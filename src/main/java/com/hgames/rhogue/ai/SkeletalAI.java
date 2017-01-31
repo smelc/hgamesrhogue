@@ -13,6 +13,11 @@ public abstract class SkeletalAI<T extends IAnimate> implements IAI<T> {
 	/** The animate whose AI it is */
 	protected final T animate;
 
+	/**
+	 * A fresh AI instance for {@code animate}.
+	 * 
+	 * @param animate
+	 */
 	public SkeletalAI(T animate) {
 		this.animate = animate;
 	}

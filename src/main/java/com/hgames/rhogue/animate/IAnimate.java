@@ -1,6 +1,7 @@
 package com.hgames.rhogue.animate;
 
 import com.hgames.rhogue.grid.Positioned;
+import com.hgames.rhogue.level.ILevel;
 import com.hgames.rhogue.team.Team;
 
 /**
@@ -20,7 +21,16 @@ public interface IAnimate extends Positioned {
 	 */
 	public boolean isDead();
 
+	/**
+	 * @return {@code this}' team.
+	 */
 	/* Override if you have a stronger return type */
 	public Team getTeam();
+
+	/**
+	 * @return {@code this}' current level, or null if none.
+	 */
+	/* Override if you have a stronger return type */
+	public /* @Nullable */ ILevel<?> getLevel();
 
 }
