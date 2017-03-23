@@ -1,11 +1,14 @@
 package com.hgames.rhogue.zone;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.DungeonUtility;
+import squidpony.squidgrid.zone.ListZone;
 import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
@@ -44,6 +47,16 @@ public class Zones {
 			}
 		}
 		return border;
+	}
+
+	/**
+	 * @param coords
+	 * @return A {@link ListZone} built from {@code coords}.
+	 */
+	public static ListZone newListZone(Coord[] coords) {
+		final List<Coord> list = new ArrayList<Coord>(coords.length);
+		Collections.addAll(list, coords);
+		return new ListZone(list);
 	}
 
 }
