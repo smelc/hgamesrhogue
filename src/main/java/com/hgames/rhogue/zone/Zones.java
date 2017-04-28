@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.hgames.lib.Pair;
+
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.DungeonUtility;
 import squidpony.squidgrid.zone.ListZone;
@@ -25,6 +27,46 @@ public class Zones {
 		final List<Coord> list = new ArrayList<Coord>(coords.length);
 		Collections.addAll(list, coords);
 		return new ListZone(list);
+	}
+
+	/**
+	 * @param z1
+	 * @param z2
+	 * @return A {@link Zone} unioning {@code z1} and {@code z1}.
+	 */
+	public static Zone union(Zone z1, Zone z2) {
+		final int sz1 = z1.size();
+		if (sz1 == 0)
+			return z2;
+		final int sz2 = z2.size();
+		if (sz2 == 0)
+			return z1;
+		final List<Coord> union = new ArrayList<Coord>(sz1 + sz2);
+		for (Coord c1 : z1)
+			union.add(c1);
+		for (Coord c2 : z2)
+			union.add(c2);
+		return new ListZone(union);
+	}
+
+	/**
+	 * @param z1
+	 * @param z2
+	 * @param z3
+	 * @return A {@link Zone} unioning {@code z1}, {@code z2}, and {@code z3}.
+	 */
+	public static Zone union(Zone z1, Zone z2, Zone z3) {
+		final int sz1 = z1.size();
+		final int sz2 = z2.size();
+		final int sz3 = z3.size();
+		final List<Coord> union = new ArrayList<Coord>(sz1 + sz2 + sz3);
+		for (Coord c1 : z1)
+			union.add(c1);
+		for (Coord c2 : z2)
+			union.add(c2);
+		for (Coord c3 : z3)
+			union.add(c3);
+		return new ListZone(union);
 	}
 
 	/**
@@ -118,6 +160,26 @@ public class Zones {
 
 	/**
 	 * @param zones
+	 * @return true if all members of zones are disjoint.
+	 */
+	public static boolean allDisjoint(List<? extends Zone> zones) {
+		final int nbz = zones.size();
+		if (nbz <= 1)
+			return true;
+		for (int i = 0; i < nbz; i++) {
+			final Zone base = zones.get(i);
+			for (Zone other : zones) {
+				if (other == base)
+					continue;
+				if (base.intersectsWith(other))
+					return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * @param zones
 	 * @param z
 	 * @return true if a member of {@code zones} {@link Zone#contains(Zone)}
 	 *         {@code z}.
@@ -144,6 +206,82 @@ public class Zones {
 				return true;
 		}
 		return false;
+	}
+
+	/**
+	 * @param z1
+	 * @param z2
+	 * @return An approximation of the distance to connect {@code z1} to
+	 *         {@code z2}.
+	 */
+	public static double connectingDistance(Zone z1, Zone z2) {
+		final Coord c1 = z1.getCenter();
+		final Coord c2 = z2.getCenter();
+		double result = c1.distance(c2);
+		result -= (diagonal(z1) / 2);
+		result -= (diagonal(z2) / 2);
+		return Math.max(0, result);
+	}
+
+	/**
+	 * @param z1
+	 * @param z2
+	 * @return A pair of coords in z1 and z2, whose distance is minimum; or null
+	 *         if none.
+	 */
+	public static /* @Nullable */ Pair<Coord, Coord> getAClosestPair(Zone z1, Zone z2) {
+		int[] result = null;
+		double minDistance = Double.MAX_VALUE;
+		for (Coord c1 : z1) {
+			for (Coord c2 : z2) {
+				if (result == null) {
+					result = new int[4];
+					result[0] = c1.x;
+					result[1] = c1.y;
+					result[2] = c2.x;
+					result[3] = c2.y;
+				} else {
+					final double local = c1.distance(c2);
+					if (local < minDistance) {
+						minDistance = local;
+						result[0] = c1.x;
+						result[1] = c1.y;
+						result[2] = c2.x;
+						result[3] = c2.y;
+					}
+				}
+			}
+		}
+		return result == null ? null
+				: Pair.of(Coord.get(result[0], result[1]), Coord.get(result[2], result[3]));
+	}
+
+	/**
+	 * @param z
+	 * @return An approximation of the length of the diagonal of a zone.
+	 */
+	public static double diagonal(Zone z) {
+		final int w = z.getWidth();
+		final int h = z.getHeight();
+		return Math.sqrt((w * w) + (h * h));
+	}
+
+	/**
+	 * @param zones
+	 * @return The approximate center of {@code zones}.
+	 */
+	public static Coord center(Iterable<Zone> zones) {
+		int x = -1;
+		int y = -1;
+		float totalSz = 0;
+		for (Zone zone : zones) {
+			final Coord center = zone.getCenter();
+			final int sz = zone.size();
+			totalSz += sz;
+			x += center.x * sz;
+			y += center.y * sz;
+		}
+		return x == -1 ? null : Coord.get(Math.round(x / totalSz), Math.round(y / totalSz));
 	}
 
 	/**
