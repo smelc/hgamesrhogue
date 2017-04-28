@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.hgames.rhogue.zone.Zones;
+
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidmath.Coord;
@@ -58,16 +60,26 @@ public class CorridorComputer {
 	/**
 	 * @return The corridors in {@code c}
 	 */
-	public Corridors compute() {
+	public final Corridors compute() {
 		/*
 		 * Implementation could be more efficient by iterating only once on the
 		 * map. But it would be tartelette aux concombres.
 		 */
 
 		final List<Rectangle> horizontalCorridors = computeHorizontalCorridors(map);
-		final List<Rectangle> verticalCorridors = computeVerticalCorridors(map);
+		List<Rectangle> hOfSize1 = null;
+		for (Rectangle horizontalCorridor : horizontalCorridors) {
+			if (horizontalCorridor.size() == 1) {
+				if (hOfSize1 == null)
+					hOfSize1 = new ArrayList<Rectangle>();
+				hOfSize1.add(horizontalCorridor);
+			}
+		}
+		final List<Rectangle> verticalCorridors = computeVerticalCorridors(map, hOfSize1);
 
-		return new Corridors(horizontalCorridors, verticalCorridors);
+		final Corridors result = new Corridors(horizontalCorridors, verticalCorridors);
+		assert Zones.allDisjoint(result.getAll());
+		return result;
 	}
 
 	protected boolean isCorridorCell(int x, int y, boolean horizontalOrVertical) {
@@ -130,7 +142,11 @@ public class CorridorComputer {
 		return result.isEmpty() ? Collections.<Rectangle> emptyList() : result;
 	}
 
-	private List<Rectangle> computeVerticalCorridors(char[][] map) {
+	/**
+	 * @param hOfSize1
+	 *            Horizontal corridors of size 1.
+	 */
+	private List<Rectangle> computeVerticalCorridors(char[][] map, /* @Nullable */ List<Rectangle> hOfSize1) {
 		/* Lazily allocated */
 		final List<Rectangle> result = new ArrayList<Rectangle>();
 
@@ -144,6 +160,7 @@ public class CorridorComputer {
 				assert start == -1 || (0 <= start && start < height);
 				final boolean corridor = isCorridorCell(x, y, false);
 				if (corridor) {
+					System.out.println(x + "," + y + " is a corridor cell");
 					if (start < 0)
 						/* Start a corridor */
 						start = y;
@@ -151,14 +168,19 @@ public class CorridorComputer {
 				} else {
 					if (0 <= start) {
 						/* End the corridor */
-						result.add(new Rectangle.Impl(Coord.get(x, y - 1), 1, y - start));
+						final Rectangle candidate = new Rectangle.Impl(Coord.get(x, y - 1), 1, y - start);
+						if (candidate.size() != 1 || !contains(hOfSize1, candidate))
+							result.add(candidate);
 						start = -1;
 					}
 				}
 			}
 			/* Corridor until the map's edge */
-			if (0 <= start)
-				result.add(new Rectangle.Impl(Coord.get(x, height - 1), 1, height - start));
+			if (0 <= start) {
+				final Rectangle candidate = new Rectangle.Impl(Coord.get(x, height - 1), 1, height - start);
+				if (candidate.size() != 1 || !contains(hOfSize1, candidate))
+					result.add(candidate);
+			}
 		}
 
 		return result.isEmpty() ? Collections.<Rectangle> emptyList() : result;
@@ -183,5 +205,27 @@ public class CorridorComputer {
 		if (y < 0 || height <= y)
 			return true;
 		return isCorridorNeighbor(map[x][y]);
+	}
+
+	private static boolean contains(/* @Nullable */ List<Rectangle> rectangles, Rectangle candidate) {
+		if (rectangles == null)
+			return false;
+		final int nbr = rectangles.size();
+		for (int i = 0; i < nbr; i++) {
+			final Rectangle rectangle = rectangles.get(i);
+			if (equals(rectangle, candidate))
+				return true;
+		}
+		return false;
+	}
+
+	private static boolean equals(Rectangle r1, Rectangle r2) {
+		assert r1.getWidth() == 1 || r1.getHeight() == 1;
+		assert r2.getWidth() == 1 || r2.getHeight() == 1;
+		if (r1.getWidth() != r2.getWidth())
+			return false;
+		if (r1.getHeight() != r2.getHeight())
+			return false;
+		return r1.getBottomLeft().equals(r2.getBottomLeft());
 	}
 }

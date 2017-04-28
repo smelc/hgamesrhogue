@@ -2,9 +2,13 @@ package com.hgames.rhogue.generation.corridor;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import squidpony.squidgrid.mapping.Rectangle;
+import squidpony.squidgrid.zone.Zone;
+import squidpony.squidmath.Coord;
 
 /**
  * A data structure storing straight corridors.
@@ -61,6 +65,35 @@ public class Corridors {
 	 */
 	public final List<Rectangle> getAll() {
 		return getCorridors(true, true);
+	}
+
+	/**
+	 * @return The number of coordinates in {@code this}. It is the size of the
+	 *         set returned by {@link #getFatSet(Set)}.
+	 */
+	public final int getNbCoords() {
+		int result = 0;
+		for (Zone r : verticalCorridors)
+			result += r.size();
+		for (Zone r : horizontalCorridors)
+			result += r.size();
+		return result;
+	}
+
+	/**
+	 * @param acc
+	 *            Where to put the result, or null for this method to allocate a
+	 *            set.
+	 * @return All coordinates in corridors (the returned set is of size
+	 *         {@link #getNbCoords()}).
+	 */
+	public final Set<Coord> getFatSet(/* @Nullable */ Set<Coord> acc) {
+		final Set<Coord> result = acc == null ? new HashSet<Coord>(getNbCoords()) : acc;
+		for (Zone r : verticalCorridors)
+			result.addAll(r.getAll());
+		for (Zone r : horizontalCorridors)
+			result.addAll(r.getAll());
+		return result;
 	}
 
 	/**
