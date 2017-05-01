@@ -69,6 +69,7 @@ public class CorridorComputer {
 		final List<Rectangle> horizontalCorridors = computeHorizontalCorridors(map);
 		List<Rectangle> hOfSize1 = null;
 		for (Rectangle horizontalCorridor : horizontalCorridors) {
+			assert isHorizontal(horizontalCorridor);
 			if (horizontalCorridor.size() == 1) {
 				if (hOfSize1 == null)
 					hOfSize1 = new ArrayList<Rectangle>();
@@ -160,7 +161,6 @@ public class CorridorComputer {
 				assert start == -1 || (0 <= start && start < height);
 				final boolean corridor = isCorridorCell(x, y, false);
 				if (corridor) {
-					System.out.println(x + "," + y + " is a corridor cell");
 					if (start < 0)
 						/* Start a corridor */
 						start = y;
@@ -169,8 +169,14 @@ public class CorridorComputer {
 					if (0 <= start) {
 						/* End the corridor */
 						final Rectangle candidate = new Rectangle.Impl(Coord.get(x, y - 1), 1, y - start);
-						if (candidate.size() != 1 || !contains(hOfSize1, candidate))
+						if (candidate.size() != 1 || !contains(hOfSize1, candidate)) {
+							final List<Rectangle> all = new ArrayList<Rectangle>();
+							all.addAll(result);
+							all.add(candidate);
+							assert Zones.allDisjoint(all);
+							assert isVertical(candidate);
 							result.add(candidate);
+						}
 						start = -1;
 					}
 				}
@@ -205,6 +211,22 @@ public class CorridorComputer {
 		if (y < 0 || height <= y)
 			return true;
 		return isCorridorNeighbor(map[x][y]);
+	}
+
+	/**
+	 * @param r
+	 * @return true if {@code r} is an horizontal corridor.
+	 */
+	public static boolean isHorizontal(Rectangle r) {
+		return r.getHeight() == 1;
+	}
+
+	/**
+	 * @param r
+	 * @return true if {@code r} is a vertical corridor.
+	 */
+	public static boolean isVertical(Rectangle r) {
+		return r.getWidth() == 1;
 	}
 
 	private static boolean contains(/* @Nullable */ List<Rectangle> rectangles, Rectangle candidate) {
