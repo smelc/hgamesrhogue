@@ -85,9 +85,9 @@ public class Corridors {
 		} else
 			result = acc;
 		if (vertical)
-			addCorridorsDoorway(verticalCorridors, false, acc);
+			addCorridorsDoorway(verticalCorridors, false, result);
 		if (horizontal)
-			addCorridorsDoorway(horizontalCorridors, true, acc);
+			addCorridorsDoorway(horizontalCorridors, true, result);
 		return result;
 	}
 
