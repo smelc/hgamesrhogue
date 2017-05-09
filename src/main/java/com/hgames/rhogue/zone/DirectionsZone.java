@@ -90,6 +90,7 @@ public class DirectionsZone extends Zone.Skeleton implements Zone {
 	 * @return The zone's center. May not be in the zone itself if
 	 *         {@link #includesCenter()} doesn't hold.
 	 */
+	@Override
 	public Coord getCenter() {
 		return center;
 	}

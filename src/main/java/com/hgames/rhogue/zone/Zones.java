@@ -1,8 +1,10 @@
 package com.hgames.rhogue.zone;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -136,11 +138,37 @@ public class Zones {
 	 * @return {@code true} if {@code zone} has a cell adjacent to {@code c}.
 	 */
 	public static boolean isAdjacentTo(Zone zone, Coord c) {
+		final Coord center = zone.getCenter();
+		if ((zone.getDiagonal() * 1.5) <= center.distance(c))
+			/* Quick dispatch to avoid iterating over the Zone */
+			return false;
+
 		for (Coord inz : zone) {
 			if (inz.isAdjacent(c))
 				return true;
 		}
 		return false;
+	}
+
+	/**
+	 * @param z
+	 * @param coords
+	 * @return true if {@code z} and {@code coords} have a common cell.
+	 */
+	public static boolean intersects(Zone z, Collection<Coord> coords) {
+		if (z.size() < coords.size()) {
+			for (Coord c : z) {
+				if (coords.contains(c))
+					return true;
+			}
+			return false;
+		} else {
+			for (Coord c : coords) {
+				if (z.contains(c))
+					return true;
+			}
+			return false;
+		}
 	}
 
 	/**
@@ -260,6 +288,7 @@ public class Zones {
 	 * @param z
 	 * @return An approximation of the length of the diagonal of a zone.
 	 */
+	@Deprecated // Use Zone#diagonal directly
 	public static double diagonal(Zone z) {
 		final int w = z.getWidth();
 		final int h = z.getHeight();

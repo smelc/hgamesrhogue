@@ -69,7 +69,7 @@ public class CorridorComputer {
 		final List<Rectangle> horizontalCorridors = computeHorizontalCorridors(map);
 		List<Rectangle> hOfSize1 = null;
 		for (Rectangle horizontalCorridor : horizontalCorridors) {
-			assert isHorizontal(horizontalCorridor);
+			assert Corridors.isHorizontal(horizontalCorridor);
 			if (horizontalCorridor.size() == 1) {
 				if (hOfSize1 == null)
 					hOfSize1 = new ArrayList<Rectangle>();
@@ -174,7 +174,7 @@ public class CorridorComputer {
 							all.addAll(result);
 							all.add(candidate);
 							assert Zones.allDisjoint(all);
-							assert isVertical(candidate);
+							assert Corridors.isVertical(candidate);
 							result.add(candidate);
 						}
 						start = -1;
@@ -211,22 +211,6 @@ public class CorridorComputer {
 		if (y < 0 || height <= y)
 			return true;
 		return isCorridorNeighbor(map[x][y]);
-	}
-
-	/**
-	 * @param r
-	 * @return true if {@code r} is an horizontal corridor.
-	 */
-	public static boolean isHorizontal(Rectangle r) {
-		return r.getHeight() == 1;
-	}
-
-	/**
-	 * @param r
-	 * @return true if {@code r} is a vertical corridor.
-	 */
-	public static boolean isVertical(Rectangle r) {
-		return r.getWidth() == 1;
 	}
 
 	private static boolean contains(/* @Nullable */ List<Rectangle> rectangles, Rectangle candidate) {

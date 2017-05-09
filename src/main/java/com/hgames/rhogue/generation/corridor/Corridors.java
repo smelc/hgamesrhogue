@@ -92,7 +92,8 @@ public class Corridors {
 	}
 
 	/**
-	 * @return All corridors in {@code this}.
+	 * @return All corridors in {@code this}. The returned list should not be
+	 *         modified , it belongs to {@code this}; not the caller.
 	 */
 	public final List<Rectangle> getAll() {
 		return getCorridors(true, true);
@@ -169,5 +170,21 @@ public class Corridors {
 				acc.add(Coord.get(x, y2 + Direction.DOWN.deltaY));
 			}
 		}
+	}
+
+	/**
+	 * @param r
+	 * @return true if {@code r} is an horizontal corridor.
+	 */
+	public static boolean isHorizontal(Rectangle r) {
+		return r.getHeight() == 1;
+	}
+
+	/**
+	 * @param r
+	 * @return true if {@code r} is a vertical corridor.
+	 */
+	public static boolean isVertical(Rectangle r) {
+		return r.getWidth() == 1;
 	}
 }
