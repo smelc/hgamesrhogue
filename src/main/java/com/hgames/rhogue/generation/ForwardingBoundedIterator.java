@@ -51,4 +51,9 @@ public class ForwardingBoundedIterator<T> implements Iterator<T> {
 		return result;
 	}
 
+	@Override
+	public void remove() {
+		delegate.remove();
+	}
+
 }
