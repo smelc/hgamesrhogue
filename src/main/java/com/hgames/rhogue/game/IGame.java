@@ -32,6 +32,12 @@ public interface IGame<L extends ILevel<?>, I extends IAnimate> {
 	public ILevelService<L> getLevelService();
 
 	/**
+	 * @return The instance of {@link IInputService}. Typically created once and
+	 *         then stored.
+	 */
+	public IInputService getInputService();
+
+	/**
 	 * @return The instance of message service. Typically created once and then
 	 *         stored.
 	 */
