@@ -59,6 +59,11 @@ public interface IInputService {
 		public final boolean isInputIgnored() {
 			return inputLocked;
 		}
+
+		@Override
+		public String toString() {
+			return "inputLocked=" + inputLocked;
+		}
 	}
 
 }
