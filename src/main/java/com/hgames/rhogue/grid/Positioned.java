@@ -15,4 +15,19 @@ public interface Positioned {
 	 */
 	public int getY();
 
+	/**
+	 * Changes this element's {@code x} coordinate.
+	 * 
+	 * @param x
+	 * @return Whether the change could be honored.
+	 */
+	public boolean setX(int x);
+
+	/**
+	 * Changes this element's {@code y} coordinate.
+	 * 
+	 * @param y
+	 * @return Whether the change could be honored.
+	 */
+	public boolean setY(int y);
 }

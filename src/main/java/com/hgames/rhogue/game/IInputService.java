@@ -18,12 +18,6 @@ public interface IInputService {
 	public void considerInput();
 
 	/**
-	 * @param val
-	 *            The value to which to disjunct the value of input ignoring.
-	 */
-	public void orInputIgnoring(boolean val);
-
-	/**
 	 * @return Whether input is being ignored now.
 	 */
 	public boolean isInputIgnored();
@@ -41,12 +35,7 @@ public interface IInputService {
 		}
 
 		@Override
-		public final void orInputIgnoring(boolean val) {
-			inputLocked |= val;
-		}
-
-		@Override
-		public final void ignoreInput() {
+		public void ignoreInput() {
 			setInputIgnoring(true);
 		}
 
