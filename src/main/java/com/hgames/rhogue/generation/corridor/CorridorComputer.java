@@ -66,7 +66,7 @@ public class CorridorComputer {
 		 * map. But it would be tartelette aux concombres.
 		 */
 
-		final List<Rectangle> horizontalCorridors = computeHorizontalCorridors(map);
+		final List<Rectangle> horizontalCorridors = computeHorizontalCorridors();
 		List<Rectangle> hOfSize1 = null;
 		for (Rectangle horizontalCorridor : horizontalCorridors) {
 			assert Corridors.isHorizontal(horizontalCorridor);
@@ -76,7 +76,7 @@ public class CorridorComputer {
 				hOfSize1.add(horizontalCorridor);
 			}
 		}
-		final List<Rectangle> verticalCorridors = computeVerticalCorridors(map, hOfSize1);
+		final List<Rectangle> verticalCorridors = computeVerticalCorridors(hOfSize1);
 
 		final Corridors result = new Corridors(horizontalCorridors, verticalCorridors);
 		assert Zones.allDisjoint(result.getAll());
@@ -109,7 +109,7 @@ public class CorridorComputer {
 		return walls.contains(c);
 	}
 
-	private List<Rectangle> computeHorizontalCorridors(char[][] map) {
+	private List<Rectangle> computeHorizontalCorridors() {
 		/* Lazily allocated */
 		final List<Rectangle> result = new ArrayList<Rectangle>();
 
@@ -147,7 +147,7 @@ public class CorridorComputer {
 	 * @param hOfSize1
 	 *            Horizontal corridors of size 1.
 	 */
-	private List<Rectangle> computeVerticalCorridors(char[][] map, /* @Nullable */ List<Rectangle> hOfSize1) {
+	private List<Rectangle> computeVerticalCorridors(/* @Nullable */ List<Rectangle> hOfSize1) {
 		/* Lazily allocated */
 		final List<Rectangle> result = new ArrayList<Rectangle>();
 

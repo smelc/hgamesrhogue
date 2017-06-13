@@ -31,4 +31,5 @@ public abstract class SkeletalAI<T extends IAnimate> implements IAI<T> {
 	public boolean isInvalidHuntingTarget(/* @Nullable */ T other) {
 		return other == null || other.isDead() || !other.getTeam().adversaries(animate.getTeam());
 	}
+
 }
