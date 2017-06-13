@@ -11,6 +11,8 @@ import squidpony.squidmath.Coord;
  * A zone containing 9 or 10 cells, centered around a {@link Coord}.
  * 
  * @author smelC
+ * 
+ * @see DirectionsZone A variant where directions can be specified.
  */
 public class NineOrTenCellsZone extends Zone.Skeleton {
 

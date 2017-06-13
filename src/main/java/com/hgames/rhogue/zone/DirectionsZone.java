@@ -13,6 +13,9 @@ import squidpony.squidmath.Coord;
  * this cell.
  * 
  * @author smelC
+ * 
+ * @see NineOrTenCellsZone A variant where the set of {@link Direction} is
+ *      {@link Direction#values()} (with or without {@link Direction#NONE}).
  */
 public class DirectionsZone extends Zone.Skeleton implements Zone {
 

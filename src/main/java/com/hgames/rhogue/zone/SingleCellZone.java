@@ -39,8 +39,8 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
-	public final boolean contains(int x, int y) {
-		return this.x == x && this.y == y;
+	public final boolean contains(int ox, int oy) {
+		return this.x == ox && this.y == oy;
 	}
 
 	@Override
