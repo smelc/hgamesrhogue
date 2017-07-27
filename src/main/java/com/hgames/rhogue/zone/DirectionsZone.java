@@ -75,6 +75,11 @@ public class DirectionsZone extends Zone.Skeleton implements Zone {
 		return all;
 	}
 
+	@Override
+	public Zone translate(int x, int y) {
+		return new DirectionsZone(center.translate(x, y), dirs.clone(), includesCenter);
+	}
+
 	/**
 	 * @return Whether this zone includes the center cell.
 	 */

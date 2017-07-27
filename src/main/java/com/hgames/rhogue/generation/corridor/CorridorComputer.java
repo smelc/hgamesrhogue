@@ -13,7 +13,8 @@ import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidmath.Coord;
 
 /**
- * A class that computes the straight corridors of a map.
+ * A class that computes the straight corridors of an arbitrary {@code char[][]}
+ * map.
  * 
  * @author smelC
  * @see Corridors

@@ -60,4 +60,8 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 		return all;
 	}
 
+	@Override
+	public Zone translate(int xShift, int yShift) {
+		return new SingleCellZone(this.x + xShift, this.y + yShift);
+	}
 }

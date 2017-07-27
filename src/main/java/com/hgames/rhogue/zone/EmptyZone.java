@@ -41,4 +41,8 @@ public final class EmptyZone extends Zone.Skeleton implements Zone {
 		return Collections.emptyList();
 	}
 
+	@Override
+	public Zone translate(int x, int y) {
+		return this;
+	}
 }

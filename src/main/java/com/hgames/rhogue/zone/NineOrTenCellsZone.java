@@ -94,6 +94,11 @@ public class NineOrTenCellsZone extends Zone.Skeleton {
 	}
 
 	@Override
+	public Zone translate(int x, int y) {
+		return new NineOrTenCellsZone(center.translate(x, y), includesCenter);
+	}
+
+	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "@" + center;
 	}
