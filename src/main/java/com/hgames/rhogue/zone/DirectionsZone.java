@@ -34,6 +34,7 @@ public class DirectionsZone extends Zone.Skeleton implements Zone {
 	 * @param includeCenter
 	 *            Whether {@link #center} is included.
 	 */
+	// FIXME CH Remove 'includeCenter' and use Directions.NONE for that
 	public DirectionsZone(Coord center, EnumSet<Direction> dirs, boolean includeCenter) {
 		this.dirs = dirs;
 		this.center = center;

@@ -7,7 +7,8 @@ public interface IDungeonDrawer {
 
 	/**
 	 * @param dungeon
-	 *            The dungeon to draw.
+	 *            The dungeon to draw. Symbols can be null, in which case they
+	 *            should be considered as walls.
 	 */
 	public void draw(DungeonSymbol[][] dungeon);
 

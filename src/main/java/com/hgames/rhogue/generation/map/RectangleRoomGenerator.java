@@ -26,7 +26,8 @@ public class RectangleRoomGenerator implements IRoomGenerator {
 	public Zone generate(int maxWidth, int maxHeight) {
 		final int w = rng.between(1, maxWidth + 1);
 		final int h = rng.between(1, maxHeight + 1);
-		return new Rectangle.Impl(Coord.get(0, 0), w, h);
+		/* h-1 because (0,0) is the *top* left coordinate */
+		return new Rectangle.Impl(Coord.get(0, h - 1), w, h);
 	}
 
 }
