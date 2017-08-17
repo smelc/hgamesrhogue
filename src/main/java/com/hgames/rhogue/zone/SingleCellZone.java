@@ -19,6 +19,8 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 	protected final int x;
 	protected final int y;
 
+	private transient List<Coord> all = null;
+
 	private static final long serialVersionUID = 6267793374508699574L;
 
 	/**
@@ -56,8 +58,6 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 	public final boolean contains(Coord c) {
 		return x == c.x && y == c.y;
 	}
-
-	private transient List<Coord> all = null;
 
 	@Override
 	public List<Coord> getAll() {

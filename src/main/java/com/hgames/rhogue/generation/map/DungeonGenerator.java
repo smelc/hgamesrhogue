@@ -1,6 +1,8 @@
 package com.hgames.rhogue.generation.map;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -31,8 +33,11 @@ public class DungeonGenerator {
 	protected final RNG rng;
 	protected final int width;
 	protected final int height;
-	/** An upper bound of the number of corridors to and from a room */
-	protected int connectivity;
+	/**
+	 * An upper bound of the number of corridors to and from a room (ignores
+	 * doors punched because of rooms being adjacent).
+	 */
+	protected int connectivity = 3;
 	protected /* @Nullable */ IDungeonDrawer drawer;
 
 	protected final ProbabilityTable<IRoomGenerator> roomGenerators;
@@ -46,6 +51,8 @@ public class DungeonGenerator {
 	protected int doorProbability = 50;
 
 	private static final Zone[] ZONE_PAIR_BUF = new Zone[2];
+	private static final List<Coord> COORD_LIST_BUF = new ArrayList<Coord>(4);
+	private static final DoublePriorityCell<Coord> DP_CELL = DoublePriorityCell.createEmpty();
 
 	/**
 	 * A fresh generator.
@@ -159,6 +166,7 @@ public class DungeonGenerator {
 		generatePassagesInAlmostAdjacentRooms(gdata);
 		draw(gdata.dungeon);
 		generateCorridors(gdata);
+		draw(gdata.dungeon);
 		return dungeon;
 	}
 
@@ -238,6 +246,7 @@ public class DungeonGenerator {
 		final Map<Zone, List<Pair<Double, Zone>>> zoneToOtherZones = new LinkedHashMap<Zone, List<Pair<Double, Zone>>>(
 				dungeon.rooms.size());
 		final int nbr = dungeon.rooms.size();
+		final double maxDist = (width + height) / 6;
 		for (int i = 0; i < nbr; i++) {
 			final Zone z = dungeon.rooms.get(i);
 			final Coord zc = z.getCenter();
@@ -250,10 +259,44 @@ public class DungeonGenerator {
 					continue;
 				final Coord oc = other.getCenter();
 				final double dist = zc.distance(oc);
+				if (maxDist < dist)
+					/* Too far away */
+					continue;
 				otherZones.add(Pair.of(dist, other));
 			}
-			assert otherZones.size() == nbr - 1;
 			zoneToOtherZones.put(z, otherZones);
+		}
+		final CorridorBuilder cc = new CorridorBuilder(gdata.dungeon, true);
+		final Coord[] connection = new Coord[2];
+		for (int i = 0; i < nbr; i++) {
+			final Zone z = dungeon.rooms.get(i);
+			final List<Pair<Double, Zone>> destinations = zoneToOtherZones.get(z);
+			if (destinations == null)
+				continue;
+			final int nbd = destinations.size();
+			if (connectivity < nbd)
+				Collections.sort(destinations, ORDERER);
+			for (int j = 0; j < connectivity && j < nbd; j++) {
+				final Zone dest = destinations.get(j).getSnd();
+				if (DungeonBuilder.areConnected(dungeon, z, dest, 3))
+					continue;
+				final boolean found = getZonesConnectionEndpoints(gdata, z, dest, connection);
+				if (found) {
+					final Coord zEndpoint = connection[0];
+					final Coord destEndpoint = connection[1];
+					final Zone built = cc.build(rng, zEndpoint, destEndpoint);
+					if (built != null) {
+						// (NO_CORRIDOR_BBOX). This doesn't trigger if 'built'
+						// is a Rectangle, but it may if it a ZoneUnion.
+						final Zone recorded = addZone(gdata, built, null, false);
+						DungeonBuilder.addConnection(dungeon, z, recorded);
+						DungeonBuilder.addConnection(dungeon, dest, recorded);
+						// Punch corridor
+						DungeonBuilder.setSymbols(dungeon, built.iterator(), DungeonSymbol.FLOOR);
+						// draw(dungeon);
+					}
+				}
+			}
 		}
 		assert zoneToOtherZones.size() == nbr;
 	}
@@ -272,6 +315,36 @@ public class DungeonGenerator {
 		if (drawer != null) {
 			drawer.draw(dungeon.getMap());
 		}
+	}
+
+	/**
+	 * @param connection
+	 * @return Whether something was found.
+	 */
+	private boolean getZonesConnectionEndpoints(GenerationData gdata, Zone z1, Zone z2, Coord[] connection) {
+		assert connection.length == 2;
+		if (z1 == z2) {
+			assert false;
+			return false;
+		}
+		final Dungeon dungeon = gdata.dungeon;
+		assert DungeonBuilder.hasZone(dungeon, z1);
+		assert DungeonBuilder.hasZone(dungeon, z2);
+		final Direction fromz1toz2 = Direction.toGoTo(z1.getCenter(), z2.getCenter());
+		assert fromz1toz2 != Direction.NONE;
+		getConnectionCandidates(gdata, z1, fromz1toz2);
+		if (COORD_LIST_BUF.isEmpty())
+			return false;
+		final Coord z1Endpoint = rng.getRandomElement(COORD_LIST_BUF);
+		assert z1.contains(z1Endpoint);
+		getConnectionCandidates(gdata, z2, fromz1toz2.opposite());
+		if (COORD_LIST_BUF.isEmpty())
+			return false;
+		final Coord z2Endpoint = rng.getRandomElement(COORD_LIST_BUF);
+		assert z2.contains(z2Endpoint);
+		connection[0] = z1Endpoint;
+		connection[1] = z2Endpoint;
+		return true;
 	}
 
 	private boolean generateRoom(GenerationData gdata) {
@@ -419,6 +492,44 @@ public class DungeonGenerator {
 		return recorded;
 	}
 
+	/**
+	 * Fills {@link #COORD_LIST_BUF} with the candidates for building a
+	 * connection towards {@code dir} in {@code z}. They should all belong to
+	 * {@code z} {@link Zone#getInternalBorder() internal border}.
+	 * 
+	 * @param gdata
+	 * @param z
+	 * @param dir
+	 * @return Whether something was found.
+	 */
+	private boolean getConnectionCandidates(GenerationData gdata, Zone z, Direction dir) {
+		if (dir == Direction.NONE)
+			throw new IllegalStateException();
+		COORD_LIST_BUF.clear();
+		if (z instanceof Rectangle && dir.isCardinal()) {
+			// (NO-BBOX)
+			Rectangle.Utils.getBorder((Rectangle) z, dir, COORD_LIST_BUF);
+		} else if (z instanceof SingleCellZone) {
+			// (NO-BBOX)
+			COORD_LIST_BUF.add(z.getCenter());
+		} else {
+			final Rectangle bbox = gdata.dungeon.boundingBoxes.get(z);
+			assert bbox != null;
+			final Coord corner = Rectangle.Utils.getCorner(bbox, dir);
+			DP_CELL.clear();
+			final List<Coord> all = z.getAll();
+			final int sz = all.size();
+			for (int i = 0; i < sz; i++) {
+				final Coord c = all.get(i);
+				DP_CELL.union(c, c.distance(corner));
+			}
+			final Coord coord = DP_CELL.get();
+			if (coord != null)
+				COORD_LIST_BUF.add(coord);
+		}
+		return !COORD_LIST_BUF.isEmpty();
+	}
+
 	private static Pair<Zone, Zone> orderedPair(GenerationData gdata, Zone z1, Zone z2) {
 		final Integer i1 = gdata.zOrder.get(z1);
 		if (i1 == null)
@@ -451,12 +562,21 @@ public class DungeonGenerator {
 
 	private static boolean needCaching(Zone z) {
 		if (z instanceof Rectangle)
+			// (NO-BBOX)
 			return false;
 		else if (z instanceof SingleCellZone)
+			// (NO-BBOX)
 			return false;
 		else
 			return true;
 	}
+
+	private static final Comparator<Pair<Double, Zone>> ORDERER = new Comparator<Pair<Double, Zone>>() {
+		@Override
+		public int compare(Pair<Double, Zone> o1, Pair<Double, Zone> o2) {
+			return Double.compare(o1.getFst(), o2.getFst());
+		}
+	};
 
 	/**
 	 * Data carried on during generation of a single dungeon.

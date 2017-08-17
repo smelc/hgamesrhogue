@@ -68,6 +68,16 @@ public class ZoneUnion extends Zone.Skeleton {
 	}
 
 	@Override
+	public Zone translate(int x, int y) {
+		return new ZoneUnion(z1.translate(x, y), z2.translate(x, y));
+	}
+
+	@Override
+	public Zone extend() {
+		return new ZoneUnion(z1.extend(), z2.extend());
+	}
+
+	@Override
 	public Coord getCenter() {
 		if (center == null) {
 			final Coord z1c = z1.getCenter();
@@ -78,4 +88,8 @@ public class ZoneUnion extends Zone.Skeleton {
 		return center;
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "(" + z1.toString() + "," + z2.toString() + ")";
+	}
 }

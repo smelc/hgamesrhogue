@@ -31,7 +31,11 @@ public class Dungeon {
 	 * contains a cell (see
 	 * {@link DungeonBuilder#findZoneContaining(Dungeon, int, int)}). It can be
 	 * incomplete both for {@link #rooms} and for {@link #corridors}, as rooms
-	 * whose bounding box is the room itself aren't recorded in there.
+	 * whose bounding box is the room itself aren't recorded in there (search
+	 * tag (NO_BBOX) to see which implementations of {@link Zone} satisfy that).
+	 * Furthermore it can be straight incomplete for {@link #corridors}, because
+	 * corridors do not have a {@link Rectangle} bounding box (see tag
+	 * (NO_CORRIDOR_BBOX) for that).
 	 */
 	final Map<Zone, Rectangle> boundingBoxes;
 	/** Doors between adjacent rooms are in there (and are zones of size 1). */

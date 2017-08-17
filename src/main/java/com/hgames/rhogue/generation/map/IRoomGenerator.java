@@ -1,5 +1,7 @@
 package com.hgames.rhogue.generation.map;
 
+import java.util.HashSet;
+
 import squidpony.squidgrid.zone.Zone;
 
 /**
@@ -19,7 +21,13 @@ public interface IRoomGenerator {
 	 *            fit.
 	 * @return A zone such that
 	 *         {@code new Rectangle(Coord.get(0, 0), maxWidth, maxHeight).contains(result)}
-	 *         holds.
+	 *         holds and such that any member is reachable from all other
+	 *         members.
+	 * 
+	 *         <p>
+	 *         The returned zone iterating order must be stable (don't implement
+	 *         {@link Zone#getAll()} with a {@link HashSet} for example).
+	 *         </p>
 	 * 
 	 *         <p>
 	 *         Or null if the size constraint cannot be honored.

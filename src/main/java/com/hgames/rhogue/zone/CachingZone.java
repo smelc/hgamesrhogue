@@ -29,6 +29,7 @@ public class CachingZone implements Zone {
 	protected transient /* @Nullable */ Integer biggestY;
 
 	protected transient /* @Nullable */ List<Coord> all;
+	protected transient /* @Nullable */ List<Coord> internalBorder;
 	protected transient /* @Nullable */ Collection<Coord> externalBorder;
 	protected transient /* @Nullable */ Zone extension;
 
@@ -167,6 +168,13 @@ public class CachingZone implements Zone {
 	@Override
 	public Zone translate(int x, int y) {
 		return new CachingZone(delegate.translate(x, y));
+	}
+
+	@Override
+	public List<Coord> getInternalBorder() {
+		if (internalBorder == null)
+			internalBorder = delegate.getInternalBorder();
+		return internalBorder;
 	}
 
 	@Override

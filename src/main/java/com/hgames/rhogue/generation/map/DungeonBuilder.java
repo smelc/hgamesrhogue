@@ -138,10 +138,10 @@ class DungeonBuilder {
 	 *         if none.
 	 */
 	static /* @Nullable */ Zone findZoneContaining(Dungeon dungeon, int x, int y) {
-		Zone result = findZoneContaining(dungeon.rooms, dungeon.boundingBoxes, x, y);
+		Zone result = findZoneContaining(dungeon.rooms, dungeon.boundingBoxes, x, y, true);
 		if (result != null)
 			return result;
-		return findZoneContaining(dungeon.corridors, dungeon.boundingBoxes, x, y);
+		return findZoneContaining(dungeon.corridors, dungeon.boundingBoxes, x, y, false);
 	}
 
 	static boolean hasZone(Dungeon dungeon, Zone z) {
@@ -149,7 +149,7 @@ class DungeonBuilder {
 	}
 
 	private static /* @Nullable */ Zone findZoneContaining(/* @Nullable */ List<? extends Zone> zones,
-			/* @Nullable */ Map<Zone, ? extends Zone> boundingBoxes, int x, int y) {
+			/* @Nullable */ Map<Zone, ? extends Zone> boundingBoxes, int x, int y, boolean roomOrCorridors) {
 		if (zones == null)
 			return null;
 		final int nb = zones.size();
@@ -158,11 +158,14 @@ class DungeonBuilder {
 			if (boundingBoxes != null) {
 				final Zone boundingBox = boundingBoxes.get(z);
 				if (boundingBox == null) {
-					assert z instanceof Rectangle : "There should be a bounding box for " + z;
-					/*
-					 * It's okay for 'z' not to have a bounding box, since it is
-					 * a rectangle. Its bounding box would be 'z' itself.
-					 */
+					if (roomOrCorridors) {
+						assert z instanceof Rectangle : "There should be a bounding box for room " + z;
+						/*
+						 * It's okay for 'z' not to have a bounding box, since
+						 * it is a rectangle. Its bounding box would be 'z'
+						 * itself.
+						 */
+					}
 				} else {
 					assert boundingBox.contains(z) : boundingBox + " isn't a bounding box of " + z;
 					if (boundingBox != null && !boundingBox.contains(x, y))

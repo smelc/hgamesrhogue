@@ -19,6 +19,8 @@ public class NineOrTenCellsZone extends Zone.Skeleton {
 	protected final Coord center;
 	protected final boolean includesCenter;
 
+	private transient List<Coord> all;
+
 	private static final long serialVersionUID = 4952793900307422804L;
 
 	/**
@@ -79,8 +81,6 @@ public class NineOrTenCellsZone extends Zone.Skeleton {
 		return includesCenter ? new NineOrTenCellsZone(center, false) : this;
 	}
 
-	private transient List<Coord> all;
-
 	@Override
 	public List<Coord> getAll() {
 		if (all == null) {
@@ -91,6 +91,11 @@ public class NineOrTenCellsZone extends Zone.Skeleton {
 				all.add(center.translate(out));
 		}
 		return all;
+	}
+
+	@Override
+	public List<Coord> getInternalBorder() {
+		return includesCenter ? new NineOrTenCellsZone(center, false).getAll() : getAll();
 	}
 
 	@Override
