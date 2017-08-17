@@ -1,9 +1,11 @@
 package com.hgames.rhogue.zone;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
@@ -65,6 +67,15 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 			all = Collections.unmodifiableList(all);
 		}
 		return all;
+	}
+
+	@Override
+	public Collection<Coord> getExternalBorder() {
+		final List<Coord> result = new ArrayList<Coord>(9);
+		final Coord center = getCenter();
+		for (Direction out : Direction.OUTWARDS)
+			result.add(center.translate(out));
+		return result;
 	}
 
 	@Override
