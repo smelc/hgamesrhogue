@@ -20,6 +20,13 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 	private static final long serialVersionUID = 6267793374508699574L;
 
 	/**
+	 * @param c
+	 */
+	public SingleCellZone(Coord c) {
+		this(c.x, c.y);
+	}
+
+	/**
 	 * @param x
 	 * @param y
 	 */

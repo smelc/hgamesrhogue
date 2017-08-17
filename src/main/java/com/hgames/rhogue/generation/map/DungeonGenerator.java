@@ -10,9 +10,12 @@ import java.util.Map;
 import com.hgames.lib.Exceptions;
 import com.hgames.lib.Ints;
 import com.hgames.lib.Pair;
+import com.hgames.lib.choice.DoublePriorityCell;
+import com.hgames.lib.collection.Multimaps;
 import com.hgames.rhogue.grid.GridIterators;
 import com.hgames.rhogue.rng.ProbabilityTable;
 import com.hgames.rhogue.zone.CachingZone;
+import com.hgames.rhogue.zone.SingleCellZone;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.Rectangle;
@@ -153,7 +156,8 @@ public class DungeonGenerator {
 		final GenerationData gdata = new GenerationData(dungeon);
 		generateRooms(gdata);
 		/* TODO use RectangleRoomFinder to generate rooms in a second pass */
-		generateDoorsInAlmostAdjacentRooms(gdata);
+		generatePassagesInAlmostAdjacentRooms(gdata);
+		draw(gdata.dungeon);
 		generateCorridors(gdata);
 		return dungeon;
 	}
@@ -168,13 +172,17 @@ public class DungeonGenerator {
 	}
 
 	/**
-	 * Generate doors on cells that are {@link DungeonSymbol#WALL} and which are
-	 * between rooms.
+	 * Generate doors/floors on cells that are {@link DungeonSymbol#WALL} and
+	 * which are between rooms.
 	 * 
 	 * @param gdata
 	 */
-	protected void generateDoorsInAlmostAdjacentRooms(GenerationData gdata) {
+	protected void generatePassagesInAlmostAdjacentRooms(GenerationData gdata) {
 		final Dungeon dungeon = gdata.dungeon;
+		/* Keys in this map are ordered according to GenerationData.zOrder */
+		/* The Lists do not contain doublons */
+		final Map<Pair<Zone, Zone>, List<Coord>> connectedsToCandidates = new HashMap<Pair<Zone, Zone>, List<Coord>>(
+				16);
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
 				if (!isDoorCandidate(dungeon, x, y, true) && !isDoorCandidate(dungeon, x, y, false))
@@ -184,9 +192,43 @@ public class DungeonGenerator {
 				final Zone z1 = ZONE_PAIR_BUF[1];
 				assert z1 != null;
 				assert z0 != z1;
-				dungeon.map[x][y] = DungeonSymbol.FLOOR;
-				DungeonBuilder.addConnection(dungeon, z0, z1);
+				Multimaps.addToListMultimap(connectedsToCandidates, orderedPair(gdata, z0, z1),
+						Coord.get(x, y));
 			}
+		}
+		/*
+		 * Look for the door closest to the mean of the zones' centers. That's
+		 * the ideal door.
+		 */
+		final DoublePriorityCell<Coord> cell = DoublePriorityCell.createEmpty();
+		for (Map.Entry<Pair<Zone, Zone>, List<Coord>> entry : connectedsToCandidates.entrySet()) {
+			cell.clear();
+			final Pair<Zone, Zone> connecteds = entry.getKey();
+			final Zone z0 = connecteds.getFst();
+			final Zone z1 = connecteds.getSnd();
+			assert !DungeonBuilder.areConnected(dungeon, z0, z1, 1);
+			final Coord ideal;
+			{
+				final Coord center0 = z0.getCenter();
+				final Coord center1 = z1.getCenter();
+				ideal = Coord.get((center0.x + center1.x) / 2, (center0.y + center1.y / 2));
+			}
+			final List<Coord> candidates = entry.getValue();
+			final int nbc = candidates.size();
+			assert 0 < nbc;
+			for (int i = 0; i < nbc; i++) {
+				final Coord candidate = candidates.get(i);
+				cell.union(candidate, candidate.distance(ideal));
+			}
+			final Coord door = cell.get();
+			assert door != null;
+			final DungeonSymbol sym = rng.next(101) <= doorProbability ? DungeonSymbol.DOOR
+					: DungeonSymbol.FLOOR;
+			DungeonBuilder.setSymbol(dungeon, door.x, door.y, sym);
+			final Zone zdoor = new SingleCellZone(door);
+			addZone(gdata, zdoor, null, false);
+			DungeonBuilder.addConnection(dungeon, z0, zdoor);
+			DungeonBuilder.addConnection(dungeon, z1, zdoor);
 		}
 	}
 
@@ -252,6 +294,9 @@ public class DungeonGenerator {
 				/* To avoid the room to be on the edge */
 				final int mw = Math.min(maxWidth, width - (tlCandidate.x + 2));
 				final int mh = Math.min(maxHeight, height - (tlCandidate.y + 2));
+				if (mw == 0 || mh == 0)
+					/* Cannot do */
+					continue;
 				/* Bottom-right cell */
 				final Coord brCandidate = Coord.get(tlCandidate.x + mw, tlCandidate.y + mh);
 				final Coord blCandidate = Coord.get(tlCandidate.x, brCandidate.y);
@@ -259,21 +304,18 @@ public class DungeonGenerator {
 				 * .extend() to avoid generating adjacent rooms. This is a smart
 				 * trick (as opposed to extending the rooms already created).
 				 */
-				if (!isOnly(dungeon,
-						Rectangle.Utils.cells(new Rectangle.Impl(blCandidate, maxWidth, maxHeight).extend()),
+				if (!isOnly(dungeon, Rectangle.Utils.cells(new Rectangle.Impl(blCandidate, mw, mh).extend()),
 						DungeonSymbol.WALL))
 					continue;
 				assert dungeon.isValid(brCandidate);
 				assert !Dungeons.isOnEdge(dungeon, brCandidate);
-				final Zone zone = generateRoomAt(tlCandidate, mw, mh);
+				final Zone zone = generateRoomAt(blCandidate, mw, mh);
 				if (zone != null) {
 					assert !DungeonBuilder.anyOnEdge(dungeon, zone.iterator());
-					/* Punch the zone */
+					/* Record the zone */
+					addZone(gdata, zone, new Rectangle.Impl(blCandidate, mw, mh), true);
+					/* Punch it */
 					DungeonBuilder.setSymbols(dungeon, zone.iterator(), DungeonSymbol.FLOOR);
-					final Zone recorded = new CachingZone(zone);
-					dungeon.rooms.add(recorded);
-					dungeon.boundingBoxes.put(recorded, new Rectangle.Impl(blCandidate, maxWidth, maxHeight));
-					gdata.extensions.put(recorded, new CachingZone(zone.extend()));
 					draw(dungeon);
 					return true;
 				}
@@ -369,6 +411,24 @@ public class DungeonGenerator {
 		return true;
 	}
 
+	private Zone addZone(GenerationData gdata, Zone z, /* @Nullable */ Rectangle boundingBox,
+			boolean roomOrCorridor) {
+		final Zone recorded = needCaching(z) ? new CachingZone(z) : z;
+		DungeonBuilder.addRoom(gdata.dungeon, recorded, boundingBox, roomOrCorridor);
+		gdata.recordRoomOrdering(recorded);
+		return recorded;
+	}
+
+	private static Pair<Zone, Zone> orderedPair(GenerationData gdata, Zone z1, Zone z2) {
+		final Integer i1 = gdata.zOrder.get(z1);
+		if (i1 == null)
+			throw new IllegalStateException("Unknown zone: " + z1);
+		final Integer i2 = gdata.zOrder.get(z2);
+		if (i2 == null)
+			throw new IllegalStateException("Unknown zone: " + z2);
+		return i1 < i2 ? Pair.of(z1, z2) : Pair.of(z2, z1);
+	}
+
 	private static boolean isDoorNeighborCandidate(/* @Nullable */ DungeonSymbol sym) {
 		if (sym == null)
 			return false;
@@ -389,6 +449,15 @@ public class DungeonGenerator {
 		throw Exceptions.newUnmatchedISE(sym);
 	}
 
+	private static boolean needCaching(Zone z) {
+		if (z instanceof Rectangle)
+			return false;
+		else if (z instanceof SingleCellZone)
+			return false;
+		else
+			return true;
+	}
+
 	/**
 	 * Data carried on during generation of a single dungeon.
 	 * 
@@ -398,14 +467,24 @@ public class DungeonGenerator {
 
 		protected final Dungeon dungeon;
 		/**
-		 * A map from {@link Dungeon#rooms} to the same zones {@link Zone#extend
-		 * extended once}.
+		 * A map that keep tracks in the order in which {@link Dungeon#rooms}
+		 * and {@link Dungeon#corridors} have been generated, hereby providing
+		 * an ordering on rooms.
 		 */
-		@Deprecated
-		protected final Map<Zone, CachingZone> extensions = new HashMap<Zone, CachingZone>();
+		protected final Map<Zone, Integer> zOrder = new HashMap<Zone, Integer>();
+
+		private int nextRoomIndex = 0;
 
 		protected GenerationData(Dungeon dungeon) {
 			this.dungeon = dungeon;
+		}
+
+		protected void recordRoomOrdering(Zone z) {
+			assert DungeonBuilder.hasZone(dungeon, z);
+			final Integer prev = this.zOrder.put(z, nextRoomIndex);
+			nextRoomIndex++;
+			if (prev != null)
+				throw new IllegalStateException("Zone " + z + " is being recorded twice");
 		}
 
 	}

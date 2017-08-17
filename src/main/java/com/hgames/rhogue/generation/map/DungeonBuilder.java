@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.hgames.lib.collection.Multimaps;
 
+import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
@@ -17,6 +18,14 @@ import squidpony.squidmath.Coord;
  */
 class DungeonBuilder {
 
+	/**
+	 * Adds a connection between {@code z1} and {@code z2} in {@code dungeon},
+	 * taking care of reflexivity.
+	 * 
+	 * @param dungeon
+	 * @param z1
+	 * @param z2
+	 */
 	static void addConnection(Dungeon dungeon, Zone z1, Zone z2) {
 		assert z1 != z2;
 		if (z1 == z2)
@@ -25,6 +34,25 @@ class DungeonBuilder {
 		assert hasZone(dungeon, z2);
 		Multimaps.addToListMultimapIfAbsent(dungeon.connections, z1, z2);
 		Multimaps.addToListMultimapIfAbsent(dungeon.connections, z2, z1);
+	}
+
+	/** Prefer this method over direct mutations, it eases debugging. */
+	static void addRoom(Dungeon dungeon, Zone z, /* @Nullable */ Rectangle boundingBox,
+			boolean roomOrCorridor) {
+		if (roomOrCorridor)
+			dungeon.rooms.add(z);
+		else
+			dungeon.corridors.add(z);
+		if (boundingBox != null) {
+			final Rectangle prev = dungeon.boundingBoxes.put(z, boundingBox);
+			if (prev != null)
+				throw new IllegalStateException(z + " was recorded already");
+		}
+	}
+
+	/** Prefer this method over direct mutations, it eases debugging. */
+	static void setSymbol(Dungeon dungeon, int x, int y, DungeonSymbol sym) {
+		dungeon.map[x][y] = sym;
 	}
 
 	/**
@@ -64,6 +92,44 @@ class DungeonBuilder {
 	}
 
 	/**
+	 * Don't go crazy on this method, it is slow on zones that are connected via
+	 * many intermediates rooms/corridors.
+	 * 
+	 * @param dungeon
+	 * @param z0
+	 * @param z1
+	 * @return Whether {@code z0} and {@code z1} are connected.
+	 */
+	static boolean areConnected(Dungeon dungeon, Zone z0, Zone z1) {
+		return areConnected(dungeon, z0, z1, Integer.MAX_VALUE);
+	}
+
+	/**
+	 * @param dungeon
+	 * @param z0
+	 * @param z1
+	 * @param intermediates
+	 *            A bound on the allowed intermediates. 1 is the minimum (a
+	 *            corridor connecting the two rooms).
+	 * @return Whether {@code z0} and {@code z1} are connected by at most
+	 *         {@code intermediates} zones.
+	 */
+	static boolean areConnected(Dungeon dungeon, Zone z0, Zone z1, int intermediates) {
+		if (intermediates < 1)
+			return false;
+		final List<Zone> list = dungeon.connections.get(z0);
+		if (list == null)
+			return false;
+		final int nb = list.size();
+		for (int i = 0; i < nb; i++) {
+			final Zone out = list.get(i);
+			if (out.equals(z1) || areConnected(dungeon, out, z1, intermediates - 1))
+				return true;
+		}
+		return false;
+	}
+
+	/**
 	 * @param dungeon
 	 * @param x
 	 * @param y
@@ -91,9 +157,17 @@ class DungeonBuilder {
 			final Zone z = zones.get(i);
 			if (boundingBoxes != null) {
 				final Zone boundingBox = boundingBoxes.get(z);
-				assert boundingBox.contains(z) : boundingBox + " isn't a bounding box of " + z;
-				if (boundingBox != null && !boundingBox.contains(x, y))
-					continue;
+				if (boundingBox == null) {
+					assert z instanceof Rectangle : "There should be a bounding box for " + z;
+					/*
+					 * It's okay for 'z' not to have a bounding box, since it is
+					 * a rectangle. Its bounding box would be 'z' itself.
+					 */
+				} else {
+					assert boundingBox.contains(z) : boundingBox + " isn't a bounding box of " + z;
+					if (boundingBox != null && !boundingBox.contains(x, y))
+						continue;
+				}
 			}
 			if (z.contains(x, y))
 				return z;

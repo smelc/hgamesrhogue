@@ -29,15 +29,17 @@ public class Dungeon {
 	 * Map whose keys are {@link #rooms} and whose values wrap the keys. It can
 	 * be used for example to quickly rule out zones when searching which zone
 	 * contains a cell (see
-	 * {@link DungeonBuilder#findZoneContaining(Dungeon, int, int)}). It is
-	 * complete for {@link #rooms} but may be incomplete for {@link #corridors}.
+	 * {@link DungeonBuilder#findZoneContaining(Dungeon, int, int)}). It can be
+	 * incomplete both for {@link #rooms} and for {@link #corridors}, as rooms
+	 * whose bounding box is the room itself aren't recorded in there.
 	 */
 	final Map<Zone, Rectangle> boundingBoxes;
+	/** Doors between adjacent rooms are in there (and are zones of size 1). */
 	final List<Zone> corridors;
 
 	/**
-	 * The zones to which a zone is connected. Keys and values belong both to
-	 * {@link #rooms} and {@link #corridors}.
+	 * The zones to which a zone is directly connected. Keys and values belong
+	 * both to {@link #rooms} and {@link #corridors}.
 	 */
 	final Map<Zone, List<Zone>> connections;
 
