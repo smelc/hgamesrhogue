@@ -14,7 +14,10 @@ public class ConsoleDungeonDrawer implements IDungeonDrawer {
 	protected int nbDrawn = 0;
 	protected final IDungeonSymbolDrawer symbolDrawer;
 
-	ConsoleDungeonDrawer(IDungeonSymbolDrawer symbolDrawer) {
+	/**
+	 * @param symbolDrawer
+	 */
+	public ConsoleDungeonDrawer(IDungeonSymbolDrawer symbolDrawer) {
 		this.symbolDrawer = symbolDrawer;
 	}
 

@@ -9,6 +9,8 @@ import squidpony.squidmath.RNG;
 /**
  * A room generator that generate rectangle rooms.
  * 
+ * <b>FIXME UNTESTED for now</b>
+ * 
  * @author smelC
  */
 public class ConstrainedRectangleRoomGenerator implements IRoomGenerator {

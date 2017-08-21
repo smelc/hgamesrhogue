@@ -14,6 +14,8 @@ import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;
 
 /**
+ * <b>FIXME UNTESTED for now</b>
+ * 
  * @author smelC
  */
 public class CaveRoomGenerator implements IRoomGenerator {

@@ -266,7 +266,8 @@ public class DungeonGenerator {
 			}
 			zoneToOtherZones.put(z, otherZones);
 		}
-		final CorridorBuilder cc = new CorridorBuilder(gdata.dungeon, true);
+		final CorridorBuilder cc = new CorridorBuilder(gdata.dungeon, true, true);
+		final Coord[] startEndBuffer = new Coord[2];
 		final Coord[] connection = new Coord[2];
 		for (int i = 0; i < nbr; i++) {
 			final Zone z = dungeon.rooms.get(i);
@@ -284,7 +285,7 @@ public class DungeonGenerator {
 				if (found) {
 					final Coord zEndpoint = connection[0];
 					final Coord destEndpoint = connection[1];
-					final Zone built = cc.build(rng, zEndpoint, destEndpoint);
+					final Zone built = cc.build(rng, zEndpoint, destEndpoint, startEndBuffer);
 					if (built != null) {
 						// (NO_CORRIDOR_BBOX). This doesn't trigger if 'built'
 						// is a Rectangle, but it may if it a ZoneUnion.

@@ -16,10 +16,44 @@ class CorridorBuilder {
 
 	private final Dungeon dungeon;
 	private final boolean allowATurn;
+	private final boolean onlyPerfectCarving;
 
-	CorridorBuilder(Dungeon dungeon, boolean allowATurn) {
+	CorridorBuilder(Dungeon dungeon, boolean allowATurn, boolean onlyPerfectCarving) {
 		this.dungeon = dungeon;
 		this.allowATurn = allowATurn;
+		this.onlyPerfectCarving = onlyPerfectCarving;
+	}
+
+	/**
+	 * @param startEndBuf
+	 *            Where to set the corridor's only cell that is cardinally
+	 *            adjacent to {@code start} and the corridor's only cell that is
+	 *            cardinally adjacent to {@code end}.
+	 */
+	Zone build(RNG stable, Coord start, Coord end, /* @Nullable */ Coord[] startEndBuf) {
+		final Zone result = build(stable, start, end);
+		if (startEndBuf != null && result != null) {
+			assert nbAdjacentCells(start, result, true) == 1;
+			assert nbAdjacentCells(end, result, true) == 1;
+			startEndBuf[0] = null;
+			startEndBuf[1] = null;
+			for (Coord c : result) {
+				boolean change = false;
+				if (Boolean.TRUE.equals(adjacency(c, start))) {
+					startEndBuf[0] = c;
+					change |= true;
+				}
+				if (Boolean.TRUE.equals(adjacency(c, start))) {
+					startEndBuf[1] = c;
+					change |= true;
+				}
+				if (change && startEndBuf[0] != null && startEndBuf[1] != null)
+					break;
+			}
+			assert startEndBuf[0] != null;
+			assert startEndBuf[1] != null;
+		}
+		return result;
 	}
 
 	/**
@@ -31,7 +65,7 @@ class CorridorBuilder {
 	 *            the result will be cardinally adjacent to it).
 	 * @return The corridor built or null if impossible.
 	 */
-	Zone build(RNG stable, Coord start, Coord end) {
+	private Zone build(RNG stable, Coord start, Coord end) {
 		final Zone firstPart;
 		final Zone secondPart;
 		if (needTurn(start, end)) {
@@ -43,8 +77,26 @@ class CorridorBuilder {
 			assert dungeon.isValid(turn1);
 			assert dungeon.isValid(turn2);
 			final Coord pivot = turnBadness(turn1) < turnBadness(turn2) ? turn1 : turn2;
-			firstPart = buildLine(start, false, pivot, true);
-			secondPart = buildLine(pivot, false, end, false);
+			/**
+			 * The conditionals account for this position:
+			 * 
+			 * <pre>
+			 * E    1
+			 * 2    S
+			 * </pre>
+			 * 
+			 * where {@code 1} denotes {@code turn1} and {@code 2} denotes
+			 * {@code turn2}. In this case the pivot is adjacent to the start or
+			 * the end and one of the line is useless.
+			 * 
+			 * This is required for the assertion about intersectsWith to hold.
+			 */
+			firstPart = Boolean.TRUE.equals(adjacency(start, pivot)) ? null
+					: buildLine(start, false, pivot, true);
+			secondPart = Boolean.TRUE.equals(adjacency(pivot, end)) ? null
+					: buildLine(pivot, false, end, false);
+			assert !(firstPart == null && secondPart == null);
+			assert firstPart == null || secondPart == null || !firstPart.intersectsWith(secondPart);
 		} else {
 			firstPart = buildLine(start, false, end, false);
 			secondPart = null;
@@ -151,5 +203,31 @@ class CorridorBuilder {
 
 	private DungeonSymbol getGoodTurnNeigbor() {
 		return DungeonSymbol.WALL;
+	}
+
+	/** @return The number of cells b-adjacent to {@code c} in {@code coords} */
+	private static int nbAdjacentCells(Coord c, Iterable<Coord> coords, boolean b) {
+		int result = 0;
+		for (Coord d : coords) {
+			final Boolean adj = adjacency(c, d);
+			if (adj == null)
+				continue;
+			if (adj == b)
+				result++;
+		}
+		return result;
+	}
+
+	/**
+	 * @return {@code true} if {@code c1} is cardinally adjacent to {@code c2},
+	 *         {@code false} if diagonally adjacent to {@code c2}, null if not
+	 *         adjacent.
+	 */
+	private static Boolean adjacency(Coord c1, Coord c2) {
+		for (Direction out : Direction.OUTWARDS) {
+			if (c1.translate(out).equals(c2))
+				return out.isCardinal() ? true : false;
+		}
+		return null;
 	}
 }
