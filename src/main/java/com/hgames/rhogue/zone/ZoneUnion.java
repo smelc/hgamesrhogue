@@ -90,6 +90,6 @@ public class ZoneUnion extends Zone.Skeleton {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + "(" + z1.toString() + "," + z2.toString() + ")";
+		return getClass().getSimpleName() + "(" + z1.toString() + "|" + z2.toString() + ")";
 	}
 }

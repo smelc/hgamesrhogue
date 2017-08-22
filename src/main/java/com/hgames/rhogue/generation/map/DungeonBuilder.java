@@ -1,5 +1,6 @@
 package com.hgames.rhogue.generation.map;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +38,11 @@ class DungeonBuilder {
 	}
 
 	/** Prefer this method over direct mutations, it eases debugging. */
-	static void addRoom(Dungeon dungeon, Zone z, /* @Nullable */ Rectangle boundingBox,
+	static void addZone(Dungeon dungeon, Zone z, /* @Nullable */ Rectangle boundingBox,
 			boolean roomOrCorridor) {
+		/* Zone should not intersect with existing zones */
+		assert findIntersectingZones(dungeon, z, true, true) == null;
+		System.out.println(z);
 		if (roomOrCorridor)
 			dungeon.rooms.add(z);
 		else
@@ -146,6 +150,43 @@ class DungeonBuilder {
 
 	static boolean hasZone(Dungeon dungeon, Zone z) {
 		return dungeon.rooms.contains(z) || dungeon.corridors.contains(z);
+	}
+
+	/**
+	 * @param dungeon
+	 * @param z
+	 * @param rooms
+	 *            Whether to consider {@code dungeon}'s rooms.
+	 * @param corridors
+	 *            Whether to consider {@code dungeon}'s corridors.
+	 * @return The zones of {@code dungeon} that intersect with {@code z}, or
+	 *         null if none.
+	 */
+	private static /* @Nullable */ List<Zone> findIntersectingZones(Dungeon dungeon, Zone z, boolean rooms,
+			boolean corridors) {
+		List<Zone> result = null;
+		if (rooms)
+			result = findIntersectingZones(z, dungeon.rooms, result);
+		if (corridors)
+			result = findIntersectingZones(z, dungeon.corridors, result);
+		return result;
+	}
+
+	private static /* @Nullable */ List<Zone> findIntersectingZones(Zone z, List<Zone> others,
+			List<Zone> buf) {
+		List<Zone> result = buf;
+		if (others == null)
+			return result;
+		final int nbo = others.size();
+		for (int i = 0; i < nbo; i++) {
+			final Zone other = others.get(i);
+			if (other.intersectsWith(z)) {
+				if (result == null)
+					result = new ArrayList<Zone>();
+				result.add(other);
+			}
+		}
+		return result;
 	}
 
 	private static /* @Nullable */ Zone findZoneContaining(/* @Nullable */ List<? extends Zone> zones,

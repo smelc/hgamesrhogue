@@ -232,11 +232,11 @@ public class DungeonGenerator {
 			assert door != null;
 			final DungeonSymbol sym = rng.next(101) <= doorProbability ? DungeonSymbol.DOOR
 					: DungeonSymbol.FLOOR;
-			DungeonBuilder.setSymbol(dungeon, door.x, door.y, sym);
 			final Zone zdoor = new SingleCellZone(door);
 			addZone(gdata, zdoor, null, false);
 			DungeonBuilder.addConnection(dungeon, z0, zdoor);
 			DungeonBuilder.addConnection(dungeon, z1, zdoor);
+			DungeonBuilder.setSymbol(dungeon, door.x, door.y, sym);
 		}
 	}
 
@@ -289,6 +289,8 @@ public class DungeonGenerator {
 					if (built != null) {
 						// (NO_CORRIDOR_BBOX). This doesn't trigger if 'built'
 						// is a Rectangle, but it may if it a ZoneUnion.
+						assert !built.contains(zEndpoint);
+						assert !built.contains(destEndpoint);
 						final Zone recorded = addZone(gdata, built, null, false);
 						DungeonBuilder.addConnection(dungeon, z, recorded);
 						DungeonBuilder.addConnection(dungeon, dest, recorded);
@@ -488,7 +490,7 @@ public class DungeonGenerator {
 	private Zone addZone(GenerationData gdata, Zone z, /* @Nullable */ Rectangle boundingBox,
 			boolean roomOrCorridor) {
 		final Zone recorded = needCaching(z) ? new CachingZone(z) : z;
-		DungeonBuilder.addRoom(gdata.dungeon, recorded, boundingBox, roomOrCorridor);
+		DungeonBuilder.addZone(gdata.dungeon, recorded, boundingBox, roomOrCorridor);
 		gdata.recordRoomOrdering(recorded);
 		return recorded;
 	}

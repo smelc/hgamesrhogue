@@ -7,7 +7,7 @@ import com.hgames.rhogue.generation.map.IDungeonDrawer;
 import squidpony.squidmath.RNG;
 
 /**
- * Tests of {@link DungeonGenerator}.
+ * Command line tests of {@link DungeonGenerator}.
  * 
  * @author smelC
  */
@@ -18,7 +18,9 @@ public class DungeonGeneratorTest {
 	 */
 	public static void main(String[] args) {
 		final IDungeonDrawer drawer = new ConsoleDungeonDrawer(new DungeonSymbolDrawer());
-		final DungeonGenerators dgens = new DungeonGenerators(new RNG(32), 60, 40);
+		final int width = 60;
+		final int height = 40;
+		final DungeonGenerators dgens = new DungeonGenerators(new RNG(32), width, height);
 		generate(dgens.rogueLikeGenerator(), drawer);
 	}
 

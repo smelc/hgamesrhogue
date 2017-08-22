@@ -1,5 +1,6 @@
 package com.hgames.rhogue.generation.map;
 
+import com.hgames.lib.Exceptions;
 import com.hgames.rhogue.zone.SingleCellZone;
 import com.hgames.rhogue.zone.ZoneUnion;
 
@@ -16,6 +17,11 @@ class CorridorBuilder {
 
 	private final Dungeon dungeon;
 	private final boolean allowATurn;
+	/**
+	 * {@code true} to request inner of corridors (i.e. corridors except the
+	 * endpoints) to be fully within walls (i.e. to be turned into a corridor
+	 * inside, a cell must be surrounded by 9 walls).
+	 */
 	private final boolean onlyPerfectCarving;
 
 	CorridorBuilder(Dungeon dungeon, boolean allowATurn, boolean onlyPerfectCarving) {
@@ -56,6 +62,31 @@ class CorridorBuilder {
 		return result;
 	}
 
+	/** @return Whether it's okay to turn this cell into a corridor */
+	protected boolean isCarvingAllowed(Coord c) {
+		assert dungeon.isValid(c);
+		if (Dungeons.isOnEdge(dungeon, c))
+			return false;
+		final DungeonSymbol sym = dungeon.getSymbol(c);
+		if (sym == null)
+			return false;
+		switch (sym) {
+		case CHASM:
+		case DEEP_WATER:
+		case DOOR:
+		case FLOOR:
+		case GRASS:
+		case HIGH_GRASS:
+		case SHALLOW_WATER:
+		case STAIR_DOWN:
+		case STAIR_UP:
+			return false;
+		case WALL:
+			return true;
+		}
+		throw Exceptions.newUnmatchedISE(sym);
+	}
+
 	/**
 	 * @param start
 	 *            The starting point (won't make it to the result, but a cell in
@@ -78,7 +109,8 @@ class CorridorBuilder {
 			assert dungeon.isValid(turn2);
 			final Coord pivot = turnBadness(turn1) < turnBadness(turn2) ? turn1 : turn2;
 			/**
-			 * The conditionals account for this position:
+			 * The conditionals about {@link #adjacency(Coord, Coord)} account
+			 * for this pattern:
 			 * 
 			 * <pre>
 			 * E    1
@@ -91,10 +123,22 @@ class CorridorBuilder {
 			 * 
 			 * This is required for the assertion about intersectsWith to hold.
 			 */
-			firstPart = Boolean.TRUE.equals(adjacency(start, pivot)) ? null
-					: buildLine(start, false, pivot, true);
-			secondPart = Boolean.TRUE.equals(adjacency(pivot, end)) ? null
-					: buildLine(pivot, false, end, false);
+			if (Boolean.TRUE.equals(adjacency(start, pivot)))
+				firstPart = null;
+			else {
+				firstPart = buildLine(start, false, pivot, true);
+				if (firstPart == null)
+					/* Cannot do */
+					return null;
+			}
+			if (Boolean.TRUE.equals(adjacency(pivot, end)))
+				secondPart = null;
+			else {
+				secondPart = buildLine(pivot, false, end, false);
+				if (secondPart == null)
+					/* Cannot do */
+					return null;
+			}
 			assert !(firstPart == null && secondPart == null);
 			assert firstPart == null || secondPart == null || !firstPart.intersectsWith(secondPart);
 		} else {
@@ -106,8 +150,8 @@ class CorridorBuilder {
 				: secondPart == null ? firstPart : new ZoneUnion(firstPart, secondPart);
 	}
 
-	/** @return The line built */
-	private Zone buildLine(Coord start, boolean includeStart, Coord end, boolean includeEnd) {
+	/** @return The line built, or null if impossible */
+	private /* @Nullable */ Zone buildLine(Coord start, boolean includeStart, Coord end, boolean includeEnd) {
 		/* is 'x' fixed ? */
 		final boolean vertical = start.x == end.x;
 		assert vertical || start.y == end.y;
@@ -125,7 +169,8 @@ class CorridorBuilder {
 				bottomLeft == start ? includeEnd : includeStart);
 	}
 
-	private Zone buildLine0(Coord start, boolean includeStart, Coord end, boolean includeEnd) {
+	private /* @Nullable */ Zone buildLine0(Coord start, boolean includeStart, Coord end,
+			boolean includeEnd) {
 		final boolean vertical = start.x == end.x;
 		assert vertical || start.y == end.y;
 		// Check that 'start' is at the bottom left of 'end'
@@ -140,7 +185,7 @@ class CorridorBuilder {
 		}
 	}
 
-	private Zone buildLine(Coord start, Coord end) {
+	private /* @Nullable */ Zone buildLine(Coord start, Coord end) {
 		final Zone result;
 		if (start.equals(end))
 			result = new SingleCellZone(start);
@@ -156,6 +201,10 @@ class CorridorBuilder {
 		}
 		assert result.contains(start);
 		assert result.contains(end);
+		for (Coord inCorridor : result) {
+			if (!isCarvingAllowed(inCorridor))
+				return null;
+		}
 		return result;
 	}
 
