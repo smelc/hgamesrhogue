@@ -24,8 +24,11 @@ public class RectangleRoomGenerator implements IRoomGenerator {
 
 	@Override
 	public Zone generate(int maxWidth, int maxHeight) {
-		final int w = rng.between(1, maxWidth + 1);
-		final int h = rng.between(1, maxHeight + 1);
+		assert 0 < maxWidth;
+		assert 0 < maxHeight;
+		/* Avoid generating corridors (width or height == 1) if possible */
+		final int w = rng.between(maxWidth == 1 ? 1 : 2, maxWidth + 1);
+		final int h = rng.between(maxHeight == 1 ? 1 : 2, maxHeight + 1);
 		return new Rectangle.Impl(Coord.get(0, 0), w, h);
 	}
 

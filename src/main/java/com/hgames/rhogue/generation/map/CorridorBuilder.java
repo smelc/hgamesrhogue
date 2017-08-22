@@ -18,9 +18,8 @@ class CorridorBuilder {
 	private final Dungeon dungeon;
 	private final boolean allowATurn;
 	/**
-	 * {@code true} to request inner of corridors (i.e. corridors except the
-	 * endpoints) to be fully within walls (i.e. to be turned into a corridor
-	 * inside, a cell must be surrounded by 9 walls).
+	 * {@code true} to request neighbors of inner of corridors (i.e. corridors
+	 * except the endpoints) to satisfy {@link }.
 	 */
 	private final boolean onlyPerfectCarving;
 
@@ -30,40 +29,61 @@ class CorridorBuilder {
 		this.onlyPerfectCarving = onlyPerfectCarving;
 	}
 
-	/**
-	 * @param startEndBuf
-	 *            Where to set the corridor's only cell that is cardinally
-	 *            adjacent to {@code start} and the corridor's only cell that is
-	 *            cardinally adjacent to {@code end}.
-	 */
-	Zone build(RNG stable, Coord start, Coord end, /* @Nullable */ Coord[] startEndBuf) {
+			/**
+			 * @param startEndBuf
+			 *            Where to set the corridor's only cell that is
+			 *            cardinally adjacent to {@code start} and the
+			 *            corridor's only cell that is cardinally adjacent to
+			 *            {@code end}.
+			 */
+			/* @Nullable */ Zone build(RNG stable, Coord start, Coord end,
+					/* @Nullable */ Coord[] startEndBuf) {
 		final Zone result = build(stable, start, end);
-		if (startEndBuf != null && result != null) {
-			assert nbAdjacentCells(start, result, true) == 1;
-			assert nbAdjacentCells(end, result, true) == 1;
-			startEndBuf[0] = null;
-			startEndBuf[1] = null;
-			for (Coord c : result) {
-				boolean change = false;
-				if (Boolean.TRUE.equals(adjacency(c, start))) {
-					startEndBuf[0] = c;
-					change |= true;
-				}
-				if (Boolean.TRUE.equals(adjacency(c, start))) {
-					startEndBuf[1] = c;
-					change |= true;
-				}
-				if (change && startEndBuf[0] != null && startEndBuf[1] != null)
-					break;
+		if (result == null)
+			return null;
+		Coord bridgeStart = null;
+		Coord bridgeEnd = null;
+		assert nbAdjacentCells(start, result, true) == 1;
+		assert nbAdjacentCells(end, result, true) == 1;
+		for (Coord c : result) {
+			boolean change = false;
+			if (Boolean.TRUE.equals(adjacency(c, start))) {
+				assert bridgeStart == null;
+				bridgeStart = c;
+				change |= true;
 			}
-			assert startEndBuf[0] != null;
-			assert startEndBuf[1] != null;
+			if (Boolean.TRUE.equals(adjacency(c, start))) {
+				assert bridgeEnd == null;
+				bridgeEnd = c;
+				change |= true;
+			}
+			if (change && bridgeStart != null && bridgeEnd != null)
+				break;
+		}
+		assert bridgeStart != null;
+		assert bridgeEnd != null;
+		if (onlyPerfectCarving) {
+			for (Coord c : result) {
+				if (c.equals(bridgeStart) || c.equals(bridgeEnd))
+					continue;
+				for (Direction out : Direction.OUTWARDS) {
+					if (isForbiddenNeighbor(c.translate(out)))
+						return null;
+				}
+			}
+		}
+		if (startEndBuf != null) {
+			startEndBuf[0] = bridgeStart;
+			startEndBuf[1] = bridgeEnd;
 		}
 		return result;
 	}
 
-	/** @return Whether it's okay to turn this cell into a corridor */
-	protected boolean isCarvingAllowed(Coord c) {
+	/**
+	 * @return Whether it's okay to turn this cell into a corridor, looking only
+	 *         at this cell.
+	 */
+	protected boolean isSingleCellCarvingAllowed(Coord c) {
 		assert dungeon.isValid(c);
 		if (Dungeons.isOnEdge(dungeon, c))
 			return false;
@@ -87,6 +107,29 @@ class CorridorBuilder {
 		throw Exceptions.newUnmatchedISE(sym);
 	}
 
+	private final boolean isForbiddenNeighbor(Coord c) {
+		return dungeon.isValid(c) && isForbiddenNeighbor0(c);
+	}
+
+	protected boolean isForbiddenNeighbor0(Coord c) {
+		final DungeonSymbol sym = dungeon.getSymbol(c);
+		switch (sym) {
+		case CHASM:
+		case DEEP_WATER:
+		case DOOR:
+		case FLOOR:
+		case GRASS:
+		case HIGH_GRASS:
+		case SHALLOW_WATER:
+		case STAIR_DOWN:
+		case STAIR_UP:
+			return true;
+		case WALL:
+			return false;
+		}
+		throw Exceptions.newUnmatchedISE(sym);
+	}
+
 	/**
 	 * @param start
 	 *            The starting point (won't make it to the result, but a cell in
@@ -96,7 +139,7 @@ class CorridorBuilder {
 	 *            the result will be cardinally adjacent to it).
 	 * @return The corridor built or null if impossible.
 	 */
-	private Zone build(RNG stable, Coord start, Coord end) {
+	private /* @Nullable */ Zone build(RNG stable, Coord start, Coord end) {
 		final Zone firstPart;
 		final Zone secondPart;
 		if (needTurn(start, end)) {
@@ -202,7 +245,7 @@ class CorridorBuilder {
 		assert result.contains(start);
 		assert result.contains(end);
 		for (Coord inCorridor : result) {
-			if (!isCarvingAllowed(inCorridor))
+			if (!isSingleCellCarvingAllowed(inCorridor))
 				return null;
 		}
 		return result;

@@ -50,6 +50,13 @@ public class DungeonGenerator {
 	/** An int in [0, 100], which is used when a door can be punched */
 	protected int doorProbability = 50;
 
+	/**
+	 * Whether rooms whose width and height of size 1 are allowed. They look
+	 * like corridors, so they are ruled out by default; but it can be fun to
+	 * have them.
+	 */
+	protected boolean allowWidthOrHeightOneRooms = false;
+
 	private static final Zone[] ZONE_PAIR_BUF = new Zone[2];
 	private static final List<Coord> COORD_LIST_BUF = new ArrayList<Coord>(4);
 	private static final DoublePriorityCell<Coord> DP_CELL = DoublePriorityCell.createEmpty();
@@ -131,6 +138,19 @@ public class DungeonGenerator {
 		if (!Ints.inInterval(0, proba, 100))
 			throw new IllegalStateException("Excepted a value in [0, 100]. Received: " + proba);
 		this.doorProbability = proba;
+		return this;
+	}
+
+	/**
+	 * @param value
+	 *            Whether to allow rooms of width or height one (which allow
+	 *            dungeons like this: <a href=
+	 *            "https://twitter.com/hgamesdev/status/899609612554559489">
+	 *            image </a>). False by default.
+	 * @return {@code this}
+	 */
+	public DungeonGenerator setAllowWidthOrHeightOneRooms(boolean value) {
+		this.allowWidthOrHeightOneRooms = value;
 		return this;
 	}
 
@@ -237,6 +257,7 @@ public class DungeonGenerator {
 			DungeonBuilder.addConnection(dungeon, z0, zdoor);
 			DungeonBuilder.addConnection(dungeon, z1, zdoor);
 			DungeonBuilder.setSymbol(dungeon, door.x, door.y, sym);
+			draw(dungeon);
 		}
 	}
 
@@ -316,6 +337,7 @@ public class DungeonGenerator {
 
 	protected void draw(Dungeon dungeon) {
 		if (drawer != null) {
+			assert dungeon.invariant();
 			drawer.draw(dungeon.getMap());
 		}
 	}
@@ -373,6 +395,10 @@ public class DungeonGenerator {
 				if (mw == 0 || mh == 0)
 					/* Cannot do */
 					continue;
+				if (!allowWidthOrHeightOneRooms && (mw == 1 || mh == 1))
+					/* Should not do */
+					continue;
+				assert 2 <= mw && 2 <= mh;
 				/* Bottom-right cell */
 				final Coord brCandidate = Coord.get(tlCandidate.x + mw, tlCandidate.y + mh);
 				final Coord blCandidate = Coord.get(tlCandidate.x, brCandidate.y);
@@ -403,6 +429,8 @@ public class DungeonGenerator {
 	}
 
 	private /* @Nullable */ Zone generateRoomAt(Coord bottomLeft, int maxWidth, int maxHeight) {
+		assert 1 <= maxWidth;
+		assert 1 <= maxHeight;
 		final IRoomGenerator rg = roomGenerators.get(rng);
 		if (rg == null)
 			return null;

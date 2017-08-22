@@ -15,10 +15,10 @@ public interface IRoomGenerator {
 	/**
 	 * @param maxWidth
 	 *            The width of the rectangle in which the returned zone must
-	 *            fit.
+	 *            fit. Greater than 0.
 	 * @param maxHeight
 	 *            The height of the rectangle in which the returned zone must
-	 *            fit.
+	 *            fit. Greater than 0.
 	 * @return A zone such that
 	 *         {@code new Rectangle(Coord.get(0, 0), maxWidth, maxHeight).contains(result)}
 	 *         holds and such that any member is reachable from all other

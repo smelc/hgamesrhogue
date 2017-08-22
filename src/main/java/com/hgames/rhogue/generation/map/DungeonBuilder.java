@@ -42,7 +42,9 @@ class DungeonBuilder {
 			boolean roomOrCorridor) {
 		/* Zone should not intersect with existing zones */
 		assert findIntersectingZones(dungeon, z, true, true) == null;
-		System.out.println(z);
+		/* Check that bounding box (if any) is correct */
+		assert boundingBox == null || boundingBox.contains(z);
+		// System.out.println("Adding zone: " + z);
 		if (roomOrCorridor)
 			dungeon.rooms.add(z);
 		else

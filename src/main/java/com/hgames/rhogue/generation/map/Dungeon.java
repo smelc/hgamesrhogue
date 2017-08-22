@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.hgames.lib.Exceptions;
+
 import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
@@ -128,22 +130,25 @@ public class Dungeon {
 	/**
 	 * @return true if {@code this}' invariants holds.
 	 */
-	// FIXME CH Call me
 	public boolean invariant() {
+		/* Every zone that is a key in the 'boundingboxes' map is registered */
 		for (Zone key : boundingBoxes.keySet()) {
 			if (!DungeonBuilder.hasZone(this, key)) {
 				assert false;
 				return false;
 			}
 		}
+		/* Bounding boxes are correct */
 		for (Map.Entry<Zone, ? extends Zone> key : boundingBoxes.entrySet()) {
 			final Zone boundingBox = key.getValue();
 			final Zone zone = key.getKey();
 			if (!boundingBox.contains(zone)) {
+				System.err.println(boundingBox + " isn't a bounding box of " + zone);
 				assert false;
 				return false;
 			}
 		}
+		/* Connections are correct */
 		for (Map.Entry<Zone, ? extends Collection<? extends Zone>> entry : connections.entrySet()) {
 			final Zone z = entry.getKey();
 			if (!DungeonBuilder.hasZone(this, z)) {
@@ -162,6 +167,40 @@ public class Dungeon {
 				}
 			}
 		}
+		/* Every non-wall cell is within a zone */
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				final DungeonSymbol sym = getSymbol(x, y);
+				switch (sym) {
+				case CHASM:
+				case DEEP_WATER:
+				case DOOR:
+				case FLOOR:
+				case GRASS:
+				case HIGH_GRASS:
+				case SHALLOW_WATER: {
+					final Zone zone = findZoneContaining(x, y);
+					if (zone == null) {
+						System.err.println(sym + " cell (" + x + "," + y + ") doesn't belong to a zone.");
+						return false;
+					}
+					continue;
+				}
+				case STAIR_DOWN:
+				case STAIR_UP:
+				case WALL:
+					final Zone zone = findZoneContaining(x, y);
+					if (zone != null) {
+						System.err.println(sym + " cell (" + x + "," + y
+								+ ") shouldn't belong to a zone (found " + zone + ").");
+						return false;
+					}
+					continue;
+				}
+				throw Exceptions.newUnmatchedISE(sym);
+			}
+		}
+		/* FIXME Check that stairs are correct */
 		return true;
 	}
 }
