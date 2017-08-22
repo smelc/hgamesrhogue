@@ -166,7 +166,7 @@ public class DungeonGenerator {
 		generatePassagesInAlmostAdjacentRooms(gdata);
 		draw(gdata.dungeon);
 		generateCorridors(gdata);
-		draw(gdata.dungeon);
+		// draw(gdata.dungeon);
 		return dungeon;
 	}
 
@@ -296,7 +296,7 @@ public class DungeonGenerator {
 						DungeonBuilder.addConnection(dungeon, dest, recorded);
 						// Punch corridor
 						DungeonBuilder.setSymbols(dungeon, built.iterator(), DungeonSymbol.FLOOR);
-						// draw(dungeon);
+						draw(dungeon);
 					}
 				}
 			}
