@@ -57,6 +57,22 @@ class DungeonBuilder {
 	}
 
 	/** Prefer this method over direct mutations, it eases debugging. */
+	static void setStair(Dungeon dungeon, int x, int y, boolean upOrDown) {
+		final DungeonSymbol sym = upOrDown ? DungeonSymbol.STAIR_UP : DungeonSymbol.STAIR_DOWN;
+		setSymbol(dungeon, x, y, sym);
+		final Coord c = Coord.get(x, y);
+		if (upOrDown)
+			dungeon.upwardStair = c;
+		else
+			dungeon.downwardStair = c;
+	}
+
+	/** Prefer this method over direct mutations, it eases debugging. */
+	static void setSymbol(Dungeon dungeon, Coord c, DungeonSymbol sym) {
+		setSymbol(dungeon, c.x, c.y, sym);
+	}
+
+	/** Prefer this method over direct mutations, it eases debugging. */
 	static void setSymbol(Dungeon dungeon, int x, int y, DungeonSymbol sym) {
 		dungeon.map[x][y] = sym;
 	}

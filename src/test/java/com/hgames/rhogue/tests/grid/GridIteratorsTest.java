@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.hgames.lib.collection.Collections;
+import com.hgames.lib.iterator.Iterators;
 import com.hgames.rhogue.grid.GridIterators;
 
 import squidpony.squidgrid.Direction;
@@ -24,6 +25,47 @@ public class GridIteratorsTest {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		testGrowingRectangle();
+		testRectangleRandomStartAndDirection();
+	}
+
+	private static void testGrowingRectangle() {
+		final Coord zz = Coord.get(0, 0);
+		Iterator<Coord> it = new GridIterators.GrowingRectangle(zz, 0);
+		{
+			if (Iterators.size(it) != 1)
+				throw new IllegalStateException();
+			System.out.println("Checked size of GrowingRectangle(_, 0)");
+		}
+		{
+			it = new GridIterators.GrowingRectangle(zz, 1);
+			final int sz = Iterators.size(it);
+			if (sz != 9)
+				throw new IllegalStateException();
+			System.out.println("Checked size of GrowingRectangle(_, 1)");
+			it = new GridIterators.GrowingRectangle(zz, 1);
+			final Set<Coord> equiv = new HashSet<Coord>(9);
+			equiv.add(zz);
+			for (Direction out : Direction.OUTWARDS)
+				equiv.add(zz.translate(out));
+			final List<Coord> asList = Iterators.toList(it, 9);
+			if (!Collections.isSet(asList))
+				throw new IllegalStateException();
+			it = new GridIterators.GrowingRectangle(zz, 1);
+			final Set<Coord> asSet = Iterators.toSet(it, 9);
+			if (!Collections.equivalent(asSet, equiv))
+				throw new IllegalStateException();
+			System.out.println("Checked content of GrowingRectangle(_, 1)");
+		}
+		{
+			it = new GridIterators.GrowingRectangle(zz, 2);
+			if (Iterators.size(it) != 25)
+				throw new IllegalStateException();
+			System.out.println("Checked size of GrowingRectangle(_, 2)");
+		}
+	}
+
+	private static void testRectangleRandomStartAndDirection() {
 		final List<Set<Coord>> sets = new ArrayList<Set<Coord>>();
 		final RNG rng = new RNG();
 		final int mapWidth = 10;

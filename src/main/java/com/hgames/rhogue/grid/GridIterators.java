@@ -1,11 +1,14 @@
 package com.hgames.rhogue.grid;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import com.hgames.lib.Exceptions;
+import com.hgames.lib.collection.Collections;
 
 import squidpony.squidgrid.Direction;
+import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidmath.Coord;
 
 /**
@@ -14,6 +17,91 @@ import squidpony.squidmath.Coord;
  * @author smelC
  */
 public class GridIterators {
+
+	/**
+	 * An iterator that iterates in growing rectangles around a given position.
+	 * 
+	 * @author smelC
+	 */
+	public static class GrowingRectangle implements Iterator<Coord> {
+
+		protected final Coord center;
+		private final int maxOffset;
+		private int nextOffset = 0;
+		private /* @Nullable */ Iterator<Coord> currentIt;
+
+		/**
+		 * @param center
+		 *            The iterator's center.
+		 * @param maxOffset
+		 *            The maximum offset from {@code center}, inclusive. Giving
+		 *            2 means this iterator will iterate at {@code center}, then
+		 *            the rectangle's border around {@code center} (whose bottom
+		 *            left is at {@code (center.x - 1, center.y -1)}), then the
+		 *            rectangle 's border around the previous rectangle (whose
+		 *            bottom left is at {@code (center.x - 2, center.y -2)}).
+		 * 
+		 *            <p>
+		 *            Starts at 0.
+		 *            </p>
+		 * @throw IllegalStateException If {@code maxDiagonalSize < 0}.
+		 */
+		public GrowingRectangle(Coord center, int maxOffset) {
+			this.center = center;
+			if (maxOffset < 0)
+				throw new IllegalStateException();
+			this.maxOffset = maxOffset;
+		}
+
+		@Override
+		public boolean hasNext() {
+			if (currentIt == null) {
+				return nextOffset <= maxOffset;
+			} else {
+				if (currentIt.hasNext())
+					return true;
+				else {
+					currentIt = null;
+					return hasNext();
+				}
+			}
+		}
+
+		@Override
+		public Coord next() {
+			if (currentIt == null) {
+				if (maxOffset < nextOffset)
+					throw new NoSuchElementException();
+				final int offset = nextOffset;
+				final int width = (offset * 2) + 1;
+				final int height = width;
+				/*
+				 * center.y + offset: recall that in SquidLib a downer y is a
+				 * bigger y
+				 */
+				final List<Coord> internalBorder = new Rectangle.Impl(
+						Coord.get(center.x - offset, center.y + offset), width, height).getInternalBorder();
+				assert Collections.isSet(internalBorder);
+				currentIt = internalBorder.iterator();
+				nextOffset++;
+				assert currentIt.hasNext();
+				return currentIt.next();
+			} else {
+				if (currentIt.hasNext())
+					return currentIt.next();
+				else {
+					currentIt = null;
+					return next();
+				}
+			}
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+
+	}
 
 	/**
 	 * An iterator that iterates within a rectangle, starting at at any

@@ -6,19 +6,25 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Queue;
 
 import com.hgames.lib.Exceptions;
 import com.hgames.lib.Ints;
 import com.hgames.lib.Pair;
 import com.hgames.lib.choice.DoublePriorityCell;
 import com.hgames.lib.collection.Multimaps;
+import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.grid.GridIterators;
 import com.hgames.rhogue.rng.ProbabilityTable;
+import com.hgames.rhogue.tests.generation.map.ConsoleDungeonDrawer;
 import com.hgames.rhogue.zone.CachingZone;
 import com.hgames.rhogue.zone.SingleCellZone;
 
+import squidpony.SquidTags;
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidgrid.zone.Zone;
@@ -26,6 +32,37 @@ import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;
 
 /**
+ * The dungeon generator I use in <a href="http://schplaf.org/hgames">Dungeon
+ * Mercenary</a>. It builts a structured dungeon. This means you have accesses
+ * to objects describing rooms, corridors, zones, etc.
+ * 
+ * <p>
+ * This class' API can be divided into two:
+ * 
+ * <ul>
+ * <li>The "configure" part of the API which consists of all {@code set*}
+ * methods.</li>
+ * <li>The "generate" part of the API which is {@link #generate()}.</li>
+ * </ul>
+ * </p>
+ * 
+ * <p>
+ * This class' state only consists of the configuration options (except for
+ * {@link #rng}) This means you can call {@link #generate()} multiple times on a
+ * single instance, hereby getting different dungeons.
+ * </p>
+ * 
+ * <p>
+ * If you wanna see how this class proceeds in console, you should give an
+ * instance of {@link ConsoleDungeonDrawer} to
+ * {@link DungeonGenerator#setDrawer(IDungeonDrawer)}. If you're in a UI context
+ * with a main loop, you should give an instance of {@link DungeonProgression}
+ * to {@link DungeonGenerator#setDrawer(IDungeonDrawer)} and draw the successive
+ * states of the dungeon in successive calls of the main loop (see the
+ * <a href="hdungeongen">https://github.com/smelc/hdungeongen</a> library for an
+ * example on how to do that with libgdx).
+ * </p>
+ * 
  * @author smelC
  */
 public class DungeonGenerator {
@@ -39,6 +76,7 @@ public class DungeonGenerator {
 	 */
 	protected int connectivity = 3;
 	protected /* @Nullable */ IDungeonDrawer drawer;
+	protected /* @Nullable */ ILogger logger;
 
 	protected final ProbabilityTable<IRoomGenerator> roomGenerators;
 
@@ -56,6 +94,17 @@ public class DungeonGenerator {
 	 * have them.
 	 */
 	protected boolean allowWidthOrHeightOneRooms = false;
+
+	/**
+	 * The percentage of the map that will be turned into deep water
+	 * (approximately). In [0, 100].
+	 */
+	protected int waterPercentage = 15;
+
+	/** Where to put the upward stair (approximately) */
+	protected /* @Nullable */ Coord upStairObjective;
+	/** Where to put the downward stair (approximately) */
+	protected /* @Nullable */ Coord downStairObjective;
 
 	private static final Zone[] ZONE_PAIR_BUF = new Zone[2];
 	private static final List<Coord> COORD_LIST_BUF = new ArrayList<Coord>(4);
@@ -95,6 +144,29 @@ public class DungeonGenerator {
 	}
 
 	/**
+	 * @param logger
+	 *            The logger to use, or null to turn logging OFF.
+	 * @return {@code this}
+	 */
+	public DungeonGenerator setLogger(/* @Nullable */ ILogger logger) {
+		this.logger = logger;
+		return this;
+	}
+
+	/**
+	 * @param value
+	 *            Whether to allow rooms of width or height one (which allow
+	 *            dungeons like this: <a href=
+	 *            "https://twitter.com/hgamesdev/status/899609612554559489">
+	 *            image </a>). False by default.
+	 * @return {@code this}
+	 */
+	public DungeonGenerator setAllowWidthOrHeightOneRooms(boolean value) {
+		this.allowWidthOrHeightOneRooms = value;
+		return this;
+	}
+
+	/**
 	 * Sets the upper bound of the number of connections of a room.
 	 * 
 	 * @param c
@@ -104,6 +176,20 @@ public class DungeonGenerator {
 		if (c <= 0)
 			throw new IllegalStateException("Connectivy must be greater than zero. Received: " + c);
 		this.connectivity = c;
+		return this;
+	}
+
+	/**
+	 * @param proba
+	 *            An int in [0, 100]
+	 * @return {@code this}
+	 * @throws IllegalStateException
+	 *             If {@code proba} isn't in [0, 100].
+	 */
+	public DungeonGenerator setDoorProbability(int proba) {
+		if (!Ints.inInterval(0, proba, 100))
+			throw new IllegalStateException("Excepted a value in [0, 100]. Received: " + proba);
+		this.doorProbability = proba;
 		return this;
 	}
 
@@ -128,29 +214,34 @@ public class DungeonGenerator {
 	}
 
 	/**
-	 * @param proba
-	 *            An int in [0, 100]
-	 * @return {@code this}
-	 * @throws IllegalStateException
-	 *             If {@code proba} isn't in [0, 100].
+	 * Sets objectives to place the stairs. By default there are no objectives
+	 * which means a first stair is placed randomly and the second stair is
+	 * placed far away from the first one.
+	 * 
+	 * @param upStair
+	 *            A coord or null.
+	 * @param downStair
+	 *            A coord or null.
+	 * @return {@code this}.
 	 */
-	public DungeonGenerator setDoorProbability(int proba) {
-		if (!Ints.inInterval(0, proba, 100))
-			throw new IllegalStateException("Excepted a value in [0, 100]. Received: " + proba);
-		this.doorProbability = proba;
+	public DungeonGenerator setStairsObjectives(/* @Nullable */Coord upStair,
+			/* @Nullable */Coord downStair) {
+		this.upStairObjective = upStair == null ? null : clamp(upStair);
+		this.downStairObjective = downStair == null ? null : clamp(downStair);
 		return this;
 	}
 
 	/**
-	 * @param value
-	 *            Whether to allow rooms of width or height one (which allow
-	 *            dungeons like this: <a href=
-	 *            "https://twitter.com/hgamesdev/status/899609612554559489">
-	 *            image </a>). False by default.
+	 * @param percent
+	 *            An int in [0, 100]
 	 * @return {@code this}
+	 * @throws IllegalStateException
+	 *             If {@code percent} isn't in [0, 100].
 	 */
-	public DungeonGenerator setAllowWidthOrHeightOneRooms(boolean value) {
-		this.allowWidthOrHeightOneRooms = value;
+	public DungeonGenerator setWaterPercentage(int percent) {
+		if (!Ints.inInterval(0, percent, 100))
+			throw new IllegalStateException("Excepted a value in [0, 100]. Received: " + percent);
+		this.waterPercentage = percent;
 		return this;
 	}
 
@@ -170,9 +261,7 @@ public class DungeonGenerator {
 		return this;
 	}
 
-	/**
-	 * @return A fresh dungeon.
-	 */
+	/** @return A fresh dungeon or null if it could not be generated. */
 	public Dungeon generate() {
 		final DungeonSymbol[][] map = new DungeonSymbol[width][height];
 		final Dungeon dungeon = new Dungeon(map);
@@ -182,11 +271,15 @@ public class DungeonGenerator {
 			return dungeon;
 		final GenerationData gdata = new GenerationData(dungeon);
 		generateRooms(gdata);
-		/* TODO use RectangleRoomFinder to generate rooms in a second pass */
+		/* XXX use RectangleRoomFinder to generate rooms in a second pass ? */
 		generatePassagesInAlmostAdjacentRooms(gdata);
 		draw(gdata.dungeon);
 		generateCorridors(gdata);
-		// draw(gdata.dungeon);
+		/* Must be called before 'generateWater' */
+		final boolean good = generateStairs(gdata);
+		if (!good)
+			return null;
+		generateWater(gdata);
 		return dungeon;
 	}
 
@@ -323,6 +416,100 @@ public class DungeonGenerator {
 			}
 		}
 		assert zoneToOtherZones.size() == nbr;
+	}
+
+	/** @return Whether the stairs could be placed */
+	private boolean generateStairs(GenerationData gdata) {
+		final Dungeon dungeon = gdata.dungeon;
+		boolean good = generateStair(gdata, true);
+		if (!good) {
+			infoLog("Cannot place upward stair");
+			return false;
+		}
+		assert dungeon.getSymbol(dungeon.upwardStair) == DungeonSymbol.STAIR_UP;
+		draw(dungeon);
+		good = generateStair(gdata, false);
+		if (!good) {
+			infoLog("Cannot place downward stair");
+			return false;
+		}
+		assert dungeon.getSymbol(dungeon.downwardStair) == DungeonSymbol.STAIR_DOWN;
+		draw(dungeon);
+		return true;
+	}
+
+	protected boolean generateStair(GenerationData gdata, boolean upOrDown) {
+		final Dungeon dungeon = gdata.dungeon;
+		/* @Nullable */ Coord objective = upOrDown ? upStairObjective : downStairObjective;
+		assert objective == null || dungeon.isValid(objective);
+		final /* @Nullable */ Coord other = upOrDown ? dungeon.downwardStair : dungeon.upwardStair;
+		if (objective == null) {
+			if (other == null)
+				objective = getRandomCell();
+			else {
+				final int random = rng.nextInt(4);
+				switch (random) {
+				case 0:
+				case 1:
+				case 2:
+					final boolean square = isSquare();
+					final boolean wide = isWide();
+					final boolean xsym = square || wide || rng.nextBoolean();
+					final boolean ysym = square || !wide || rng.nextBoolean();
+					objective = getSymmetric(other, xsym, ysym);
+					break;
+				case 3:
+					objective = getRandomCell();
+					break;
+				default:
+					throw new IllegalStateException(
+							"Rng is incorrect. Received " + random + " when calling nextInt(4)");
+				}
+			}
+		}
+		assert objective != null;
+
+		final int rSize = ((width + height) / 6) + 1;
+		final Iterator<Coord> it = new GridIterators.GrowingRectangle(objective, rSize);
+		final PriorityQueue<Coord> queue = new PriorityQueue<Coord>(rSize * 4,
+				newDistanceComparatorFrom(objective));
+		while (it.hasNext()) {
+			final Coord next = it.next();
+			if (isStairCandidate(dungeon, next))
+				queue.add(next);
+		}
+		if (queue.isEmpty())
+			return false;
+		while (!queue.isEmpty()) {
+			final Coord candidate = queue.remove();
+			if (other == null
+					|| (!other.equals(candidate) && gdata.pathExists(other, candidate, false, false))) {
+				if (punchStair(gdata, candidate, upOrDown))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	/** @return Whether punching was done */
+	protected boolean punchStair(GenerationData gdata, Coord c, boolean upOrDown) {
+		final Dungeon dungeon = gdata.dungeon;
+		DungeonBuilder.setStair(dungeon, c.x, c.y, upOrDown);
+		return true;
+	}
+
+	/**
+	 * This method should be called before making all rooms connected, as it'll
+	 * recycle them into water areas.
+	 * 
+	 * @param gdata
+	 * @throws IllegalStateException
+	 *             If the stairs haven't been set yet.
+	 */
+	protected void generateWater(GenerationData gdata) {
+		if (waterPercentage == 0)
+			/* Nothing to do */
+			return;
 	}
 
 	protected int getMaxRoomSideSize(boolean widthOrHeight, boolean spiceItUp) {
@@ -561,6 +748,122 @@ public class DungeonGenerator {
 		return !COORD_LIST_BUF.isEmpty();
 	}
 
+	/*
+	 * This method makes the assumption that grass hasn't been generated yet It
+	 * could be changed by giving an EnumSet<DungeonSymbol> to
+	 * nbNeighborsOfType.
+	 */
+	protected boolean isStairCandidate(Dungeon dungeon, Coord c) {
+		final DungeonSymbol sym = dungeon.getSymbol(c);
+		if (sym == null)
+			return false;
+		switch (sym) {
+		case CHASM:
+		case DEEP_WATER:
+		case DOOR:
+		case FLOOR:
+		case GRASS:
+		case HIGH_GRASS:
+		case SHALLOW_WATER:
+		case STAIR_DOWN:
+		case STAIR_UP:
+			return false;
+		case WALL:
+			break;
+		}
+		final int nbf = nbNeighborsOfType(dungeon, c, DungeonSymbol.FLOOR, false);
+		if (nbf < 1)
+			/* Stair isn't cardinally accessible from floor */
+			return false;
+		final int nbw = nbNeighborsOfType(dungeon, c, DungeonSymbol.WALL, true);
+		if (nbw < 5)
+			/**
+			 * Because we want stairs in such positions:
+			 * 
+			 * <pre>
+			 * ###
+			 * #>#
+			 * ...
+			 * </pre>
+			 * 
+			 * and we wanna avoid
+			 * 
+			 * <pre>
+			 * .##
+			 * #>#
+			 * ...
+			 * </pre>
+			 * 
+			 * which would force placement to take care of placing in the
+			 * "right" cell upon arriving.
+			 */
+			return false;
+		return true;
+	}
+
+	protected final int nbNeighborsOfType(Dungeon dungeon, Coord c, DungeonSymbol searched,
+			boolean considerDiagonals) {
+		final Direction[] dirs = considerDiagonals ? Direction.OUTWARDS : Direction.CARDINALS;
+		int result = 0;
+		for (Direction dir : dirs) {
+			final Coord d = c.translate(dir);
+			final DungeonSymbol sym = dungeon.getSymbol(d);
+			if (sym == null) {
+				if (searched == null)
+					result++;
+			} else if (sym.equals(searched))
+				result++;
+		}
+		return result;
+	}
+
+	protected final Coord getRandomCell() {
+		return Coord.get(rng.nextInt(width), rng.nextInt(height));
+	}
+
+	/**
+	 * @param xsym
+	 *            Whether to do symmetry according to x
+	 * @param ysym
+	 *            Whether to do symmetry according to y
+	 * @return The symetric of {@code c} in {code this}.
+	 */
+	protected final Coord getSymmetric(Coord c, boolean xsym, boolean ysym) {
+		final int x = xsym ? getSymmetric(c.x, true) : c.x;
+		final int y = ysym ? getSymmetric(c.y, false) : c.y;
+		final Coord result = Coord.get(x, y);
+		return result;
+	}
+
+	protected final int getSymmetric(int v, boolean xOrY) {
+		final int middle = (xOrY ? width : height) / 2;
+		final int diff = middle - v;
+		return diff < 0 ? middle + diff : middle - diff;
+	}
+
+	/**
+	 * @return A variant of {@code c} (or {@code c} itself) clamped to be valid
+	 *         in {@code this}.
+	 */
+	protected final Coord clamp(Coord c) {
+		final int x = Ints.clamp(0, c.x, width - 1);
+		final int y = Ints.clamp(0, c.y, height - 1);
+		return x == c.y && y == c.y ? c : Coord.get(x, y);
+	}
+
+	protected final boolean isSquare() {
+		return width == height;
+	}
+
+	protected final boolean isWide() {
+		return height < width;
+	}
+
+	protected final void infoLog(String log) {
+		if (logger != null)
+			logger.infoLog(SquidTags.GENERATION, log);
+	}
+
 	private static Pair<Zone, Zone> orderedPair(GenerationData gdata, Zone z1, Zone z2) {
 		final Integer i1 = gdata.zOrder.get(z1);
 		if (i1 == null)
@@ -602,6 +905,15 @@ public class DungeonGenerator {
 			return true;
 	}
 
+	private static Comparator<Coord> newDistanceComparatorFrom(final Coord c) {
+		return new Comparator<Coord>() {
+			@Override
+			public int compare(Coord o1, Coord o2) {
+				return Double.compare(o1.distance(c), o2.distance(c));
+			}
+		};
+	}
+
 	private static final Comparator<Pair<Double, Zone>> ORDERER = new Comparator<Pair<Double, Zone>>() {
 		@Override
 		public int compare(Pair<Double, Zone> o1, Pair<Double, Zone> o2) {
@@ -624,6 +936,9 @@ public class DungeonGenerator {
 		 */
 		protected final Map<Zone, Integer> zOrder = new HashMap<Zone, Integer>();
 
+		/** A buffer of size {@link Dungeon#width} and{@link Dungeon#height} */
+		private boolean buf[][];
+
 		private int nextRoomIndex = 0;
 
 		protected GenerationData(Dungeon dungeon) {
@@ -636,6 +951,84 @@ public class DungeonGenerator {
 			nextRoomIndex++;
 			if (prev != null)
 				throw new IllegalStateException("Zone " + z + " is being recorded twice");
+		}
+
+		/**
+		 * Note that this method is designed to return {@code true} when
+		 * {@code from} or {@code to} is a wall accessible from a floor. That's
+		 * because this method is used to check stairs-accessibility.
+		 * 
+		 * @param from
+		 * @param to
+		 * @param considerDiagonals
+		 *            Whether to allow diagonal moves.
+		 * @param unsafe
+		 *            Whether to consider unsafe moves (through deep water).
+		 * @return true if there exists a path from {@code from} to {@code to}.
+		 */
+		protected boolean pathExists(Coord from, Coord to, boolean considerDiagonals, boolean unsafe) {
+			if (from.equals(to))
+				return true;
+			/* #buf acts as a Set<Coord> dones */
+			prepareBuffer();
+			/* Cells in 'todo' are cells reachable from 'from' */
+			final Queue<Coord> todo = new LinkedList<Coord>();
+			todo.add(from);
+			final Direction[] moves = considerDiagonals ? Direction.OUTWARDS : Direction.CARDINALS;
+			while (!todo.isEmpty()) {
+				final Coord next = todo.remove();
+				if (buf[next.x][next.y])
+					continue;
+				assert !to.equals(next);
+				for (Direction dir : moves) {
+					final Coord neighbor = next.translate(dir);
+					if (buf[neighbor.x][neighbor.y]) {
+						assert !to.equals(neighbor);
+						continue;
+					}
+					if (to.equals(neighbor))
+						return true;
+					final DungeonSymbol sym = dungeon.getSymbol(neighbor);
+					if (sym == null)
+						continue;
+					switch (sym) {
+					case CHASM:
+					case STAIR_DOWN:
+					case STAIR_UP:
+					case WALL:
+						continue;
+					case DEEP_WATER:
+						if (!unsafe)
+							continue;
+						//$FALL-THROUGH$
+					case DOOR:
+					case FLOOR:
+					case GRASS:
+					case HIGH_GRASS:
+					case SHALLOW_WATER:
+						todo.add(neighbor);
+						continue;
+					}
+					throw Exceptions.newUnmatchedISE(sym);
+				}
+				assert !buf[next.x][next.y];
+				// Record it was done
+				buf[next.x][next.y] = true;
+			}
+			return false;
+		}
+
+		private void prepareBuffer() {
+			final int width = dungeon.width;
+			final int height = dungeon.height;
+			if (buf == null)
+				buf = new boolean[width][height];
+			else {
+				for (int x = 0; x < width; x++) {
+					for (int y = 0; y < height; y++)
+						buf[x][y] &= false;
+				}
+			}
 		}
 
 	}

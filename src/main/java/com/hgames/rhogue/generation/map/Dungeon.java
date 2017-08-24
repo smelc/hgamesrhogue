@@ -49,6 +49,9 @@ public class Dungeon {
 	 */
 	final Map<Zone, List<Zone>> connections;
 
+	Coord upwardStair;
+	Coord downwardStair;
+
 	Dungeon(DungeonSymbol[][] map) {
 		this.map = map;
 		final int estimatedNumberOfRooms = size() / 256;
@@ -82,6 +85,14 @@ public class Dungeon {
 	 */
 	public DungeonSymbol getSymbol(int x, int y) {
 		return isValid(x, y) ? map[x][y] : null;
+	}
+
+	/**
+	 * @param upOrDown
+	 * @return The stair up or the stair down.
+	 */
+	public /* @Nullable */ Coord getStair(boolean upOrDown) {
+		return upOrDown ? upwardStair : downwardStair;
 	}
 
 	/**
