@@ -422,45 +422,60 @@ public class DungeonGenerator {
 	/** @return Whether the stairs could be placed */
 	private boolean generateStairs(GenerationData gdata) {
 		final Dungeon dungeon = gdata.dungeon;
-		boolean good = generateStair(gdata, true);
-		if (!good) {
-			infoLog("Cannot place upward stair");
+		final Coord up = generateStair(gdata, true);
+		if (up == null) {
+			warnLog("Cannot place upward stair");
 			return false;
-		}
+		} else if (logger != null && logger.isInfoEnabled())
+			infoLog("Placed upward stair at " + up);
 		assert dungeon.getSymbol(dungeon.upwardStair) == DungeonSymbol.STAIR_UP;
 		draw(dungeon);
-		good = generateStair(gdata, false);
-		if (!good) {
-			infoLog("Cannot place downward stair");
+		final Coord down = generateStair(gdata, false);
+		if (down == null) {
+			warnLog("Cannot place downward stair");
 			return false;
-		}
+		} else if (logger != null && logger.isInfoEnabled())
+			infoLog("Placed downward stair at " + down);
 		assert dungeon.getSymbol(dungeon.downwardStair) == DungeonSymbol.STAIR_DOWN;
 		draw(dungeon);
 		return true;
 	}
 
-	protected boolean generateStair(GenerationData gdata, boolean upOrDown) {
+	/** @return Where it got generated, if it did (otherwise null) */
+	protected /* @Nullable */ Coord generateStair(GenerationData gdata, boolean upOrDown) {
 		final Dungeon dungeon = gdata.dungeon;
 		/* @Nullable */ Coord objective = upOrDown ? upStairObjective : downStairObjective;
 		assert objective == null || dungeon.isValid(objective);
 		final /* @Nullable */ Coord other = upOrDown ? dungeon.downwardStair : dungeon.upwardStair;
 		if (objective == null) {
-			if (other == null)
-				objective = getRandomCell();
-			else {
+			if (other == null) {
+				objective = getRandomCell(null);
+				if (logger != null && logger.isInfoEnabled())
+					infoLog((upOrDown ? "upward" : "downward") + " stair objective chosen randomly");
+			} else {
 				final int random = rng.nextInt(4);
 				switch (random) {
 				case 0:
 				case 1:
 				case 2:
-					final boolean square = isSquare();
-					final boolean wide = isWide();
-					final boolean xsym = square || wide || rng.nextBoolean();
-					final boolean ysym = square || !wide || rng.nextBoolean();
-					objective = getSymmetric(other, xsym, ysym);
+					final Direction otherDir = getDirection(other);
+					if (logger != null && logger.isInfoEnabled())
+						infoLog("other stair is in direction: " + otherDir);
+					final int disturb = rng.nextInt(2);
+					Direction chosenDir = otherDir.opposite();
+					if (1 == disturb)
+						chosenDir = chosenDir.clockwise();
+					else if (2 == disturb)
+						chosenDir = chosenDir.counterClockwise();
+					objective = getRandomCell(chosenDir);
+					if (logger != null && logger.isInfoEnabled())
+						infoLog((upOrDown ? "upward" : "downward") + " stair objective chosen in direction: "
+								+ chosenDir);
 					break;
 				case 3:
-					objective = getRandomCell();
+					if (logger != null && logger.isInfoEnabled())
+						infoLog((upOrDown ? "upward" : "downward") + " stair objective chosen randomly");
+					objective = getRandomCell(null);
 					break;
 				default:
 					throw new IllegalStateException(
@@ -469,6 +484,8 @@ public class DungeonGenerator {
 			}
 		}
 		assert objective != null;
+		if (logger != null && logger.isInfoEnabled())
+			infoLog("Stair objective: " + objective);
 
 		final int rSize = ((width + height) / 6) + 1;
 		final Iterator<Coord> it = new GridIterators.GrowingRectangle(objective, rSize);
@@ -480,16 +497,18 @@ public class DungeonGenerator {
 				queue.add(next);
 		}
 		if (queue.isEmpty())
-			return false;
+			return null;
+		if (logger != null && logger.isInfoEnabled())
+			infoLog(queue.size() + " stair candidate" + (queue.size() == 1 ? "" : "s"));
 		while (!queue.isEmpty()) {
 			final Coord candidate = queue.remove();
 			if (other == null
 					|| (!other.equals(candidate) && gdata.pathExists(other, candidate, false, false))) {
 				if (punchStair(gdata, candidate, upOrDown))
-					return true;
+					return candidate;
 			}
 		}
-		return false;
+		return null;
 	}
 
 	/** @return Whether punching was done */
@@ -885,8 +904,48 @@ public class DungeonGenerator {
 		return true;
 	}
 
-	protected final Coord getRandomCell() {
-		return Coord.get(rng.nextInt(width), rng.nextInt(height));
+	/**
+	 * @param dir
+	 * @return A random cell. In the direction {@code dir} (think about the map
+	 *         being split in 8 parts) if {@code dir} is not null.
+	 */
+	protected final Coord getRandomCell(/* @Nullable */ Direction dir) {
+		if (dir == null)
+			return Coord.get(rng.nextInt(width), rng.nextInt(height));
+		else {
+			final boolean hasup = dir.hasUp();
+			final boolean hasdown = dir.hasDown();
+			assert !(hasup && hasdown);
+			final boolean hasleft = dir.hasLeft();
+			final boolean hasright = dir.hasRight();
+			assert !(hasleft && hasright);
+			final int w3 = width / 3;
+			final int h3 = height / 3;
+			int x = rng.nextInt(w3);
+			if (!hasleft) {
+				x += w3;
+				/* Can be centered or to the right */
+				if (hasright)
+					/* To the right */
+					x += w3;
+			}
+			int y = rng.nextInt(h3);
+			if (!hasup) {
+				/* Can be centered or downward */
+				y += h3;
+				if (hasdown)
+					/* Is downward */
+					y += h3;
+			}
+			assert x < width;
+			assert y < width;
+			return Coord.get(x, y);
+		}
+	}
+
+	protected final Direction getDirection(Coord c) {
+		final Coord center = Coord.get(width / 2, height / 2);
+		return Direction.getCardinalDirection(c.x - center.x, c.y - center.y);
 	}
 
 	/**
@@ -930,6 +989,16 @@ public class DungeonGenerator {
 	protected final void infoLog(String log) {
 		if (logger != null)
 			logger.infoLog(SquidTags.GENERATION, log);
+	}
+
+	protected final void warnLog(String log) {
+		if (logger != null)
+			logger.warnLog(SquidTags.GENERATION, log);
+	}
+
+	protected final void errLog(String log) {
+		if (logger != null)
+			logger.errLog(SquidTags.GENERATION, log);
 	}
 
 	private static Pair<Zone, Zone> orderedPair(GenerationData gdata, Zone z1, Zone z2) {
