@@ -806,55 +806,58 @@ public class DungeonGenerator {
 			/* Not cardinally accessible from a safe cell */
 			return false;
 		/* Diagonal neighbors */
-		final EnumMultiset<DungeonSymbol> dneighbors = Dungeons.getNeighbors(dungeon, c.x, c.y, true);
-		int sources = 0;
-		for (DungeonSymbol dsym : DungeonSymbol.values()) {
+		COORD_LIST_BUF.clear();
+		int nbw = 0;
+		for (Direction dir : Direction.OUTWARDS) {
+			final Coord neighbor = c.translate(dir);
+			final DungeonSymbol dsym = dungeon.getSymbol(neighbor);
+			if (dsym == null)
+				continue;
 			switch (dsym) {
 			case CHASM:
 			case DEEP_WATER:
-			case DOOR:
 			case HIGH_GRASS:
 				continue;
 			case FLOOR:
 			case GRASS:
 			case SHALLOW_WATER:
-				/* Can go from such cells to the candidate stair */
-				sources += dneighbors.count(dsym);
+				/* Can safely go from such cells to the candidate stair */
+				COORD_LIST_BUF.add(neighbor);
 				continue;
+			case DOOR:
 			case STAIR_DOWN:
 			case STAIR_UP:
-				if (dneighbors.contains(dsym))
-					/* Stair should not be adjacent to another stair */
-					return false;
-				continue;
+				/* Stair should not be adjacent to a door or stair */
+				return false;
 			case WALL:
-				/**
-				 * Because we want stairs in such positions:
-				 * 
-				 * <pre>
-				 * ###
-				 * #>#
-				 * ...
-				 * </pre>
-				 * 
-				 * because we wanna avoid
-				 * 
-				 * <pre>
-				 * .##
-				 * #>#
-				 * ...
-				 * </pre>
-				 * 
-				 * which would force cause possible placement weirdness upon
-				 * arriving into the level (since placement in different rooms
-				 * would be possible).
-				 */
-				if (dneighbors.count(dsym) < 5)
-					return false;
+				nbw++;
 				continue;
 			}
 			throw Exceptions.newUnmatchedISE(dsym);
 		}
+		/**
+		 * Because we want stairs in such positions:
+		 * 
+		 * <pre>
+		 * ###
+		 * #>#
+		 * ...
+		 * </pre>
+		 * 
+		 * because we wanna avoid
+		 * 
+		 * <pre>
+		 * .##
+		 * #>#
+		 * ...
+		 * </pre>
+		 * 
+		 * which would force cause possible placement weirdness upon arriving
+		 * into the level (since placement in different rooms would be
+		 * possible).
+		 */
+		if (nbw < 5)
+			return false;
 		/**
 		 * Because we wanna forbid stairs in such positions:
 		 * 
@@ -864,16 +867,21 @@ public class DungeonGenerator {
 		 * #..#
 		 * </pre>
 		 */
+		final int sources = COORD_LIST_BUF.size();
 		if (sources < 3)
 			return false;
-		// FIXME Check that all sources are adjacent to each other. To avoid:
 		/**
+		 * Check that all sources are adjacent to each other. To avoid:
+		 * 
 		 * <pre>
 		 * ..#
 		 * #>#
 		 * .##
 		 * </pre>
 		 */
+		if (!haveACrossRoad(COORD_LIST_BUF))
+			return false;
+		COORD_LIST_BUF.clear();
 		return true;
 	}
 
@@ -952,6 +960,27 @@ public class DungeonGenerator {
 			return true;
 		}
 		throw Exceptions.newUnmatchedISE(sym);
+	}
+
+	/**
+	 * @param list
+	 * @return {@code true} if there's a member of {@code list} to which all
+	 *         other members are adjacent.
+	 */
+	private static boolean haveACrossRoad(List<Coord> list) {
+		final int size = list.size();
+		outer: for (int i = 0; i < size; i++) {
+			final Coord c = list.get(i);
+			for (int j = 0; j < size; j++) {
+				if (i == j)
+					continue;
+				final Coord other = list.get(i);
+				if (!c.isAdjacent(other))
+					continue outer;
+			}
+			return true;
+		}
+		return true;
 	}
 
 	private static boolean needCaching(Zone z) {
