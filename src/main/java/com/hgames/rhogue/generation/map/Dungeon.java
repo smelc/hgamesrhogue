@@ -17,7 +17,15 @@ import squidpony.squidmath.Coord;
  * intentionally only to retrieve the dungeon's structure. Mutation to the
  * dungeon are done via package-visible fields.
  * 
+ * <p>
+ * The API of this file is kept intentionally small. See {@link Dungeons} for
+ * more query methods.
+ * </p>
+ * 
  * @author smelC
+ * 
+ * @see DungeonGenerator
+ * @see Dungeons
  */
 public class Dungeon {
 

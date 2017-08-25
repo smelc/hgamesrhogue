@@ -17,6 +17,7 @@ import com.hgames.lib.Ints;
 import com.hgames.lib.Pair;
 import com.hgames.lib.choice.DoublePriorityCell;
 import com.hgames.lib.collection.Multimaps;
+import com.hgames.lib.collection.multiset.EnumMultiset;
 import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.grid.GridIterators;
 import com.hgames.rhogue.rng.ProbabilityTable;
@@ -771,50 +772,109 @@ public class DungeonGenerator {
 		case WALL:
 			break;
 		}
-		final int nbf = nbNeighborsOfType(dungeon, c, DungeonSymbol.FLOOR, false);
-		if (nbf < 1)
-			/* Stair isn't cardinally accessible from floor */
-			return false;
-		final int nbw = nbNeighborsOfType(dungeon, c, DungeonSymbol.WALL, true);
-		if (nbw < 5)
-			/**
-			 * Because we want stairs in such positions:
-			 * 
-			 * <pre>
-			 * ###
-			 * #>#
-			 * ...
-			 * </pre>
-			 * 
-			 * and we wanna avoid
-			 * 
-			 * <pre>
-			 * .##
-			 * #>#
-			 * ...
-			 * </pre>
-			 * 
-			 * which would force placement to take care of placing in the
-			 * "right" cell upon arriving.
-			 */
-			return false;
-		return true;
-	}
-
-	protected final int nbNeighborsOfType(Dungeon dungeon, Coord c, DungeonSymbol searched,
-			boolean considerDiagonals) {
-		final Direction[] dirs = considerDiagonals ? Direction.OUTWARDS : Direction.CARDINALS;
-		int result = 0;
-		for (Direction dir : dirs) {
-			final Coord d = c.translate(dir);
-			final DungeonSymbol sym = dungeon.getSymbol(d);
-			if (sym == null) {
-				if (searched == null)
-					result++;
-			} else if (sym.equals(searched))
-				result++;
+		/* Cardinal neighbors */
+		final EnumMultiset<DungeonSymbol> cneighbors = Dungeons.getNeighbors(dungeon, c.x, c.y, false);
+		boolean reachable = false;
+		/* This pattern to avoid missing a case */
+		for (DungeonSymbol dsym : DungeonSymbol.values()) {
+			switch (dsym) {
+			case CHASM:
+			case DEEP_WATER:
+				/* No constraint */
+				continue;
+			case GRASS:
+			case SHALLOW_WATER:
+			case FLOOR:
+				if (cneighbors.contains(dsym))
+					reachable |= true;
+				continue;
+			case DOOR:
+			case HIGH_GRASS:
+			case STAIR_DOWN:
+			case STAIR_UP:
+				if (cneighbors.contains(dsym))
+					/* Stair should not be cardinally adjacent to those */
+					return false;
+				continue;
+			case WALL:
+				/* Constraint checked on diagonal neighbors (see below) */
+				continue;
+			}
+			throw Exceptions.newUnmatchedISE(dsym);
 		}
-		return result;
+		if (!reachable)
+			/* Not cardinally accessible from a safe cell */
+			return false;
+		/* Diagonal neighbors */
+		final EnumMultiset<DungeonSymbol> dneighbors = Dungeons.getNeighbors(dungeon, c.x, c.y, true);
+		int sources = 0;
+		for (DungeonSymbol dsym : DungeonSymbol.values()) {
+			switch (dsym) {
+			case CHASM:
+			case DEEP_WATER:
+			case DOOR:
+			case HIGH_GRASS:
+				continue;
+			case FLOOR:
+			case GRASS:
+			case SHALLOW_WATER:
+				/* Can go from such cells to the candidate stair */
+				sources += dneighbors.count(dsym);
+				continue;
+			case STAIR_DOWN:
+			case STAIR_UP:
+				if (dneighbors.contains(dsym))
+					/* Stair should not be adjacent to another stair */
+					return false;
+				continue;
+			case WALL:
+				/**
+				 * Because we want stairs in such positions:
+				 * 
+				 * <pre>
+				 * ###
+				 * #>#
+				 * ...
+				 * </pre>
+				 * 
+				 * because we wanna avoid
+				 * 
+				 * <pre>
+				 * .##
+				 * #>#
+				 * ...
+				 * </pre>
+				 * 
+				 * which would force cause possible placement weirdness upon
+				 * arriving into the level (since placement in different rooms
+				 * would be possible).
+				 */
+				if (dneighbors.count(dsym) < 5)
+					return false;
+				continue;
+			}
+			throw Exceptions.newUnmatchedISE(dsym);
+		}
+		/**
+		 * Because we wanna forbid stairs in such positions:
+		 * 
+		 * <pre>
+		 * ####
+		 * #>##
+		 * #..#
+		 * </pre>
+		 */
+		if (sources < 3)
+			return false;
+		// FIXME Check that all sources are adjacent to each other. To avoid:
+		/**
+		 * <pre>
+		 * ..#
+		 * #>#
+		 * .##
+		 * </pre>
+		 */
+		return true;
 	}
 
 	protected final Coord getRandomCell() {
