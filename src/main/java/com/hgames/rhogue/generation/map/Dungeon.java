@@ -191,8 +191,6 @@ public class Dungeon {
 			for (int y = 0; y < height; y++) {
 				final DungeonSymbol sym = getSymbol(x, y);
 				switch (sym) {
-				case CHASM:
-				case DEEP_WATER:
 				case DOOR:
 				case FLOOR:
 				case GRASS:
@@ -205,6 +203,8 @@ public class Dungeon {
 					}
 					continue;
 				}
+				case CHASM:
+				case DEEP_WATER:
 				case STAIR_DOWN:
 				case STAIR_UP:
 				case WALL:

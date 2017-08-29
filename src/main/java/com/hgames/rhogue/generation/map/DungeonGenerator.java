@@ -3,18 +3,22 @@ package com.hgames.rhogue.generation.map;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Set;
 
 import com.hgames.lib.Exceptions;
 import com.hgames.lib.Ints;
 import com.hgames.lib.Pair;
+import com.hgames.lib.Stopwatch;
 import com.hgames.lib.choice.DoublePriorityCell;
 import com.hgames.lib.collection.Multimaps;
 import com.hgames.lib.collection.multiset.EnumMultiset;
@@ -101,6 +105,12 @@ public class DungeonGenerator {
 	 * (approximately). In [0, 100].
 	 */
 	protected int waterPercentage = 15;
+
+	/**
+	 * The number of unconnected rooms (w.r.t. to the stairs) to aim for. Useful
+	 * for secret rooms that require carving.
+	 */
+	protected int disconnectedRoomsObjective = 0;
 
 	/** Where to put the upward stair (approximately) */
 	protected /* @Nullable */ Coord upStairObjective;
@@ -233,6 +243,21 @@ public class DungeonGenerator {
 	}
 
 	/**
+	 * @param objective
+	 *            The objective. Must be >= 0.
+	 * @return {@code this}
+	 * @throws IllegalStateException
+	 *             If {@code objective < 0}.
+	 */
+	public DungeonGenerator setDisconnectedRoomsObjective(int objective) {
+		if (objective < 0)
+			throw new IllegalStateException(
+					"Disconnected rooms objective must be >= 0. Received: " + objective);
+		this.disconnectedRoomsObjective = objective;
+		return this;
+	}
+
+	/**
 	 * @param percent
 	 *            An int in [0, 100]
 	 * @return {@code this}
@@ -264,23 +289,31 @@ public class DungeonGenerator {
 
 	/** @return A fresh dungeon or null if it could not be generated. */
 	public Dungeon generate() {
+		final Stopwatch watch = (logger != null && logger.isInfoEnabled()) ? new Stopwatch() : null;
 		final DungeonSymbol[][] map = new DungeonSymbol[width][height];
 		final Dungeon dungeon = new Dungeon(map);
 		DungeonBuilder.setAllSymbols(dungeon, DungeonSymbol.WALL);
 		if (width == 0 || height == 0)
 			// Nothing to do
 			return dungeon;
-		final GenerationData gdata = new GenerationData(dungeon);
+		final GenerationData gdata = new GenerationData(dungeon, watch);
+		gdata.startStage(Stage.ROOMS);
 		generateRooms(gdata);
+		gdata.startStage(Stage.PASSAGES_IN_ALMOST_ADJACENT_ROOMS);
 		/* XXX use RectangleRoomFinder to generate rooms in a second pass ? */
 		generatePassagesInAlmostAdjacentRooms(gdata);
 		draw(gdata.dungeon);
+		gdata.startStage(Stage.CORRIDORS);
 		generateCorridors(gdata);
 		/* Must be called before 'generateWater' */
+		gdata.startStage(Stage.STAIRS);
 		final boolean good = generateStairs(gdata);
 		if (!good)
 			return null;
+		gdata.startStage(Stage.WATER);
 		generateWater(gdata);
+		gdata.startStage(null);
+		gdata.logTimings(logger);
 		return dungeon;
 	}
 
@@ -530,6 +563,43 @@ public class DungeonGenerator {
 		if (waterPercentage == 0)
 			/* Nothing to do */
 			return;
+		final Dungeon dungeon = gdata.dungeon;
+		if (!DungeonBuilder.hasStairs(dungeon))
+			throw new IllegalStateException("Stairs must be set for generateWater to be called");
+		/* Try to garbage collect disconnected rooms */
+		final List<Zone> disconnectedZones = gdata.zonesDisconnectedFrom(true, true, dungeon.upwardStair,
+				dungeon.downwardStair);
+		final int nbdz = disconnectedZones.size();
+		final List<Zone> disconnectedRooms = new ArrayList<Zone>(nbdz / 4);
+		if (!disconnectedRooms.isEmpty() && logger != null && logger.isInfoEnabled())
+			infoLog("Found " + disconnectedRooms.size() + " disconnected room"
+					+ (disconnectedRooms.size() == 1 ? "" : "s"));
+		for (int i = 0; i < nbdz; i++) {
+			final Zone z = disconnectedZones.get(i);
+			if (DungeonBuilder.isRoom(dungeon, z))
+				disconnectedRooms.add(z);
+		}
+		final int waterObjective = (int) (mapSize() * (waterPercentage / 100f));
+		int waterCells = 0;
+		while (!disconnectedRooms.isEmpty() && disconnectedRoomsObjective < disconnectedRooms.size()
+				&& waterCells < waterObjective) {
+			final int wdiff = waterObjective - waterCells;
+			assert 0 < wdiff;
+			/* Pick room whose size is closest to wdiff */
+			Collections.sort(disconnectedRooms, new Comparator<Zone>() {
+				@Override
+				public int compare(Zone o1, Zone o2) {
+					final int diff1 = Math.abs(o1.size() - wdiff);
+					final int diff2 = Math.abs(o2.size() - wdiff);
+					return Integer.compare(diff1, diff2);
+				}
+			});
+			final Zone toFlood = disconnectedRooms.remove(0);
+			DungeonBuilder.setSymbols(dungeon, toFlood.iterator(), DungeonSymbol.DEEP_WATER);
+			waterCells += toFlood.size();
+			removeZone(gdata, toFlood);
+			draw(dungeon);
+		}
 	}
 
 	protected int getMaxRoomSideSize(boolean widthOrHeight, boolean spiceItUp) {
@@ -726,8 +796,22 @@ public class DungeonGenerator {
 			boolean roomOrCorridor) {
 		final Zone recorded = needCaching(z) ? new CachingZone(z) : z;
 		DungeonBuilder.addZone(gdata.dungeon, recorded, boundingBox, roomOrCorridor);
+		for (Coord c : recorded) {
+			final Zone prev = gdata.cellToEncloser[c.x][c.y];
+			if (prev != null)
+				throw new IllegalStateException(
+						"Cell " + c + " belongs to zone " + prev + " already. Cannot map it to " + recorded);
+			gdata.cellToEncloser[c.x][c.y] = recorded;
+		}
 		gdata.recordRoomOrdering(recorded);
 		return recorded;
+	}
+
+	private void removeZone(GenerationData gdata, Zone z) {
+		DungeonBuilder.removeZone(gdata.dungeon, z);
+		for (Coord c : z) {
+			gdata.cellToEncloser[c.x][c.y] = null;
+		}
 	}
 
 	/**
@@ -1088,6 +1172,12 @@ public class DungeonGenerator {
 
 		protected final Dungeon dungeon;
 		/**
+		 * An array that keeps track of the zone to which a cell belongs. A cell
+		 * belongs to at most one zone, because all zones are exclusive. All
+		 * zones in this array belong to {@link #dungeon}.
+		 */
+		protected final Zone[][] cellToEncloser;
+		/**
 		 * A map that keep tracks in the order in which {@link Dungeon#rooms}
 		 * and {@link Dungeon#corridors} have been generated, hereby providing
 		 * an ordering on rooms.
@@ -1099,8 +1189,35 @@ public class DungeonGenerator {
 
 		private int nextRoomIndex = 0;
 
-		protected GenerationData(Dungeon dungeon) {
+		/** Current stage is the stage whose value is -1 */
+		private final /* @Nullable */ Stopwatch watch;
+		private final EnumMap<Stage, Long> timings;
+
+		protected GenerationData(Dungeon dungeon, /* @Nullable */ Stopwatch watch) {
 			this.dungeon = dungeon;
+			this.cellToEncloser = new Zone[dungeon.width][dungeon.height];
+			this.timings = new EnumMap<Stage, Long>(Stage.class);
+			this.timings.put(Stage.INIT, -1l);
+			this.watch = watch;
+		}
+
+		protected void startStage(/* @Nullable */ Stage next) {
+			if (watch == null)
+				return;
+			Stage current = null;
+			for (Stage s : Stage.values()) {
+				if (timings.get(s) == -1l) {
+					current = s;
+					break;
+				}
+			}
+			if (current == null)
+				throw new IllegalStateException("Stage not found: " + current);
+			timings.put(current, watch.getDuration());
+			if (next != null) {
+				watch.reset();
+				timings.put(next, -1l);
+			}
 		}
 
 		protected void recordRoomOrdering(Zone z) {
@@ -1176,6 +1293,99 @@ public class DungeonGenerator {
 			return false;
 		}
 
+		protected Set<Zone> zonesConnectedTo(Coord... starts) {
+			prepareBuffer();
+			final Set<Zone> result = new LinkedHashSet<Zone>(DungeonBuilder.getNumberOfZones(dungeon) / 2);
+			/* Cells in 'todo' are cells reachable from 'from' */
+			final Queue<Coord> todo = new LinkedList<Coord>();
+			for (Coord start : starts)
+				todo.add(start);
+			final Direction[] moves = Direction.CARDINALS;
+			while (!todo.isEmpty()) {
+				final Coord next = todo.remove();
+				if (buf[next.x][next.y])
+					continue;
+				for (Direction dir : moves) {
+					final Coord neighbor = next.translate(dir);
+					if (buf[neighbor.x][neighbor.y]) {
+						/* Done already */
+						continue;
+					}
+					final DungeonSymbol sym = dungeon.getSymbol(neighbor);
+					if (sym == null)
+						continue;
+					switch (sym) {
+					case CHASM:
+					case DEEP_WATER:
+					case STAIR_DOWN:
+					case STAIR_UP:
+					case WALL:
+						continue;
+					case DOOR:
+					case FLOOR:
+					case GRASS:
+					case HIGH_GRASS:
+					case SHALLOW_WATER:
+						final Zone z = cellToEncloser[neighbor.x][neighbor.y];
+						result.add(z);
+						todo.add(neighbor);
+						continue;
+					}
+					throw Exceptions.newUnmatchedISE(sym);
+				}
+				assert !buf[next.x][next.y];
+				// Record it was done
+				buf[next.x][next.y] = true;
+			}
+			return result;
+		}
+
+		/**
+		 * @param considerRooms
+		 *            Whether to consider rooms for inclusion in the result.
+		 * @param considerCorridors
+		 *            Whether to consider corridors for inclusion in the result.
+		 * @param starts
+		 * @return Zones that are not reachable from {@code starts}.
+		 */
+		protected List<Zone> zonesDisconnectedFrom(boolean considerRooms, boolean considerCorridors,
+				Coord... starts) {
+			final int sz = (considerRooms ? dungeon.rooms.size() : 0)
+					+ (considerCorridors ? dungeon.corridors.size() : 0);
+			final List<Zone> result = new ArrayList<Zone>(sz / 8);
+			if (considerRooms)
+				result.addAll(dungeon.rooms);
+			if (considerCorridors)
+				result.addAll(dungeon.corridors);
+			result.removeAll(zonesConnectedTo(starts));
+			return result;
+		}
+
+		protected void logTimings(ILogger logger) {
+			if (watch == null || logger == null || !logger.isInfoEnabled())
+				return;
+			long total = 0;
+			final String tag = SquidTags.GENERATION;
+			for (Stage stage : Stage.values()) {
+				final long duration = timings.get(stage);
+				if (duration < 0)
+					logger.warnLog(tag, "Duration of stage " + stage + " is unexpectedly " + duration);
+				else
+					logger.infoLog(tag, stage + ": " + duration + "ms");
+				total += timings.get(stage);
+			}
+			final int width = dungeon.width;
+			final int height = dungeon.height;
+			final int mapSize = width * height;
+			logger.infoLog(tag, "Generated " + width + "x" + height + " dungeon (" + mapSize + " cells) in "
+					+ total + "ms.");
+			if (1000 < mapSize)
+				logger.infoLog(tag,
+						"That's approximately " + (int) ((1000f / mapSize) * total) + "ms per 1K cells.");
+			for (Stage stage : Stage.values())
+				logger.infoLog(tag, "Stage " + stage + " took " + timings.get(stage) + "ms");
+		}
+
 		private void prepareBuffer() {
 			final int width = dungeon.width;
 			final int height = dungeon.height;
@@ -1189,5 +1399,15 @@ public class DungeonGenerator {
 			}
 		}
 
+	}
+
+	/**
+	 * The stages of generation. Used for logging performances.
+	 * 
+	 * @author smelC
+	 */
+	private static enum Stage {
+		/* In the order in which they are executed */
+		INIT, ROOMS, PASSAGES_IN_ALMOST_ADJACENT_ROOMS, CORRIDORS, STAIRS, WATER
 	}
 }

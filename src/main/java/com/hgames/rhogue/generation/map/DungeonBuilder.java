@@ -56,6 +56,18 @@ class DungeonBuilder {
 		}
 	}
 
+	static void removeZone(Dungeon dungeon, Zone z) {
+		boolean done = dungeon.rooms.remove(z);
+		if (!done)
+			done = dungeon.corridors.remove(z);
+		if (!done)
+			throw new IllegalStateException("Zone not found: " + z);
+		dungeon.boundingBoxes.remove(z);
+		dungeon.connections.remove(z);
+		for (List<Zone> destinations : dungeon.connections.values())
+			destinations.remove(z);
+	}
+
 	/** Prefer this method over direct mutations, it eases debugging. */
 	static void setStair(Dungeon dungeon, int x, int y, boolean upOrDown) {
 		final DungeonSymbol sym = upOrDown ? DungeonSymbol.STAIR_UP : DungeonSymbol.STAIR_DOWN;
@@ -166,8 +178,20 @@ class DungeonBuilder {
 		return findZoneContaining(dungeon.corridors, dungeon.boundingBoxes, x, y, false);
 	}
 
+	static int getNumberOfZones(Dungeon dungeon) {
+		return dungeon.rooms.size() + dungeon.corridors.size();
+	}
+
+	static boolean hasStairs(Dungeon dungeon) {
+		return dungeon.upwardStair != null && dungeon.downwardStair != null;
+	}
+
 	static boolean hasZone(Dungeon dungeon, Zone z) {
 		return dungeon.rooms.contains(z) || dungeon.corridors.contains(z);
+	}
+
+	static boolean isRoom(Dungeon dungeon, Zone z) {
+		return dungeon.rooms.contains(z);
 	}
 
 	/**
