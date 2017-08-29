@@ -289,6 +289,10 @@ public class DungeonGenerator {
 
 	/** @return A fresh dungeon or null if it could not be generated. */
 	public Dungeon generate() {
+		/*
+		 * /!\ Don't forget to disable assertions when checking performances.
+		 * Assertions are by far the longest thing! /!\.
+		 */
 		final Stopwatch watch = (logger != null && logger.isInfoEnabled()) ? new Stopwatch() : null;
 		final DungeonSymbol[][] map = new DungeonSymbol[width][height];
 		final Dungeon dungeon = new Dungeon(map);
@@ -719,7 +723,7 @@ public class DungeonGenerator {
 	}
 
 	/**
-	 * @param dungeon
+	 * @param gdata
 	 * @param x
 	 * @param y
 	 * @param southNorthOrEastWest
@@ -761,6 +765,7 @@ public class DungeonGenerator {
 		final int y2 = y + (southNorthOrEastWest ? Direction.UP.deltaY : Direction.RIGHT.deltaY);
 		if (!isDoorNeighborCandidate(dungeon.getSymbol(x2, y2)))
 			return false;
+		// Using gdata's cellToEncloser cache isn't necessary for performances
 		final Zone z1 = gdata.findZoneContaining(x1, y1);
 		if (z1 == null) {
 			assert false;
