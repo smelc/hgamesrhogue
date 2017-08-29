@@ -340,7 +340,7 @@ public class DungeonGenerator {
 				16);
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
-				if (!isDoorCandidate(dungeon, x, y, true) && !isDoorCandidate(dungeon, x, y, false))
+				if (!isDoorCandidate(gdata, x, y, true) && !isDoorCandidate(gdata, x, y, false))
 					continue;
 				final Zone z0 = ZONE_PAIR_BUF[0];
 				assert z0 != null;
@@ -734,7 +734,8 @@ public class DungeonGenerator {
 	 *         the zones that could be connected by the door.
 	 *         </p>
 	 */
-	private boolean isDoorCandidate(Dungeon dungeon, int x, int y, boolean southNorthOrEastWest) {
+	private boolean isDoorCandidate(GenerationData gdata, int x, int y, boolean southNorthOrEastWest) {
+		final Dungeon dungeon = gdata.dungeon;
 		final DungeonSymbol sym = dungeon.getSymbol(x, y);
 		if (sym == null)
 			return false;
@@ -760,12 +761,12 @@ public class DungeonGenerator {
 		final int y2 = y + (southNorthOrEastWest ? Direction.UP.deltaY : Direction.RIGHT.deltaY);
 		if (!isDoorNeighborCandidate(dungeon.getSymbol(x2, y2)))
 			return false;
-		final Zone z1 = Dungeons.findZoneContaining(dungeon, x1, y1);
+		final Zone z1 = gdata.findZoneContaining(x1, y1);
 		if (z1 == null) {
 			assert false;
 			throw new IllegalStateException("Cannot find zone containing " + x1 + "," + y1);
 		}
-		final Zone z2 = Dungeons.findZoneContaining(dungeon, x2, y2);
+		final Zone z2 = gdata.findZoneContaining(x2, y2);
 		if (z2 == null) {
 			assert false;
 			throw new IllegalStateException("Cannot find zone containing " + x1 + "," + y1);
@@ -1359,6 +1360,12 @@ public class DungeonGenerator {
 				result.addAll(dungeon.corridors);
 			result.removeAll(zonesConnectedTo(starts));
 			return result;
+		}
+
+		protected Zone findZoneContaining(int x, int y) {
+			if (cellToEncloser != null)
+				return cellToEncloser[x][y];
+			return DungeonBuilder.findZoneContaining(dungeon, x, y);
 		}
 
 		protected void logTimings(ILogger logger) {
