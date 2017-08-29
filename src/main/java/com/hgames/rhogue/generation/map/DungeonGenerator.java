@@ -656,7 +656,11 @@ public class DungeonGenerator {
 	private boolean generateRoom(GenerationData gdata) {
 		final Dungeon dungeon = gdata.dungeon;
 		int frustration = 0;
-		outer: while (frustration < 32) {
+		/*
+		 * This bound is quite important. Increasing it makes dungeon generation
+		 * slower, but creates more packed dungeons (more small rooms).
+		 */
+		outer: while (frustration < 8) {
 			frustration++;
 			/* +1 to account for the surrounding wall */
 			final int maxWidth = getMaxRoomSideSize(true, rng.nextInt(10) == 0) + 1;
