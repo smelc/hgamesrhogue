@@ -10,7 +10,7 @@ import squidpony.squidmath.RNG;
  * 
  * @author smelC
  */
-public class RectangleRoomGenerator implements IRoomGenerator {
+public class RectangleRoomGenerator extends SkeletalRoomGenerator {
 
 	protected final RNG rng;
 
@@ -31,5 +31,4 @@ public class RectangleRoomGenerator implements IRoomGenerator {
 		final int h = rng.between(maxHeight == 1 ? 1 : 2, maxHeight + 1);
 		return new Rectangle.Impl(Coord.get(0, 0), w, h);
 	}
-
 }

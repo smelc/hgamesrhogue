@@ -57,6 +57,25 @@ public class ProbabilityTable<T> {
 	}
 
 	/**
+	 * Remove an element from this table.
+	 * 
+	 * @param t
+	 * @return Whether the element got removed.
+	 */
+	public boolean remove(T t) {
+		final Integer rmed = table.remove(t);
+		final boolean result;
+		if (rmed == null)
+			result = false;
+		else {
+			total -= rmed;
+			result = true;
+		}
+		assert invariant();
+		return result;
+	}
+
+	/**
 	 * @param rng
 	 *            The rng to use.
 	 * @return The chosen object (can be null if null was put or if the table is

@@ -1,5 +1,9 @@
 package com.hgames.rhogue.generation.map;
 
+import com.hgames.rhogue.generation.map.lifetime.Eternity;
+import com.hgames.rhogue.generation.map.lifetime.OneShot;
+import com.hgames.rhogue.generation.map.rgenerator.CircularRoomGenerator;
+
 import squidpony.squidmath.RNG;
 
 /**
@@ -29,12 +33,22 @@ public class DungeonGenerators {
 		this.height = height;
 	}
 
-	/**
-	 * @return A generator that builds dungeons like the original rogue.
-	 */
+	/** @return A generator that builds dungeons with only rectangle rooms. */
+	// FIXME CH Rename me
 	public DungeonGenerator rogueLikeGenerator() {
 		final DungeonGenerator result = new DungeonGenerator(rng, width, height);
-		result.installRoomGenerator(new RectangleRoomGenerator(rng), 1);
+		result.installRoomGenerator(new RectangleRoomGenerator(rng), 1, Eternity.INSTANCE);
+		return result;
+	}
+
+	/**
+	 * @return A generator that builds a dungeons that always features a single
+	 *         circular room, plus classical rectangular rooms.
+	 */
+	public DungeonGenerator guaranteesOneCircularRoom() {
+		final DungeonGenerator result = new DungeonGenerator(rng, width, height);
+		result.installRoomGenerator(new CircularRoomGenerator(rng), 100, new OneShot());
+		result.installRoomGenerator(new RectangleRoomGenerator(rng), 1, Eternity.INSTANCE);
 		return result;
 	}
 

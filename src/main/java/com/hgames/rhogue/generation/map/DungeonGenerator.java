@@ -23,6 +23,7 @@ import com.hgames.lib.choice.DoublePriorityCell;
 import com.hgames.lib.collection.Multimaps;
 import com.hgames.lib.collection.multiset.EnumMultiset;
 import com.hgames.lib.log.ILogger;
+import com.hgames.rhogue.generation.map.lifetime.Lifetime;
 import com.hgames.rhogue.grid.GridIterators;
 import com.hgames.rhogue.rng.ProbabilityTable;
 import com.hgames.rhogue.tests.generation.map.ConsoleDungeonDrawer;
@@ -52,9 +53,10 @@ import squidpony.squidmath.RNG;
  * </p>
  * 
  * <p>
- * This class' state only consists of the configuration options (except for
- * {@link #rng}) This means you can call {@link #generate()} multiple times on a
- * single instance, hereby getting different dungeons.
+ * You can call {@link #generate()} multiple times on a single instance to
+ * generate different dungeons. Beware, however, that instances of
+ * {@link Lifetime} associated to {@link IRoomGenerator generators} may change
+ * their inner state overtime; which will affect {@link #generate() results}.
  * </p>
  * 
  * <p>
@@ -66,6 +68,10 @@ import squidpony.squidmath.RNG;
  * states of the dungeon in successive calls of the main loop (see the
  * <a href="hdungeongen">https://github.com/smelc/hdungeongen</a> library for an
  * example on how to do that with libgdx).
+ * </p>
+ * 
+ * <p>
+ * See {@link DungeonGenerators} for examples of usage.
  * </p>
  * 
  * @author smelC
@@ -83,7 +89,10 @@ public class DungeonGenerator {
 	protected /* @Nullable */ IDungeonDrawer drawer;
 	protected /* @Nullable */ ILogger logger;
 
+	/** All elements of this table are in {@link #rgLifetimes} too */
 	protected final ProbabilityTable<IRoomGenerator> roomGenerators;
+	/** All elements of this map are in {@link #roomGenerators} too */
+	protected final Map<IRoomGenerator, Lifetime> rgLifetimes;
 
 	protected int minRoomWidth = 2;
 	protected int maxRoomWidth;
@@ -140,6 +149,7 @@ public class DungeonGenerator {
 		this.width = width;
 		this.height = height;
 		this.roomGenerators = ProbabilityTable.create();
+		this.rgLifetimes = new HashMap<IRoomGenerator, Lifetime>();
 		this.maxRoomWidth = width / 5;
 		this.maxRoomHeight = height / 5;
 	}
@@ -206,21 +216,32 @@ public class DungeonGenerator {
 
 	/**
 	 * @param minWidth
-	 *            The minimum width of rooms. The default is 2.
+	 *            The minimum width of rooms. The default is 2. Give anything
+	 *            negative to keep the existing value (useful to only change a
+	 *            subset of the sizes).
 	 * @param maxWidth
-	 *            The maximum width of rooms. The default is {@link #width} / 5.
+	 *            The maximum width of rooms (inclusive). The default is
+	 *            {@link #width} / 5. Give anything negative to keep the
+	 *            existing value (useful to only change a subset of the sizes).
 	 * @param minHeight
-	 *            The minimum width of rooms. The default is 2.
+	 *            The minimum width of rooms. The default is 2. Give anything
+	 *            negative to keep the existing value (useful to only change a
+	 *            subset of the sizes).
 	 * @param maxHeight
-	 *            The maximum height of rooms. The default is {@link #height} /
-	 *            5.
+	 *            The maximum height of rooms (inclusive). The default is
+	 *            {@link #height} / 5. Give anything negative to keep the
+	 *            existing value (useful to only change a subset of the sizes).
 	 * @return {@code this}
 	 */
 	public DungeonGenerator setRoomsBounds(int minWidth, int maxWidth, int minHeight, int maxHeight) {
-		this.minRoomWidth = minWidth;
-		this.maxRoomWidth = maxWidth;
-		this.minRoomHeight = minHeight;
-		this.maxRoomHeight = maxHeight;
+		if (0 <= minWidth)
+			this.minRoomWidth = minWidth;
+		if (0 <= maxWidth)
+			this.maxRoomWidth = maxWidth;
+		if (0 <= minHeight)
+			this.minRoomHeight = minHeight;
+		if (0 <= maxHeight)
+			this.maxRoomHeight = maxHeight;
 		return this;
 	}
 
@@ -280,10 +301,13 @@ public class DungeonGenerator {
 	 * @param probability
 	 *            The probability of using {@code roomGenerator} among all room
 	 *            generators installed.
+	 * @param lifetime
 	 * @return {@code this}.
 	 */
-	public DungeonGenerator installRoomGenerator(IRoomGenerator roomGenerator, int probability) {
+	public DungeonGenerator installRoomGenerator(IRoomGenerator roomGenerator, int probability,
+			Lifetime lifetime) {
 		this.roomGenerators.add(roomGenerator, probability);
+		this.rgLifetimes.put(roomGenerator, lifetime);
 		return this;
 	}
 
@@ -607,8 +631,12 @@ public class DungeonGenerator {
 	}
 
 	protected int getMaxRoomSideSize(boolean widthOrHeight, boolean spiceItUp) {
-		final int result = widthOrHeight ? rng.between(minRoomWidth, maxRoomWidth)
-				: rng.between(minRoomHeight, maxRoomHeight);
+		/*
+		 * +1, because #maxRoomWidth and #maxRoomHeight are inclusive, where
+		 * RNG#between isn't.
+		 */
+		final int result = widthOrHeight ? rng.between(minRoomWidth, maxRoomWidth + 1)
+				: rng.between(minRoomHeight, maxRoomHeight + 1);
 		return result * (spiceItUp ? 2 : 1);
 	}
 
@@ -697,6 +725,10 @@ public class DungeonGenerator {
 				assert dungeon.isValid(brCandidate);
 				assert !Dungeons.isOnEdge(dungeon, brCandidate);
 				final Zone zone = generateRoomAt(blCandidate, mw, mh);
+				/*
+				 * 'zone' must be used now, since the generator's usage has been
+				 * recorded in 'generateRoomAt'.
+				 */
 				if (zone != null) {
 					assert !DungeonBuilder.anyOnEdge(dungeon, zone.iterator());
 					/* Record the zone */
@@ -719,10 +751,25 @@ public class DungeonGenerator {
 		final IRoomGenerator rg = roomGenerators.get(rng);
 		if (rg == null)
 			return null;
+		System.out.println("Trying " + maxWidth + "x" + maxHeight + " room at " + bottomLeft);
 		final Zone zeroZeroZone = rg.generate(maxWidth, maxHeight);
 		if (zeroZeroZone == null)
 			return null;
 		final Zone zone = zeroZeroZone.translate(bottomLeft);
+		{
+			/* Remember that generator is getting used */
+			final Lifetime lifetime = rgLifetimes.get(rg);
+			if (lifetime == null)
+				throw new IllegalStateException(IRoomGenerator.class.getSimpleName() + " has no "
+						+ Lifetime.class.getSimpleName() + " instance attached");
+			lifetime.recordUsage();
+			if (lifetime.shouldBeRemoved()) {
+				/* Remove generator */
+				roomGenerators.remove(rg);
+				rgLifetimes.remove(lifetime);
+				lifetime.removeCallback();
+			}
+		}
 		return zone;
 	}
 
@@ -847,6 +894,9 @@ public class DungeonGenerator {
 		} else {
 			final Rectangle bbox = gdata.dungeon.boundingBoxes.get(z);
 			assert bbox != null;
+			if (dir.isCardinal())
+				/* Rectangle.Utils.getCorner doesn't support cardinals */
+				return false;
 			final Coord corner = Rectangle.Utils.getCorner(bbox, dir);
 			DP_CELL.clear();
 			final List<Coord> all = z.getAll();

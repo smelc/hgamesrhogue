@@ -18,7 +18,7 @@ import squidpony.squidmath.RNG;
  * 
  * @author smelC
  */
-public class CaveRoomGenerator implements IRoomGenerator {
+public class CaveRoomGenerator extends SkeletalRoomGenerator {
 
 	protected final RNG rng;
 
@@ -51,7 +51,8 @@ public class CaveRoomGenerator implements IRoomGenerator {
 
 	@Override
 	public Zone generate(int maxWidth, int maxHeight) {
-		final ConstrainedRectangleRoomGenerator delegate = new ConstrainedRectangleRoomGenerator(rng, maxWidth, maxHeight);
+		final ConstrainedRectangleRoomGenerator delegate = new ConstrainedRectangleRoomGenerator(rng,
+				maxWidth, maxHeight);
 		final Rectangle rectangle = delegate.generate(maxWidth, maxHeight);
 		if (rectangle == null) {
 			/* Should not happen */

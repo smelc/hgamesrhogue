@@ -13,7 +13,7 @@ import squidpony.squidmath.RNG;
  * 
  * @author smelC
  */
-public class ConstrainedRectangleRoomGenerator implements IRoomGenerator {
+public class ConstrainedRectangleRoomGenerator extends SkeletalRoomGenerator {
 
 	protected final RNG rng;
 
