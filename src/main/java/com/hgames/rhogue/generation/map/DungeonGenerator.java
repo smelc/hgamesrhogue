@@ -416,7 +416,8 @@ public class DungeonGenerator {
 		}
 	}
 
-	protected void generateCorridors(GenerationData gdata) {
+	/** @return The number of corridors built */
+	protected int generateCorridors(GenerationData gdata) {
 		final Dungeon dungeon = gdata.dungeon;
 		/* A Zone, to the other zones; ordered by the distance of the centers */
 		final Map<Zone, List<Pair<Double, Zone>>> zoneToOtherZones = new LinkedHashMap<Zone, List<Pair<Double, Zone>>>(
@@ -445,39 +446,41 @@ public class DungeonGenerator {
 		final CorridorBuilder cc = new CorridorBuilder(gdata.dungeon, true, true);
 		final Coord[] startEndBuffer = new Coord[2];
 		final Coord[] connection = new Coord[2];
+		int result = 0;
 		for (int i = 0; i < nbr; i++) {
 			final Zone z = dungeon.rooms.get(i);
 			final List<Pair<Double, Zone>> destinations = zoneToOtherZones.get(z);
 			if (destinations == null)
 				continue;
 			final int nbd = destinations.size();
-			if (connectivity < nbd)
-				Collections.sort(destinations, ORDERER);
+			Collections.sort(destinations, ORDERER);
 			for (int j = 0; j < connectivity && j < nbd; j++) {
 				final Zone dest = destinations.get(j).getSnd();
 				if (DungeonBuilder.areConnected(dungeon, z, dest, 3))
 					continue;
 				final boolean found = getZonesConnectionEndpoints(gdata, z, dest, connection);
-				if (found) {
-					final Coord zEndpoint = connection[0];
-					final Coord destEndpoint = connection[1];
-					final Zone built = cc.build(rng, zEndpoint, destEndpoint, startEndBuffer);
-					if (built != null) {
-						// (NO_CORRIDOR_BBOX). This doesn't trigger if 'built'
-						// is a Rectangle, but it may if it a ZoneUnion.
-						assert !built.contains(zEndpoint);
-						assert !built.contains(destEndpoint);
-						final Zone recorded = addZone(gdata, built, null, false);
-						DungeonBuilder.addConnection(dungeon, z, recorded);
-						DungeonBuilder.addConnection(dungeon, dest, recorded);
-						// Punch corridor
-						DungeonBuilder.setSymbols(dungeon, built.iterator(), DungeonSymbol.FLOOR);
-						draw(dungeon);
-					}
+				if (!found)
+					continue;
+				final Coord zEndpoint = connection[0];
+				final Coord destEndpoint = connection[1];
+				final Zone built = cc.build(rng, zEndpoint, destEndpoint, startEndBuffer);
+				if (built != null) {
+					// (NO_CORRIDOR_BBOX). This doesn't trigger if 'built'
+					// is a Rectangle, but it may if it a ZoneUnion.
+					assert !built.contains(zEndpoint);
+					assert !built.contains(destEndpoint);
+					final Zone recorded = addZone(gdata, built, null, false);
+					DungeonBuilder.addConnection(dungeon, z, recorded);
+					DungeonBuilder.addConnection(dungeon, dest, recorded);
+					// Punch corridor
+					DungeonBuilder.setSymbols(dungeon, built.iterator(), DungeonSymbol.FLOOR);
+					draw(dungeon);
+					result++;
 				}
 			}
 		}
 		assert zoneToOtherZones.size() == nbr;
+		return result;
 	}
 
 	/** @return Whether the stairs could be placed */
@@ -731,6 +734,7 @@ public class DungeonGenerator {
 				 */
 				if (zone != null) {
 					assert !DungeonBuilder.anyOnEdge(dungeon, zone.iterator());
+					// infoLog("Generated room: " + zone);
 					/* Record the zone */
 					addZone(gdata, zone, new Rectangle.Impl(blCandidate, mw, mh), true);
 					/* Punch it */
@@ -751,7 +755,8 @@ public class DungeonGenerator {
 		final IRoomGenerator rg = roomGenerators.get(rng);
 		if (rg == null)
 			return null;
-		System.out.println("Trying " + maxWidth + "x" + maxHeight + " room at " + bottomLeft);
+		// infoLog("Trying " + maxWidth + "x" + maxHeight + " room at " +
+		// bottomLeft);
 		final Zone zeroZeroZone = rg.generate(maxWidth, maxHeight);
 		if (zeroZeroZone == null)
 			return null;
@@ -1130,6 +1135,13 @@ public class DungeonGenerator {
 		return height < width;
 	}
 
+	/**
+	 * You should avoid calling this method too muchif {@code logger} is null or
+	 * if info isn't enabled, because building {@code log} can be costly if it's
+	 * not a constant.
+	 * 
+	 * @param log
+	 */
 	protected final void infoLog(String log) {
 		if (logger != null)
 			logger.infoLog(SquidTags.GENERATION, log);
@@ -1436,8 +1448,6 @@ public class DungeonGenerator {
 				final long duration = timings.get(stage);
 				if (duration < 0)
 					logger.warnLog(tag, "Duration of stage " + stage + " is unexpectedly " + duration);
-				else
-					logger.infoLog(tag, stage + ": " + duration + "ms");
 				total += timings.get(stage);
 			}
 			final int width = dungeon.width;

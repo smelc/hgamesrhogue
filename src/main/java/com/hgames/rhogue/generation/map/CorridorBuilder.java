@@ -18,8 +18,8 @@ class CorridorBuilder {
 	private final Dungeon dungeon;
 	private final boolean allowATurn;
 	/**
-	 * {@code true} to request neighbors of inner of corridors (i.e. corridors
-	 * except the endpoints) to satisfy {@link }.
+	 * {@code true} to request neighbors of inners of corridors (i.e. corridors
+	 * except the endpoints) to satisfy {@link #isForbiddenNeighbor0(Coord)}.
 	 */
 	private final boolean onlyPerfectCarving;
 
@@ -52,7 +52,7 @@ class CorridorBuilder {
 				bridgeStart = c;
 				change |= true;
 			}
-			if (Boolean.TRUE.equals(adjacency(c, start))) {
+			if (Boolean.TRUE.equals(adjacency(c, end))) {
 				assert bridgeEnd == null;
 				bridgeEnd = c;
 				change |= true;
