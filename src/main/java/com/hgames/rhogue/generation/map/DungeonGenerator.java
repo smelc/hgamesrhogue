@@ -25,6 +25,7 @@ import com.hgames.lib.choice.DoublePriorityCell;
 import com.hgames.lib.collection.Multimaps;
 import com.hgames.lib.collection.multiset.EnumMultiset;
 import com.hgames.lib.log.ILogger;
+import com.hgames.rhogue.Tags;
 import com.hgames.rhogue.generation.map.lifetime.Lifetime;
 import com.hgames.rhogue.grid.GridIterators;
 import com.hgames.rhogue.rng.ProbabilityTable;
@@ -33,7 +34,6 @@ import com.hgames.rhogue.zone.CachingZone;
 import com.hgames.rhogue.zone.SingleCellZone;
 import com.hgames.rhogue.zone.Zones;
 
-import squidpony.SquidTags;
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidgrid.zone.Zone;
@@ -1275,17 +1275,17 @@ public class DungeonGenerator {
 	 */
 	protected final void infoLog(String log) {
 		if (logger != null)
-			logger.infoLog(SquidTags.GENERATION, log);
+			logger.infoLog(Tags.GENERATION, log);
 	}
 
 	protected final void warnLog(String log) {
 		if (logger != null)
-			logger.warnLog(SquidTags.GENERATION, log);
+			logger.warnLog(Tags.GENERATION, log);
 	}
 
 	protected final void errLog(String log) {
 		if (logger != null)
-			logger.errLog(SquidTags.GENERATION, log);
+			logger.errLog(Tags.GENERATION, log);
 	}
 
 	private static Pair<Zone, Zone> orderedPair(GenerationData gdata, Zone z1, Zone z2) {
@@ -1574,7 +1574,7 @@ public class DungeonGenerator {
 			if (watch == null || logger == null || !logger.isInfoEnabled())
 				return;
 			long total = 0;
-			final String tag = SquidTags.GENERATION;
+			final String tag = Tags.GENERATION;
 			for (Stage stage : Stage.values()) {
 				final long duration = timings.get(stage);
 				if (duration < 0)
