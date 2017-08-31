@@ -536,7 +536,7 @@ public class DungeonGenerator {
 				case 0:
 				case 1:
 				case 2:
-					final Direction otherDir = getDirection(other);
+					final Direction otherDir = getDirectionFromMapCenter(other);
 					if (logger != null && logger.isInfoEnabled())
 						infoLog("other stair is in direction: " + otherDir);
 					final int disturb = rng.nextInt(2);
@@ -775,7 +775,7 @@ public class DungeonGenerator {
 		return result * (spiceItUp ? 2 : 1);
 	}
 
-	protected int mapSize() {
+	protected final int mapSize() {
 		return width * height;
 	}
 
@@ -1223,29 +1223,9 @@ public class DungeonGenerator {
 		}
 	}
 
-	protected final Direction getDirection(Coord c) {
+	protected final Direction getDirectionFromMapCenter(Coord c) {
 		final Coord center = Coord.get(width / 2, height / 2);
 		return Direction.getCardinalDirection(c.x - center.x, c.y - center.y);
-	}
-
-	/**
-	 * @param xsym
-	 *            Whether to do symmetry according to x
-	 * @param ysym
-	 *            Whether to do symmetry according to y
-	 * @return The symetric of {@code c} in {code this}.
-	 */
-	protected final Coord getSymmetric(Coord c, boolean xsym, boolean ysym) {
-		final int x = xsym ? getSymmetric(c.x, true) : c.x;
-		final int y = ysym ? getSymmetric(c.y, false) : c.y;
-		final Coord result = Coord.get(x, y);
-		return result;
-	}
-
-	protected final int getSymmetric(int v, boolean xOrY) {
-		final int middle = (xOrY ? width : height) / 2;
-		final int diff = middle - v;
-		return diff < 0 ? middle + diff : middle - diff;
 	}
 
 	/**
@@ -1256,14 +1236,6 @@ public class DungeonGenerator {
 		final int x = Ints.clamp(0, c.x, width - 1);
 		final int y = Ints.clamp(0, c.y, height - 1);
 		return x == c.y && y == c.y ? c : Coord.get(x, y);
-	}
-
-	protected final boolean isSquare() {
-		return width == height;
-	}
-
-	protected final boolean isWide() {
-		return height < width;
 	}
 
 	/**
