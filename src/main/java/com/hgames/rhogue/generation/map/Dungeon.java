@@ -64,6 +64,11 @@ public class Dungeon {
 	Coord upwardStair;
 	Coord downwardStair;
 
+	/**
+	 * A fresh instance backed up by {@code map}.
+	 * 
+	 * @param map
+	 */
 	Dungeon(DungeonSymbol[][] map) {
 		this.map = map;
 		final int estimatedNumberOfRooms = size() / 256;

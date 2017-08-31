@@ -335,7 +335,7 @@ public class DungeonGenerator {
 		generatePassagesInAlmostAdjacentRooms(gdata);
 		draw(gdata.dungeon);
 		gdata.startStage(Stage.CORRIDORS);
-		generateCorridors(gdata);
+		generateCorridors(gdata, dungeon.rooms, dungeon.rooms, true);
 		/* Must be called before 'generateWater' */
 		gdata.startStage(Stage.STAIRS);
 		final boolean good = generateStairs(gdata);
@@ -421,22 +421,32 @@ public class DungeonGenerator {
 		}
 	}
 
-	/** @return The number of corridors built */
-	protected int generateCorridors(GenerationData gdata) {
+	/**
+	 * @param rooms
+	 *            The rooms to build corridors from.
+	 * @param dests
+	 *            The possible destinations (should be rooms too).
+	 * @return The number of corridors built
+	 */
+	protected int generateCorridors(GenerationData gdata, List<Zone> rooms, List<Zone> dests,
+			boolean onlyPerfectCarving) {
 		final Dungeon dungeon = gdata.dungeon;
+		final int nbr = rooms.size();
 		/* A Zone, to the other zones; ordered by the distance of the centers */
 		final Map<Zone, List<Pair<Double, Zone>>> zoneToOtherZones = new LinkedHashMap<Zone, List<Pair<Double, Zone>>>(
-				dungeon.rooms.size());
-		final int nbr = dungeon.rooms.size();
+				nbr);
+		final int nbd = dests.size();
 		final double maxDist = (width + height) / 6;
 		for (int i = 0; i < nbr; i++) {
-			final Zone z = dungeon.rooms.get(i);
+			final Zone z = rooms.get(i);
+			assert DungeonBuilder.isRoom(dungeon, z);
 			final Coord zc = z.getCenter();
 			assert !zoneToOtherZones.keySet().contains(z);
 			final List<Pair<Double, Zone>> otherZones = new ArrayList<Pair<Double, Zone>>(
 					Math.max(0, nbr - 1));
-			for (int j = 0; j < nbr; j++) {
-				final Zone other = dungeon.rooms.get(j);
+			for (int j = 0; j < nbd; j++) {
+				final Zone other = dests.get(j);
+				assert DungeonBuilder.isRoom(dungeon, other);
 				if (other == z)
 					continue;
 				final Coord oc = other.getCenter();
@@ -446,21 +456,21 @@ public class DungeonGenerator {
 					continue;
 				otherZones.add(Pair.of(dist, other));
 			}
-			zoneToOtherZones.put(z, otherZones);
+			if (!otherZones.isEmpty())
+				zoneToOtherZones.put(z, otherZones);
 		}
-		final CorridorBuilder cc = new CorridorBuilder(gdata.dungeon, true, true);
+		final CorridorBuilder cc = new CorridorBuilder(gdata.dungeon, true, onlyPerfectCarving);
 		final Coord[] startEndBuffer = new Coord[2];
 		final Coord[] connection = new Coord[2];
 		int result = 0;
-		for (int i = 0; i < nbr; i++) {
-			final Zone z = dungeon.rooms.get(i);
-			final List<Pair<Double, Zone>> destinations = zoneToOtherZones.get(z);
-			if (destinations == null)
+		for (Zone z : zoneToOtherZones.keySet()) {
+			final List<Pair<Double, Zone>> candidateDests = zoneToOtherZones.get(z);
+			if (candidateDests == null)
 				continue;
-			final int nbd = destinations.size();
-			Collections.sort(destinations, ORDERER);
-			for (int j = 0; j < connectivity && j < nbd; j++) {
-				final Zone dest = destinations.get(j).getSnd();
+			final int nbcd = candidateDests.size();
+			Collections.sort(candidateDests, ORDERER);
+			for (int j = 0; j < connectivity && j < nbcd; j++) {
+				final Zone dest = candidateDests.get(j).getSnd();
 				if (DungeonBuilder.areConnected(dungeon, z, dest, 3))
 					continue;
 				final boolean found = getZonesConnectionEndpoints(gdata, z, dest, connection);
@@ -484,7 +494,6 @@ public class DungeonGenerator {
 				}
 			}
 		}
-		assert zoneToOtherZones.size() == nbr;
 		return result;
 	}
 
@@ -590,8 +599,13 @@ public class DungeonGenerator {
 	/**
 	 * Make sure that at least 1/5th of the map is accessible. For that, find
 	 * disconnected rooms. For every disconnected component whose size is >
-	 * 1/10th of the map, try very hard to connect it to the stairs. At the end
-	 * check if 1/5th of the map is accessible.
+	 * {@link #getWallificationBound()} of the map, try very hard to connect it
+	 * to the stairs. At the end check if 1/6th of the map is accessible.
+	 * 
+	 * <p>
+	 * This method must be called before generating impassable terrain (deep
+	 * water, lava, etc.)
+	 * </p>
 	 * 
 	 * @return Whether the dungeon is valid.
 	 */
@@ -601,23 +615,52 @@ public class DungeonGenerator {
 			throw new IllegalStateException("ensureDensity method requires stairs to be set");
 		final List<Zone> disconnectedZones = gdata.zonesDisconnectedFrom(true, true, dungeon.upwardStair,
 				dungeon.downwardStair);
-		final int nbdz = disconnectedZones.size();
 		final List<List<Zone>> disconnectedComponents = DungeonBuilder.connectedComponents(dungeon,
 				disconnectedZones);
 		final int nbdc = disconnectedComponents.size();
-		if (0 < nbdc)
+		int reachable = Zones.size(dungeon.rooms);
+		reachable += Zones.size(dungeon.corridors);
+		final int msz = mapSize();
+		if (0 < nbdc) {
 			infoLog("Found " + nbdc + " disconnected component" + plural(nbdc));
-		for (int i = 0; i < nbdc; i++)
-			treatDisconnectedComponent(gdata, disconnectedComponents.get(i));
-		return true;
+			final List<Zone> connectedRooms = new ArrayList<Zone>(dungeon.rooms);
+			for (int i = 0; i < nbdc; i++)
+				connectedRooms.removeAll(disconnectedComponents.get(i));
+			for (int i = 0; i < nbdc; i++) {
+				/* Contains both rooms and corridors */
+				final List<Zone> disconnectedComponent = disconnectedComponents.get(i);
+				final int sz = Zones.size(disconnectedComponent);
+				/*
+				 * /!\ This call mutes 'connectedRooms' and trashes
+				 * 'disconnectedComponent' /!\
+				 */
+				final int extension = treatDisconnectedComponent(gdata, connectedRooms,
+						disconnectedComponent);
+				if (0 < extension) {
+					reachable += extension;
+					infoLog("Connected component (consisting of " + nbdc + " zone" + plural(sz) + ") of size "
+							+ extension);
+				}
+			}
+		}
+		return (msz / 6) < reachable;
 	}
 
-	private void treatDisconnectedComponent(GenerationData gdata, List<Zone> component) {
+	/**
+	 * @param connectedRooms
+	 *            Rooms connected to the stair (which are possible corridors
+	 *            destinations). Can be extended by this call.
+	 * @param component
+	 *            The component. It should not be used anymore after this call.
+	 * @return The number of cells that got connected to the stairs.
+	 */
+	private int treatDisconnectedComponent(GenerationData gdata, List<Zone> connectedRooms,
+			List<Zone> component) {
 		final Dungeon dungeon = gdata.dungeon;
-		final int msz = mapSize();
 		final int sz = Zones.size(component);
 		final int csz = component.size();
-		if (sz < (msz / 10)) {
+		final int bound = getWallificationBound();
+		if (sz < bound) {
 			/* Component is small, replace it with walls (hereby removing it) */
 			if (csz == 1) {
 				/*
@@ -626,16 +669,39 @@ public class DungeonGenerator {
 				 */
 				if (disconnectedRoomsObjective < dungeon.getDisconnectedRooms().size()) {
 					DungeonBuilder.addDisconnectedRoom(dungeon, component.get(0));
-					return;
+					return 0;
 				}
 			}
 
 			for (int i = 0; i < csz; i++) {
-				wallify(gdata, component.get(i));
-				infoLog("Wallified a component of size " + sz);
+				final Zone z = component.get(i);
+				wallify(gdata, z);
+				if (logger != null && logger.isInfoEnabled())
+					infoLog("Wallified a zone of size " + z.size());
+				// FIXME CH Record this zone's center as a candidate for water
+				// fill
 			}
-			return;
+			infoLog("Total of wallification: " + sz + " (bound is " + bound + " cells)");
+			return 0;
 		}
+
+		final int nbCellsInComponent = Zones.size(component);
+		/*
+		 * To ensure 'generateCorridors' precondition that we give it only rooms
+		 */
+		component.removeAll(dungeon.corridors);
+		final int nbc = generateCorridors(gdata, component, connectedRooms, true);
+		final boolean connected = 0 < nbc;
+		if (connected) {
+			connectedRooms.addAll(component);
+			return nbCellsInComponent;
+		} else
+			return 0;
+	}
+
+	/** @return The size under which a disconnected component is wallified */
+	protected int getWallificationBound() {
+		return mapSize() / 24;
 	}
 
 	/** Turns a zone into walls, hereby removing it */
@@ -662,6 +728,7 @@ public class DungeonGenerator {
 		final Dungeon dungeon = gdata.dungeon;
 		if (!DungeonBuilder.hasStairs(dungeon))
 			throw new IllegalStateException("Stairs must be set for generateWater to be called");
+		// FIXME CH Change all that
 		/* Try to garbage collect disconnected rooms */
 		final List<Zone> disconnectedZones = gdata.zonesDisconnectedFrom(true, true, dungeon.upwardStair,
 				dungeon.downwardStair);
@@ -955,18 +1022,17 @@ public class DungeonGenerator {
 		if (dir == Direction.NONE)
 			throw new IllegalStateException();
 		COORD_LIST_BUF.clear();
-		if (z instanceof Rectangle && dir.isCardinal()) {
+		final boolean zIsARectangle = z instanceof Rectangle;
+		if (zIsARectangle && dir.isCardinal()) {
 			// (NO-BBOX)
+			// Rectangle.Utils.getBorder requires a cardinal direction
 			Rectangle.Utils.getBorder((Rectangle) z, dir, COORD_LIST_BUF);
 		} else if (z instanceof SingleCellZone) {
 			// (NO-BBOX)
 			COORD_LIST_BUF.add(z.getCenter());
 		} else {
-			final Rectangle bbox = gdata.dungeon.boundingBoxes.get(z);
+			final Rectangle bbox = zIsARectangle ? (Rectangle) z : gdata.dungeon.boundingBoxes.get(z);
 			assert bbox != null;
-			if (dir.isCardinal())
-				/* Rectangle.Utils.getCorner doesn't support cardinals */
-				return false;
 			final Coord corner = Rectangle.Utils.getCorner(bbox, dir);
 			DP_CELL.clear();
 			final List<Coord> all = z.getAll();

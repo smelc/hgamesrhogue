@@ -297,7 +297,10 @@ class CorridorBuilder {
 		return DungeonSymbol.WALL;
 	}
 
-	/** @return The number of cells b-adjacent to {@code c} in {@code coords} */
+	/**
+	 * @return The number of cells b-adjacent to {@code c} in {@code coords}.
+	 *         b-adjacence is defined in {@link #adjacency(Coord, Coord)}
+	 */
 	private static int nbAdjacentCells(Coord c, Iterable<Coord> coords, boolean b) {
 		int result = 0;
 		for (Coord d : coords) {

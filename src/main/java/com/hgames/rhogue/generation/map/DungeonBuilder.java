@@ -104,6 +104,7 @@ class DungeonBuilder {
 	 * 
 	 * @param sym
 	 */
+	// FIXME CH Take a Zone instead
 	static void setSymbols(Dungeon dungeon, Iterator<Coord> it, DungeonSymbol sym) {
 		while (it.hasNext()) {
 			final Coord c = it.next();

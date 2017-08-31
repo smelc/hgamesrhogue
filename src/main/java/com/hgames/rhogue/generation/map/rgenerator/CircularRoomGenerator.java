@@ -35,6 +35,8 @@ public class CircularRoomGenerator extends SkeletalRoomGenerator {
 	}
 
 	protected int radius(int maxWidth, int maxHeight) {
-		return rng.between(1, Math.min(maxWidth / 2, maxHeight / 2) + 1);
+		final int constraint = Math.min(maxWidth, maxHeight);
+		final int max = constraint / 2; // Exclusive
+		return rng.between(1, max);
 	}
 }

@@ -13,6 +13,9 @@ import squidpony.squidmath.RNG;
  */
 public class DungeonGeneratorTest {
 
+	/** The seed used */
+	public static final int SEED = 32;
+
 	/**
 	 * @param args
 	 */
@@ -20,7 +23,7 @@ public class DungeonGeneratorTest {
 		final IDungeonDrawer drawer = new ConsoleDungeonDrawer(new DungeonSymbolDrawer());
 		final int width = 60;
 		final int height = 40;
-		final DungeonGenerators dgens = new DungeonGenerators(new RNG(32), width, height);
+		final DungeonGenerators dgens = new DungeonGenerators(new RNG(SEED), width, height);
 		generate(dgens.guaranteesOneCircularRoom(), drawer);
 	}
 
