@@ -2,6 +2,7 @@ package com.hgames.rhogue.generation.map;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,9 @@ public class Dungeon {
 	final Map<Zone, Rectangle> boundingBoxes;
 	/** Doors between adjacent rooms are in there (and are zones of size 1). */
 	final List<Zone> corridors;
+
+	/** Members of {@link #rooms} that aren't connected to the stairs. */
+	/* @Nullable */ List<Zone> disconnectedRooms;
 
 	/**
 	 * The zones to which a zone is directly connected. Keys and values belong
@@ -101,6 +105,35 @@ public class Dungeon {
 	 */
 	public /* @Nullable */ Coord getStair(boolean upOrDown) {
 		return upOrDown ? upwardStair : downwardStair;
+	}
+
+	/**
+	 * @return The rooms. This is a reference to an internal structure, you
+	 *         should likely not modify it.
+	 */
+	public List<Zone> getRooms() {
+		return rooms;
+	}
+
+	/**
+	 * @return The corridors. This is a reference to an internal structure, you
+	 *         should likely not modify it.
+	 */
+	public List<Zone> getCorridors() {
+		return corridors;
+	}
+
+	/**
+	 * @return The member of {@link #getRooms()} that aren't connected to the
+	 *         stairs. Useful for hidden rooms that require carving to be
+	 *         reached (brogue's underworms) This is a reference to an internal
+	 *         structure, you should likely not modify it.
+	 */
+	public List<Zone> getDisconnectedRooms() {
+		if (disconnectedRooms == null)
+			return Collections.emptyList();
+		else
+			return disconnectedRooms;
 	}
 
 	/**

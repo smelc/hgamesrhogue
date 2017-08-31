@@ -1,5 +1,7 @@
 package com.hgames.rhogue.generation.map;
 
+import static com.hgames.lib.Strings.plural;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -29,6 +31,7 @@ import com.hgames.rhogue.rng.ProbabilityTable;
 import com.hgames.rhogue.tests.generation.map.ConsoleDungeonDrawer;
 import com.hgames.rhogue.zone.CachingZone;
 import com.hgames.rhogue.zone.SingleCellZone;
+import com.hgames.rhogue.zone.Zones;
 
 import squidpony.SquidTags;
 import squidpony.squidgrid.Direction;
@@ -338,6 +341,8 @@ public class DungeonGenerator {
 		final boolean good = generateStairs(gdata);
 		if (!good)
 			return null;
+		gdata.startStage(Stage.ENSURE_DENSITY);
+		ensureDensity(gdata);
 		gdata.startStage(Stage.WATER);
 		generateWater(gdata);
 		gdata.startStage(null);
@@ -580,6 +585,66 @@ public class DungeonGenerator {
 		final Dungeon dungeon = gdata.dungeon;
 		DungeonBuilder.setStair(dungeon, c.x, c.y, upOrDown);
 		return true;
+	}
+
+	/**
+	 * Make sure that at least 1/5th of the map is accessible. For that, find
+	 * disconnected rooms. For every disconnected component whose size is >
+	 * 1/10th of the map, try very hard to connect it to the stairs. At the end
+	 * check if 1/5th of the map is accessible.
+	 * 
+	 * @return Whether the dungeon is valid.
+	 */
+	protected boolean ensureDensity(GenerationData gdata) {
+		final Dungeon dungeon = gdata.dungeon;
+		if (!DungeonBuilder.hasStairs(dungeon))
+			throw new IllegalStateException("ensureDensity method requires stairs to be set");
+		final List<Zone> disconnectedZones = gdata.zonesDisconnectedFrom(true, true, dungeon.upwardStair,
+				dungeon.downwardStair);
+		final int nbdz = disconnectedZones.size();
+		final List<List<Zone>> disconnectedComponents = DungeonBuilder.connectedComponents(dungeon,
+				disconnectedZones);
+		final int nbdc = disconnectedComponents.size();
+		if (0 < nbdc)
+			infoLog("Found " + nbdc + " disconnected component" + plural(nbdc));
+		for (int i = 0; i < nbdc; i++)
+			treatDisconnectedComponent(gdata, disconnectedComponents.get(i));
+		return true;
+	}
+
+	private void treatDisconnectedComponent(GenerationData gdata, List<Zone> component) {
+		final Dungeon dungeon = gdata.dungeon;
+		final int msz = mapSize();
+		final int sz = Zones.size(component);
+		final int csz = component.size();
+		if (sz < (msz / 10)) {
+			/* Component is small, replace it with walls (hereby removing it) */
+			if (csz == 1) {
+				/*
+				 * Component is a single room. Can it be used to honor
+				 * #disconnectedRoomsObjective ?
+				 */
+				if (disconnectedRoomsObjective < dungeon.getDisconnectedRooms().size()) {
+					DungeonBuilder.addDisconnectedRoom(dungeon, component.get(0));
+					return;
+				}
+			}
+
+			for (int i = 0; i < csz; i++) {
+				wallify(gdata, component.get(i));
+				infoLog("Wallified a component of size " + sz);
+			}
+			return;
+		}
+	}
+
+	/** Turns a zone into walls, hereby removing it */
+	protected final void wallify(GenerationData gdata, Zone z) {
+		final Dungeon dungeon = gdata.dungeon;
+		assert DungeonBuilder.hasZone(dungeon, z);
+		removeZone(gdata, z);
+		DungeonBuilder.setSymbols(dungeon, z.iterator(), DungeonSymbol.WALL);
+		draw(dungeon);
 	}
 
 	/**
@@ -1484,6 +1549,6 @@ public class DungeonGenerator {
 	 */
 	private static enum Stage {
 		/* In the order in which they are executed */
-		INIT, ROOMS, PASSAGES_IN_ALMOST_ADJACENT_ROOMS, CORRIDORS, STAIRS, WATER
+		INIT, ROOMS, PASSAGES_IN_ALMOST_ADJACENT_ROOMS, CORRIDORS, STAIRS, ENSURE_DENSITY, WATER
 	}
 }

@@ -1,9 +1,12 @@
 package com.hgames.rhogue.generation.map;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.hgames.lib.collection.Multimaps;
 
@@ -35,6 +38,13 @@ class DungeonBuilder {
 		assert hasZone(dungeon, z2);
 		Multimaps.addToListMultimapIfAbsent(dungeon.connections, z1, z2);
 		Multimaps.addToListMultimapIfAbsent(dungeon.connections, z2, z1);
+	}
+
+	static void addDisconnectedRoom(Dungeon dungeon, Zone z) {
+		assert dungeon.getRooms().contains(z);
+		if (dungeon.disconnectedRooms == null)
+			dungeon.disconnectedRooms = new ArrayList<Zone>();
+		dungeon.disconnectedRooms.add(z);
 	}
 
 	/** Prefer this method over direct mutations, it eases debugging. */
@@ -149,6 +159,10 @@ class DungeonBuilder {
 	 *         {@code intermediates} zones.
 	 */
 	static boolean areConnected(Dungeon dungeon, Zone z0, Zone z1, int intermediates) {
+		return areConnected(dungeon, z0, z1, intermediates, new HashSet<Zone>());
+	}
+
+	private static boolean areConnected(Dungeon dungeon, Zone z0, Zone z1, int intermediates, Set<Zone> z0s) {
 		if (intermediates < 1)
 			return false;
 		final List<Zone> list = dungeon.connections.get(z0);
@@ -157,10 +171,40 @@ class DungeonBuilder {
 		final int nb = list.size();
 		for (int i = 0; i < nb; i++) {
 			final Zone out = list.get(i);
-			if (out.equals(z1) || areConnected(dungeon, out, z1, intermediates - 1))
+			if (out.equals(z1))
+				return true;
+			final boolean added = z0s.add(out);
+			if (added && areConnected(dungeon, out, z1, intermediates - 1, z0s))
 				return true;
 		}
 		return false;
+	}
+
+	static List<List<Zone>> connectedComponents(Dungeon dungeon, List<Zone> zones) {
+		if (zones.isEmpty())
+			return Collections.emptyList();
+		final List<List<Zone>> result = new ArrayList<List<Zone>>();
+		final int nbz = zones.size();
+		nextZone: for (int i = 0; i < nbz; i++) {
+			final Zone zone = zones.get(i);
+			final int rsz = result.size();
+			for (int j = 0; j < rsz; j++) {
+				final List<Zone> component = result.get(j);
+				final int csz = component.size();
+				for (int k = 0; k < csz; k++) {
+					final Zone z = component.get(k);
+					if (areConnected(dungeon, zone, z)) {
+						component.add(zone);
+						continue nextZone;
+					}
+				}
+			}
+			/* 'zone' belongs to no component. Creating a new one. */
+			final List<Zone> component = new ArrayList<Zone>(nbz / 4);
+			component.add(zone);
+			result.add(component);
+		}
+		return result;
 	}
 
 	/**
