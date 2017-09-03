@@ -14,7 +14,7 @@ import squidpony.squidmath.RNG;
 public class DungeonGeneratorTest {
 
 	/** The seed used */
-	public static final int SEED = 32;
+	public static final int SEED = 38;
 
 	/**
 	 * @param args

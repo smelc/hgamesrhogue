@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -117,6 +118,12 @@ public class DungeonGenerator {
 	 * (approximately). In [0, 100].
 	 */
 	protected int waterPercentage = 15;
+
+	/**
+	 * The number of zones to fill with water. Ignored if
+	 * {@link #waterPercentage} is 0.
+	 */
+	protected int waterPools = 2;
 
 	/**
 	 * The number of unconnected rooms (w.r.t. to the stairs) to aim for. Useful
@@ -283,15 +290,23 @@ public class DungeonGenerator {
 
 	/**
 	 * @param percent
-	 *            An int in [0, 100]
+	 *            An int in [0, 100]. The percentage of the map to turn into
+	 *            water.
+	 * @param pools
+	 *            An int in [0, Integer.MAX_VALUE]. The number of pools to
+	 *            create.
 	 * @return {@code this}
 	 * @throws IllegalStateException
-	 *             If {@code percent} isn't in [0, 100].
+	 *             If {@code percent} isn't in [0, 100] or if {@code pools} is
+	 *             negative.
 	 */
-	public DungeonGenerator setWaterPercentage(int percent) {
+	public DungeonGenerator setWaterObjective(int percent, int pools) {
 		if (!Ints.inInterval(0, percent, 100))
 			throw new IllegalStateException("Excepted a value in [0, 100]. Received: " + percent);
+		if (pools < 0)
+			throw new IllegalStateException("Excepted a 0 or positive value. Received: " + pools);
 		this.waterPercentage = percent;
+		this.waterPools = pools;
 		return this;
 	}
 
@@ -678,8 +693,7 @@ public class DungeonGenerator {
 				wallify(gdata, z);
 				if (logger != null && logger.isInfoEnabled())
 					infoLog("Wallified a zone of size " + z.size());
-				// FIXME CH Record this zone's center as a candidate for water
-				// fill
+				gdata.addWaterFillStartCandidate(z.getCenter());
 			}
 			infoLog("Total of wallification: " + sz + " (bound is " + bound + " cells)");
 			return 0;
@@ -722,47 +736,70 @@ public class DungeonGenerator {
 	 *             If the stairs haven't been set yet.
 	 */
 	protected void generateWater(GenerationData gdata) {
-		if (waterPercentage == 0)
+		if (waterPercentage == 0 || waterPools == 0)
 			/* Nothing to do */
 			return;
 		final Dungeon dungeon = gdata.dungeon;
 		if (!DungeonBuilder.hasStairs(dungeon))
 			throw new IllegalStateException("Stairs must be set for generateWater to be called");
-		// FIXME CH Change all that
-		/* Try to garbage collect disconnected rooms */
-		final List<Zone> disconnectedZones = gdata.zonesDisconnectedFrom(true, true, dungeon.upwardStair,
-				dungeon.downwardStair);
-		final int nbdz = disconnectedZones.size();
-		final List<Zone> disconnectedRooms = new ArrayList<Zone>(nbdz / 4);
-		if (!disconnectedRooms.isEmpty() && logger != null && logger.isInfoEnabled())
-			infoLog("Found " + disconnectedRooms.size() + " disconnected room"
-					+ (disconnectedRooms.size() == 1 ? "" : "s"));
-		for (int i = 0; i < nbdz; i++) {
-			final Zone z = disconnectedZones.get(i);
-			if (DungeonBuilder.isRoom(dungeon, z))
-				disconnectedRooms.add(z);
-		}
-		final int waterObjective = (int) (mapSize() * (waterPercentage / 100f));
-		int waterCells = 0;
-		while (!disconnectedRooms.isEmpty() && disconnectedRoomsObjective < disconnectedRooms.size()
-				&& waterCells < waterObjective) {
-			final int wdiff = waterObjective - waterCells;
-			assert 0 < wdiff;
-			/* Pick room whose size is closest to wdiff */
-			Collections.sort(disconnectedRooms, new Comparator<Zone>() {
-				@Override
-				public int compare(Zone o1, Zone o2) {
-					final int diff1 = Math.abs(o1.size() - wdiff);
-					final int diff2 = Math.abs(o2.size() - wdiff);
-					return Integer.compare(diff1, diff2);
-				}
-			});
-			final Zone toFlood = disconnectedRooms.remove(0);
-			DungeonBuilder.setSymbols(dungeon, toFlood.iterator(), DungeonSymbol.DEEP_WATER);
-			waterCells += toFlood.size();
-			removeZone(gdata, toFlood);
+		Set<Coord> candidates = gdata.getWaterFillStartCandidates();
+		if (candidates.isEmpty())
+			candidates = new LinkedHashSet<Coord>();
+		gdata.removeWaterFillStartCandidates();
+		if (candidates.isEmpty())
+			return;
+		/* The number of cells filled */
+		int filled = 0;
+		final Splash<DungeonSymbol> splash = createSplash();
+		final int msz = mapSize();
+		final int totalObjective = (msz / 100) * waterPercentage;
+		final int poolObjective = totalObjective / waterPools;
+		int poolsDone = 0;
+		final Iterator<Coord> it = candidates.iterator();
+		while (it.hasNext() && poolsDone < waterPools && filled < totalObjective) {
+			final Coord candidate = it.next();
+			infoLog("Using candidate: " + candidate);
+			final List<Coord> spill = splash.spill(rng, dungeon.map, candidate, poolObjective, 2);
+			if (spill.isEmpty())
+				continue;
+			final int sz = spill.size();
+			for (int i = 0; i < sz; i++) {
+				final Coord spilt = spill.get(i);
+				assert DungeonBuilder.findZoneContaining(dungeon, spilt.x,
+						spilt.y) == null : ("Cells spilt on should not belong to a zone. You should fix 'impassable'. Cell spilt on: "
+								+ spilt + " belonging to zone: "
+								+ DungeonBuilder.findZoneContaining(dungeon, spilt.x, spilt.y));
+				DungeonBuilder.setSymbol(dungeon, spilt, DungeonSymbol.DEEP_WATER);
+				filled++;
+			}
+			if (logger != null && logger.isInfoEnabled())
+				infoLog("Created water pool of size " + sz);
 			draw(dungeon);
+			poolsDone++;
 		}
+	}
+
+	protected Splash<DungeonSymbol> createSplash() {
+		final EnumSet<DungeonSymbol> impassable = EnumSet.noneOf(DungeonSymbol.class);
+		for (DungeonSymbol sym : DungeonSymbol.values()) {
+			switch (sym) {
+			case CHASM:
+			case DEEP_WATER:
+			case DOOR:
+			case FLOOR:
+			case GRASS:
+			case HIGH_GRASS:
+			case SHALLOW_WATER:
+			case STAIR_DOWN:
+			case STAIR_UP:
+				impassable.add(sym);
+				continue;
+			case WALL:
+				continue;
+			}
+			throw Exceptions.newUnmatchedISE(sym);
+		}
+		return new Splash<DungeonSymbol>(impassable);
 	}
 
 	protected int getMaxRoomSideSize(boolean widthOrHeight, boolean spiceItUp) {
@@ -1362,6 +1399,8 @@ public class DungeonGenerator {
 		/** A buffer of size {@link Dungeon#width} and{@link Dungeon#height} */
 		private boolean buf[][];
 
+		private /* @Nullable */ Set<Coord> waterFillStartCandidates;
+
 		private int nextRoomIndex = 0;
 
 		/** Current stage is the stage whose value is -1 */
@@ -1540,6 +1579,24 @@ public class DungeonGenerator {
 			if (cellToEncloser != null)
 				return cellToEncloser[x][y];
 			return DungeonBuilder.findZoneContaining(dungeon, x, y);
+		}
+
+		protected void addWaterFillStartCandidate(Coord c) {
+			if (waterFillStartCandidates == null)
+				waterFillStartCandidates = new LinkedHashSet<Coord>();
+			waterFillStartCandidates.add(c);
+		}
+
+		/** @return A mutable set if not empty. */
+		protected Set<Coord> getWaterFillStartCandidates() {
+			if (waterFillStartCandidates == null)
+				return Collections.emptySet();
+			else
+				return waterFillStartCandidates;
+		}
+
+		protected void removeWaterFillStartCandidates() {
+			waterFillStartCandidates = null;
 		}
 
 		protected void logTimings(ILogger logger) {
