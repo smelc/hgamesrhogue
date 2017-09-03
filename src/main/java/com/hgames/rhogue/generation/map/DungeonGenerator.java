@@ -3,11 +3,13 @@ package com.hgames.rhogue.generation.map;
 import static com.hgames.lib.Strings.plural;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -18,6 +20,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
+import com.hgames.lib.Arrays;
 import com.hgames.lib.Exceptions;
 import com.hgames.lib.Ints;
 import com.hgames.lib.Pair;
@@ -27,6 +30,9 @@ import com.hgames.lib.collection.Multimaps;
 import com.hgames.lib.collection.multiset.EnumMultiset;
 import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.Tags;
+import com.hgames.rhogue.generation.map.flood.DungeonFloodFill;
+import com.hgames.rhogue.generation.map.flood.FloodFill;
+import com.hgames.rhogue.generation.map.flood.IFloodObjective;
 import com.hgames.rhogue.generation.map.lifetime.Lifetime;
 import com.hgames.rhogue.grid.GridIterators;
 import com.hgames.rhogue.rng.ProbabilityTable;
@@ -750,21 +756,26 @@ public class DungeonGenerator {
 			return;
 		/* The number of cells filled */
 		int filled = 0;
-		final Splash<DungeonSymbol> splash = createSplash();
+		final FloodFill fill = createFloodFill(gdata);
+		final FloodFillObjective objective = new FloodFillObjective(dungeon);
 		final int msz = mapSize();
 		final int totalObjective = (msz / 100) * waterPercentage;
 		final int poolObjective = totalObjective / waterPools;
 		int poolsDone = 0;
 		final Iterator<Coord> it = candidates.iterator();
+		final LinkedHashSet<Coord> spill = new LinkedHashSet<Coord>();
 		while (it.hasNext() && poolsDone < waterPools && filled < totalObjective) {
+			/* Prepare iteration */
+			objective.prepare(poolObjective);
+			spill.clear();
+			/* Go */
 			final Coord candidate = it.next();
 			infoLog("Using candidate: " + candidate);
-			final List<Coord> spill = splash.spill(rng, dungeon.map, candidate, poolObjective, 2);
+			fill.flood(rng, candidate.x, candidate.y, objective, spill);
 			if (spill.isEmpty())
 				continue;
 			final int sz = spill.size();
-			for (int i = 0; i < sz; i++) {
-				final Coord spilt = spill.get(i);
+			for (Coord spilt : spill) {
 				assert DungeonBuilder.findZoneContaining(dungeon, spilt.x,
 						spilt.y) == null : ("Cells spilt on should not belong to a zone. You should fix 'impassable'. Cell spilt on: "
 								+ spilt + " belonging to zone: "
@@ -800,6 +811,10 @@ public class DungeonGenerator {
 			throw Exceptions.newUnmatchedISE(sym);
 		}
 		return new Splash<DungeonSymbol>(impassable);
+	}
+
+	protected FloodFill createFloodFill(GenerationData gdata) {
+		return new DungeonFloodFill(gdata.dungeon.map, width, height);
 	}
 
 	protected int getMaxRoomSideSize(boolean widthOrHeight, boolean spiceItUp) {
@@ -1374,6 +1389,81 @@ public class DungeonGenerator {
 			return Double.compare(o1.getFst(), o2.getFst());
 		}
 	};
+
+	/**
+	 * @author smelC
+	 */
+	protected static class FloodFillObjective implements IFloodObjective {
+
+		/** The underlying dungeon */
+		protected final Dungeon dungeon;
+
+		/** See {@link #isMet()} for the relation between all these fields */
+
+		protected Collection<Coord> dones;
+		/** The minimum size that the floodfill should reach */
+		protected int sizeObjective;
+
+		protected int walkableNeighbors = 0;
+
+		public FloodFillObjective(Dungeon dungeon) {
+			this.dungeon = dungeon;
+		}
+
+		protected void prepare(int szObjective) {
+			if (dones != null)
+				dones.clear();
+			this.sizeObjective = szObjective;
+			walkableNeighbors = 0;
+		}
+
+		@Override
+		public void record(Coord c) {
+			if (dones == null)
+				dones = new HashSet<Coord>();
+			dones.add(c);
+			if (isCardinallyAdjacentToWalkable(c))
+				walkableNeighbors++;
+		}
+
+		@Override
+		public boolean isMet() {
+			final int sz = dones == null ? 0 : dones.size();
+			if (sz < sizeObjective)
+				/* Size objective isn't met */
+				return false;
+			if (walkableNeighbors < 3)
+				/* It must be connected to a walkable area by at least */
+				return false;
+			return true;
+		}
+
+		private boolean isCardinallyAdjacentToWalkable(Coord c) {
+			for (Direction dir : Direction.CARDINALS) {
+				final Coord neighbor = c.translate(dir);
+				final DungeonSymbol sym = Arrays.getIfValid(dungeon.map, neighbor.x, neighbor.y);
+				if (sym == null)
+					continue;
+				switch (sym) {
+				case CHASM:
+				case DEEP_WATER:
+				case STAIR_DOWN:
+				case STAIR_UP:
+				case WALL:
+					continue;
+				case DOOR:
+				case FLOOR:
+				case GRASS:
+				case HIGH_GRASS:
+				case SHALLOW_WATER:
+					return true;
+				}
+				throw Exceptions.newUnmatchedISE(sym);
+			}
+			return false;
+		}
+
+	}
 
 	/**
 	 * Data carried on during generation of a single dungeon.
