@@ -1,6 +1,7 @@
 package com.hgames.rhogue.generation.map;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -64,7 +65,7 @@ class DungeonBuilder {
 	static void addZone(Dungeon dungeon, Zone z, /* @Nullable */ Rectangle boundingBox,
 			boolean roomOrCorridor) {
 		/* Zone should not intersect with existing zones */
-		assert findIntersectingZones(dungeon, z, true, true) == null;
+		assert findIntersectingZones(dungeon, z, true, true, true) == null;
 		/* Check that bounding box (if any) is correct */
 		assert boundingBox == null || boundingBox.contains(z);
 		// System.out.println("Adding zone: " + z);
@@ -288,26 +289,61 @@ class DungeonBuilder {
 	}
 
 	/**
+	 * Remove all members of {@code z} from {@code dungeon}'s water pools.
+	 * 
+	 * @param dungeon
+	 * @param z
+	 * @parma buf Where to record removed cells, or null.
+	 * @return Whether something was indeed removed.
+	 */
+	static boolean removeFromWaterPools(Dungeon dungeon, Zone z, /* @Nullable */ Collection<Coord> acc) {
+		if (dungeon.waterPools == null)
+			return false;
+		boolean result = false;
+		final int sz = dungeon.waterPools.size();
+		nextCoord: for (Coord c : z) {
+			for (int i = 0; i < sz; i++) {
+				final boolean rmed = dungeon.waterPools.get(i).getState().remove(c);
+				if (rmed) {
+					result = true;
+					if (acc != null)
+						acc.add(c);
+					continue nextCoord;
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * @param dungeon
 	 * @param z
 	 * @param rooms
 	 *            Whether to consider {@code dungeon}'s rooms.
 	 * @param corridors
 	 *            Whether to consider {@code dungeon}'s corridors.
+	 * @param deepWaters
+	 *            Whether to consider {@code dungeon}'s water pools.
 	 * @return The zones of {@code dungeon} that intersect with {@code z}, or
 	 *         null if none.
 	 */
 	private static /* @Nullable */ List<Zone> findIntersectingZones(Dungeon dungeon, Zone z, boolean rooms,
-			boolean corridors) {
+			boolean corridors, boolean deepWaters) {
 		List<Zone> result = null;
 		if (rooms)
 			result = findIntersectingZones(z, dungeon.rooms, result);
+		if (result != null)
+			return result;
 		if (corridors)
 			result = findIntersectingZones(z, dungeon.corridors, result);
+		if (result != null)
+			return result;
+		if (deepWaters)
+			result = findIntersectingZones(z, dungeon.waterPools, result);
 		return result;
 	}
 
-	private static /* @Nullable */ List<Zone> findIntersectingZones(Zone z, List<Zone> others,
+	private static /* @Nullable */ List<Zone> findIntersectingZones(Zone z, List<? extends Zone> others,
 			List<Zone> buf) {
 		List<Zone> result = buf;
 		if (others == null)

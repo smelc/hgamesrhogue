@@ -1,12 +1,18 @@
 package com.hgames.rhogue.generation.map;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.hgames.lib.Exceptions;
+import com.hgames.lib.collection.Collections;
 import com.hgames.rhogue.zone.SingleCellZone;
 import com.hgames.rhogue.zone.ZoneUnion;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.Rectangle;
+import squidpony.squidgrid.zone.ListZone;
 import squidpony.squidgrid.zone.Zone;
+import squidpony.squidmath.Bresenham;
 import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;
 
@@ -16,16 +22,30 @@ import squidpony.squidmath.RNG;
 class CorridorBuilder {
 
 	private final Dungeon dungeon;
+
+	/**
+	 * Whether to allow turns when building corridors using two lines and
+	 * bresenham.
+	 */
 	private final boolean allowATurn;
+
+	/**
+	 * Whether to fallback to using bresenham if using one (or two, if
+	 * {@link #allowATurn} holds) line(s) failed.
+	 */
+	private final boolean bresenham;
+
 	/**
 	 * {@code true} to request neighbors of inners of corridors (i.e. corridors
-	 * except the endpoints) to satisfy {@link #isForbiddenNeighbor0(Coord)}.
+	 * except the endpoints) to satisfy
+	 * {@link #isForbiddenNeighbor0(Coord, boolean)}.
 	 */
 	private final boolean onlyPerfectCarving;
 
-	CorridorBuilder(Dungeon dungeon, boolean allowATurn, boolean onlyPerfectCarving) {
+	CorridorBuilder(Dungeon dungeon, boolean allowATurn, boolean bresenham, boolean onlyPerfectCarving) {
 		this.dungeon = dungeon;
 		this.allowATurn = allowATurn;
+		this.bresenham = bresenham;
 		this.onlyPerfectCarving = onlyPerfectCarving;
 	}
 
@@ -35,17 +55,37 @@ class CorridorBuilder {
 			 *            cardinally adjacent to {@code start} and the
 			 *            corridor's only cell that is cardinally adjacent to
 			 *            {@code end}.
+			 * @return A zone connecting {@code start} and {@code end}. It
+			 *         doesn't contain neither {@code start} nor {@code end}.
 			 */
 			/* @Nullable */ Zone build(RNG stable, Coord start, Coord end,
 					/* @Nullable */ Coord[] startEndBuf) {
-		final Zone result = build(stable, start, end);
-		if (result == null)
+		Zone result = buildOneOrTwoLines(stable, start, end);
+		if (result != null) {
+			result = postprocess(result, start, end, startEndBuf, false);
+			if (result != null)
+				return result;
+		}
+		if (!bresenham)
 			return null;
+		result = buildBresenham(stable, start, end);
+		result = postprocess(result, start, end, startEndBuf, true);
+		return result;
+	}
+
+	private Zone postprocess(Zone z, Coord start, Coord end, /* @Nullable */ Coord[] startEndBuf,
+			boolean bresenham_) {
+		assert z != null;
 		Coord bridgeStart = null;
 		Coord bridgeEnd = null;
-		assert nbAdjacentCells(start, result, true) == 1;
-		assert nbAdjacentCells(end, result, true) == 1;
-		for (Coord c : result) {
+		/* Number of cells cardinally adjacent to 'start' is 1 */
+		assert nbAdjacentCells(start, z, true) == 1 : "Expected number of cells cardinally adjacent to "
+				+ start + " to be 1, but found " + nbAdjacentCells(start, z, true);
+		/* Number of cells cardinally adjacent to 'end' is 1 */
+		assert nbAdjacentCells(end, z, true) == 1 : "Expected number of cells cardinally adjacent to " + end
+				+ " to be 1, but found " + nbAdjacentCells(end, z, true);
+
+		for (Coord c : z) {
 			boolean change = false;
 			if (Boolean.TRUE.equals(adjacency(c, start))) {
 				assert bridgeStart == null;
@@ -63,11 +103,12 @@ class CorridorBuilder {
 		assert bridgeStart != null;
 		assert bridgeEnd != null;
 		if (onlyPerfectCarving) {
-			for (Coord c : result) {
+			for (Coord c : z) {
 				if (c.equals(bridgeStart) || c.equals(bridgeEnd))
 					continue;
 				for (Direction out : Direction.OUTWARDS) {
-					if (isForbiddenNeighbor(c.translate(out)))
+					assert !bresenham_ || bresenham;
+					if (isForbiddenNeighbor(c.translate(out), bresenham_))
 						return null;
 				}
 			}
@@ -76,7 +117,7 @@ class CorridorBuilder {
 			startEndBuf[0] = bridgeStart;
 			startEndBuf[1] = bridgeEnd;
 		}
-		return result;
+		return z;
 	}
 
 	/**
@@ -107,15 +148,21 @@ class CorridorBuilder {
 		throw Exceptions.newUnmatchedISE(sym);
 	}
 
-	private final boolean isForbiddenNeighbor(Coord c) {
-		return dungeon.isValid(c) && isForbiddenNeighbor0(c);
+	private final boolean isForbiddenNeighbor(Coord c, boolean bresenham_) {
+		return dungeon.isValid(c) && isForbiddenNeighbor0(c, bresenham_);
 	}
 
-	protected boolean isForbiddenNeighbor0(Coord c) {
+	protected boolean isForbiddenNeighbor0(Coord c, boolean bresenham_) {
 		final DungeonSymbol sym = dungeon.getSymbol(c);
+		/*
+		 * If this method is changed for 'bresenham_', DungeonGenerator::
+		 * generateCorridors should be adapted.
+		 */
 		switch (sym) {
-		case CHASM:
 		case DEEP_WATER:
+			/* forbidden is bresenham, otherwise allowed */
+			return !bresenham_;
+		case CHASM:
 		case DOOR:
 		case FLOOR:
 		case GRASS:
@@ -123,6 +170,7 @@ class CorridorBuilder {
 		case SHALLOW_WATER:
 		case STAIR_DOWN:
 		case STAIR_UP:
+			/* Always forbidden */
 			return true;
 		case WALL:
 			return false;
@@ -139,7 +187,7 @@ class CorridorBuilder {
 	 *            the result will be cardinally adjacent to it).
 	 * @return The corridor built or null if impossible.
 	 */
-	private /* @Nullable */ Zone build(RNG stable, Coord start, Coord end) {
+	private /* @Nullable */ Zone buildOneOrTwoLines(RNG stable, Coord start, Coord end) {
 		final Zone firstPart;
 		final Zone secondPart;
 		if (needTurn(start, end)) {
@@ -191,6 +239,48 @@ class CorridorBuilder {
 
 		return firstPart == null ? (secondPart == null ? null : firstPart)
 				: secondPart == null ? firstPart : new ZoneUnion(firstPart, secondPart);
+	}
+
+	private /* @Nullable */ Zone buildBresenham(RNG stable, Coord start, Coord end) {
+		final Coord[] array = Bresenham.line2D_(start, end);
+		final List<Coord> result = new ArrayList<Coord>(array.length + (array.length / 4));
+		assert array[0].equals(start);
+		assert array[array.length - 1].equals(end);
+		Coord prev = null;
+		for (int i = 0; i < array.length; i++) {
+			/*
+			 * If 'extremity' holds we should not add 'now', but the turn maybe
+			 */
+			final boolean extremity = i == 0 || i == array.length - 1;
+			final Coord now = array[i];
+			if (prev != null) {
+				assert prev.isAdjacent(now);
+				final Direction dir = prev.toGoTo(now);
+				if (!dir.isCardinal()) {
+					/*
+					 * Need to add a turn, because we want the result to be
+					 * cardinally walkable.
+					 */
+					final Coord candidate1 = prev.translate(dir.clockwise());
+					final Coord candidate2 = prev.translate(dir.counterClockwise());
+					final int bad1 = turnBadness(candidate1);
+					final int bad2 = turnBadness(candidate2);
+					final Coord chosenTurn;
+					if (bad1 == bad2)
+						chosenTurn = stable.nextBoolean() ? candidate1 : candidate2;
+					else if (bad1 < bad2)
+						chosenTurn = candidate1;
+					else
+						chosenTurn = candidate2;
+					result.add(chosenTurn);
+				}
+			}
+			if (!extremity)
+				result.add(now);
+			prev = now;
+		}
+		assert Collections.isSet(result);
+		return result.isEmpty() ? null : new ListZone(result);
 	}
 
 	/** @return The line built, or null if impossible */

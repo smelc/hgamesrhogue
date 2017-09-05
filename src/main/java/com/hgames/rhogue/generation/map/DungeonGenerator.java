@@ -369,7 +369,7 @@ public class DungeonGenerator {
 		generatePassagesInAlmostAdjacentRooms(gdata);
 		draw(gdata.dungeon);
 		gdata.startStage(Stage.CORRIDORS);
-		generateCorridors(gdata, dungeon.rooms, dungeon.rooms, true);
+		generateCorridors(gdata, dungeon.rooms, dungeon.rooms, true, false);
 		/* Must be called before 'generateWater' */
 		gdata.startStage(Stage.STAIRS);
 		final boolean good = generateStairs(gdata);
@@ -433,33 +433,7 @@ public class DungeonGenerator {
 						continue nextPool;
 				}
 			}
-			/*
-			 * Now cleanup dungeon.waterPools: remove lonelies and then delete
-			 * empty pools.
-			 */
-			if (dungeon.waterPools != null) {
-				final Iterator<ListZone> it = dungeon.waterPools.iterator();
-				while (it.hasNext()) {
-					final ListZone next = it.next();
-					if (!needCleanUp.contains(next))
-						continue;
-					final List<Coord> all = next.getState();
-					/* /!\ Mutes 'all' */
-					DungeonGeneratorHelper.replaceLonelies(next, new CellDoer() {
-						@Override
-						public void doOnCell(Coord c) {
-							/* Remove from the pool */
-							assert !all.contains(c) : c + " should have been removed already";
-							DungeonBuilder.setSymbol(dungeon, c, DungeonSymbol.WALL);
-							/* Adapt cell->Zone cache */
-							gdata.cellToEncloser[c.x][c.y] = null;
-							draw(dungeon);
-						}
-					});
-					if (next.isEmpty())
-						it.remove();
-				}
-			}
+			cleanWaterPools(gdata, needCleanUp);
 		}
 
 		{
@@ -484,6 +458,36 @@ public class DungeonGenerator {
 					/* Cannot place any more room */
 					break;
 			}
+		}
+	}
+
+	/**
+	 * Cleanup {@link Dungeon#waterPools}: remove lonelies and then delete empty
+	 * pools.
+	 */
+	private void cleanWaterPools(final GenerationData gdata,
+			/* @Nullable */ Collection<? extends Zone> needCleanUp) {
+		final Dungeon dungeon = gdata.dungeon;
+		final Iterator<ListZone> it = dungeon.waterPools.iterator();
+		while (it.hasNext()) {
+			final ListZone next = it.next();
+			if (needCleanUp != null && !needCleanUp.contains(next))
+				continue;
+			final List<Coord> all = next.getState();
+			/* /!\ Mutes 'all' */
+			DungeonGeneratorHelper.replaceLonelies(next, new CellDoer() {
+				@Override
+				public void doOnCell(Coord c) {
+					/* Remove from the pool */
+					assert !all.contains(c) : c + " should have been removed already";
+					DungeonBuilder.setSymbol(dungeon, c, DungeonSymbol.WALL);
+					/* Adapt cell->Zone cache */
+					gdata.cellToEncloser[c.x][c.y] = null;
+					draw(dungeon);
+				}
+			});
+			if (next.isEmpty())
+				it.remove();
 		}
 	}
 
@@ -560,7 +564,7 @@ public class DungeonGenerator {
 	 * @return The number of corridors built
 	 */
 	protected int generateCorridors(GenerationData gdata, List<Zone> rooms, List<Zone> dests,
-			boolean onlyPerfectCarving) {
+			boolean onlyPerfectCarving, boolean bresenham) {
 		final Dungeon dungeon = gdata.dungeon;
 		final int nbr = rooms.size();
 		/* A Zone, to the other zones; ordered by the distance of the centers */
@@ -590,9 +594,11 @@ public class DungeonGenerator {
 			if (!otherZones.isEmpty())
 				zoneToOtherZones.put(z, otherZones);
 		}
-		final CorridorBuilder cc = new CorridorBuilder(gdata.dungeon, true, onlyPerfectCarving);
+		final CorridorBuilder cc = new CorridorBuilder(gdata.dungeon, true, bresenham, onlyPerfectCarving);
 		final Coord[] startEndBuffer = new Coord[2];
 		final Coord[] connection = new Coord[2];
+		boolean needWaterPoolsCleanup = false;
+		final Set<Coord> buf = bresenham ? new HashSet<Coord>() : null;
 		int result = 0;
 		for (Zone z : zoneToOtherZones.keySet()) {
 			final List<Pair<Double, Zone>> candidateDests = zoneToOtherZones.get(z);
@@ -615,16 +621,39 @@ public class DungeonGenerator {
 					// is a Rectangle, but it may if it a ZoneUnion.
 					assert !built.contains(zEndpoint);
 					assert !built.contains(destEndpoint);
+					if (bresenham) {
+						/* Corridor can go through DEEP_WATER */
+						if (buf != null)
+							buf.clear();
+						final boolean rm = DungeonBuilder.removeFromWaterPools(dungeon, built, buf);
+						if (rm) {
+							needWaterPoolsCleanup = true;
+							for (Coord c : buf) {
+								gdata.cellToEncloser[c.x][c.y] = null;
+								/*
+								 * To preserve invariant that unbound cell have
+								 * the WALL symbol.
+								 */
+								DungeonBuilder.setSymbol(dungeon, c, DungeonSymbol.WALL);
+							}
+							draw(dungeon);
+						}
+					}
 					final Zone recorded = addZone(gdata, built, null, ZoneType.CORRIDOR);
 					DungeonBuilder.addConnection(dungeon, z, recorded);
 					DungeonBuilder.addConnection(dungeon, dest, recorded);
 					// Punch corridor
-					DungeonBuilder.setSymbols(dungeon, built.iterator(), DungeonSymbol.FLOOR);
+					for (Coord c : built) {
+						DungeonBuilder.setSymbol(dungeon, c, buf != null && buf.contains(c)
+								? DungeonSymbol.SHALLOW_WATER : DungeonSymbol.FLOOR);
+					}
 					draw(dungeon);
 					result++;
 				}
 			}
 		}
+		if (needWaterPoolsCleanup)
+			cleanWaterPools(gdata, null);
 		return result;
 	}
 
@@ -771,7 +800,8 @@ public class DungeonGenerator {
 					reachable += extension;
 					infoLog("Connected component (consisting of " + nbdc + " zone" + plural(sz) + ") of size "
 							+ extension);
-				}
+				} else
+					infoLog("Could not treat a disconnected component");
 			}
 		}
 		return (msz / 6) < reachable;
@@ -820,7 +850,7 @@ public class DungeonGenerator {
 		 * To ensure 'generateCorridors' precondition that we give it only rooms
 		 */
 		component.removeAll(dungeon.corridors);
-		final int nbc = generateCorridors(gdata, component, connectedRooms, true);
+		final int nbc = generateCorridors(gdata, component, connectedRooms, true, true);
 		final boolean connected = 0 < nbc;
 		if (connected) {
 			connectedRooms.addAll(component);
@@ -900,7 +930,7 @@ public class DungeonGenerator {
 			}
 			addZone(gdata, new ListZone(new ArrayList<Coord>(spill)), null, ZoneType.DEEP_WATER);
 			if (logger != null && logger.isInfoEnabled())
-				infoLog("Created water pool of size " + sz);
+				infoLog("Created water pool of size " + sz); // + ": " + spill);
 			draw(dungeon);
 			poolsDone++;
 		}
