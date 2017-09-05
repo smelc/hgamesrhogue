@@ -1,10 +1,12 @@
 package com.hgames.rhogue.generation.map.flood;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import com.hgames.rhogue.generation.map.DungeonSymbol;
@@ -12,6 +14,7 @@ import com.hgames.rhogue.grid.DoerInACircle;
 import com.hgames.rhogue.grid.Grids;
 
 import squidpony.squidgrid.Direction;
+import squidpony.squidgrid.zone.ListZone;
 import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;
 
@@ -47,13 +50,17 @@ public abstract class FloodFill {
 	 *            Where to start.
 	 * @param objective
 	 *            How to control when to stop the floodfill.
+	 * @param eatBorders
+	 *            Whether to eat the fill's borders using some kind of drunken
+	 *            walk. Give {@code true} if your floodfill isn't stopped by
+	 *            other symbols in {@code objective}.
 	 * @param buf
 	 *            Where to store the result, or {@code null} for this method to
 	 *            allocate a fresh set.
 	 * @return The flood or null (or empty) if none.
 	 */
 	public /* @Nullable */ LinkedHashSet<Coord> flood(RNG rng, int x, int y, IFloodObjective objective,
-			/* @Nullable */ LinkedHashSet<Coord> buf) {
+			boolean eatBorders, /* @Nullable */ LinkedHashSet<Coord> buf) {
 		final Coord start = Coord.get(x, y);
 		if (!canBeFloodOn_(start))
 			return buf;
@@ -78,7 +85,7 @@ public abstract class FloodFill {
 			}
 		}
 		if (result != null)
-			postprocess(result);
+			postprocess(rng, result, eatBorders);
 		return result;
 	}
 
@@ -111,9 +118,11 @@ public abstract class FloodFill {
 	 * </ol>
 	 * 
 	 * @param result
+	 * @param eatBorders
 	 */
-	protected void postprocess(final Collection<? extends Coord> result) {
-		// eatBorders(result);
+	protected void postprocess(RNG rng, final Collection<? extends Coord> result, boolean eatBorders) {
+		if (eatBorders)
+			eatBorders(rng, result);
 		removeLonelies(result);
 		// // keepBiggestComponent(result);
 		if (result.size() < 9)
@@ -121,17 +130,15 @@ public abstract class FloodFill {
 			result.clear();
 	}
 
-	protected void eatBorders(final Collection<? extends Coord> result) {
+	protected void eatBorders(RNG rng, final Collection<? extends Coord> result) {
 		/*
 		 * XXX We should not eat the border if it's connecting it to walkable
 		 * cells.
 		 */
 		int eaters = (result.size() / 24) + 1;
-		Iterator<? extends Coord> it = result.iterator();
-		while (it.hasNext() && 0 < eaters) {
-			final Coord eatCenter = it.next();
-			if (!Grids.isOnBorder(result, eatCenter))
-				continue;
+		final List<Coord> border = new ListZone(new ArrayList<Coord>(result)).getInternalBorder();
+		while (0 < eaters) {
+			final Coord eatCenter = rng.getRandomElement(border);
 			final DoerInACircle doer = new DoerInACircle() {
 				@Override
 				protected boolean doOnACell(int x, int y) {
@@ -141,7 +148,6 @@ public abstract class FloodFill {
 				}
 			};
 			doer.doInACircle(eatCenter.x, eatCenter.y, 2);
-			it = result.iterator();
 			eaters--;
 		}
 	}

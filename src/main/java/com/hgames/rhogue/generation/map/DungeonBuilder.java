@@ -1,5 +1,6 @@
 package com.hgames.rhogue.generation.map;
 
+import com.hgames.rhogue.zone.Zones;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -45,6 +46,16 @@ class DungeonBuilder {
 		if (dungeon.disconnectedRooms == null)
 			dungeon.disconnectedRooms = new ArrayList<Zone>();
 		dungeon.disconnectedRooms.add(z);
+	}
+
+	/** Prefer this method over direct mutations, it eases debugging. */
+	static void addWaterPool(Dungeon dungeon, Zone pool) {
+		assert !hasZone(dungeon, pool);
+		if (dungeon.waterPools == null)
+			dungeon.waterPools = new ArrayList<Zone>();
+		else
+			assert !dungeon.waterPools.contains(pool);
+		dungeon.waterPools.add(pool);
 	}
 
 	/** Prefer this method over direct mutations, it eases debugging. */
@@ -224,6 +235,10 @@ class DungeonBuilder {
 
 	static int getNumberOfZones(Dungeon dungeon) {
 		return dungeon.rooms.size() + dungeon.corridors.size();
+	}
+
+	static int getSizeOfWater(Dungeon dungeon) {
+		return dungeon.waterPools == null ? 0 : Zones.size(dungeon.waterPools);
 	}
 
 	static boolean hasStairs(Dungeon dungeon) {

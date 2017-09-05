@@ -43,6 +43,7 @@ import com.hgames.rhogue.zone.Zones;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.Rectangle;
+import squidpony.squidgrid.zone.ListZone;
 import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;
@@ -118,6 +119,9 @@ public class DungeonGenerator {
 	 * have them.
 	 */
 	protected boolean allowWidthOrHeightOneRooms = false;
+
+	/** Whether to do water before rooms. This makes water more central. */
+	protected boolean startWithWater;
 
 	/**
 	 * The percentage of the map that will be turned into deep water
@@ -295,24 +299,30 @@ public class DungeonGenerator {
 	}
 
 	/**
+	 * @param startWithWater
+	 *            Whether to do water before rooms. This makes water more
+	 *            central.
 	 * @param percent
 	 *            An int in [0, 100]. The percentage of the map to turn into
-	 *            water.
+	 *            water. Or anything negative not to change it.
 	 * @param pools
 	 *            An int in [0, Integer.MAX_VALUE]. The number of pools to
-	 *            create.
+	 *            create. Or anything negative not to change it.
 	 * @return {@code this}
 	 * @throws IllegalStateException
-	 *             If {@code percent} isn't in [0, 100] or if {@code pools} is
-	 *             negative.
+	 *             If {@code percent} is greater than 100.
 	 */
-	public DungeonGenerator setWaterObjective(int percent, int pools) {
-		if (!Ints.inInterval(0, percent, 100))
-			throw new IllegalStateException("Excepted a value in [0, 100]. Received: " + percent);
-		if (pools < 0)
-			throw new IllegalStateException("Excepted a 0 or positive value. Received: " + pools);
-		this.waterPercentage = percent;
-		this.waterPools = pools;
+	public DungeonGenerator setWaterObjective(boolean startWithWater, int percent, int pools) {
+		this.startWithWater = startWithWater;
+		if (0 <= percent) {
+			if (100 < percent)
+				throw new IllegalStateException("Excepted a value in [0, 100]. Received: " + percent);
+			this.waterPercentage = percent;
+		}
+		/* else do not change it */
+		if (0 <= pools)
+			this.waterPools = pools;
+		/* else do not change it */
 		return this;
 	}
 
@@ -349,6 +359,9 @@ public class DungeonGenerator {
 			// Nothing to do
 			return dungeon;
 		final GenerationData gdata = new GenerationData(dungeon, watch);
+		gdata.startStage(Stage.WATER_START);
+		if (startWithWater)
+			generateWater(gdata);
 		gdata.startStage(Stage.ROOMS);
 		generateRooms(gdata);
 		gdata.startStage(Stage.PASSAGES_IN_ALMOST_ADJACENT_ROOMS);
@@ -365,7 +378,8 @@ public class DungeonGenerator {
 		gdata.startStage(Stage.ENSURE_DENSITY);
 		ensureDensity(gdata);
 		gdata.startStage(Stage.WATER);
-		generateWater(gdata);
+		if (!startWithWater)
+			generateWater(gdata);
 		gdata.startStage(null);
 		gdata.logTimings(logger);
 		return dungeon;
@@ -734,30 +748,36 @@ public class DungeonGenerator {
 	}
 
 	/**
-	 * This method should be called before making all rooms connected, as it'll
-	 * recycle them into water areas.
+	 * This method behaves differently as to whether {@link #startWithWater} is
+	 * set. If not set, it'll build pools that are connected to existing
+	 * walkable areas.
 	 * 
 	 * @param gdata
-	 * @throws IllegalStateException
-	 *             If the stairs haven't been set yet.
 	 */
 	protected void generateWater(GenerationData gdata) {
 		if (waterPercentage == 0 || waterPools == 0)
 			/* Nothing to do */
 			return;
 		final Dungeon dungeon = gdata.dungeon;
-		if (!DungeonBuilder.hasStairs(dungeon))
-			throw new IllegalStateException("Stairs must be set for generateWater to be called");
 		Set<Coord> candidates = gdata.getWaterFillStartCandidates();
 		if (candidates.isEmpty())
 			candidates = new LinkedHashSet<Coord>();
 		gdata.removeWaterFillStartCandidates();
-		if (candidates.isEmpty())
-			return;
+		if (candidates.isEmpty()) {
+			if (startWithWater) {
+				for (int i = 0; i < waterPools; i++) {
+					/* So that's it's not too much on the edge */
+					final int x = rng.between(width / 4, width - (width / 4));
+					final int y = rng.between(height / 4, height - (height / 4));
+					candidates.add(Coord.get(x, y));
+				}
+			} else
+				throw new IllegalStateException("Implement me");
+		}
 		/* The number of cells filled */
 		int filled = 0;
 		final FloodFill fill = createFloodFill(gdata);
-		final FloodFillObjective objective = new FloodFillObjective(dungeon);
+		final FloodFillObjective objective = new FloodFillObjective(dungeon, startWithWater);
 		final int msz = mapSize();
 		final int totalObjective = (msz / 100) * waterPercentage;
 		final int poolObjective = totalObjective / waterPools;
@@ -770,8 +790,7 @@ public class DungeonGenerator {
 			spill.clear();
 			/* Go */
 			final Coord candidate = it.next();
-			infoLog("Using candidate: " + candidate);
-			fill.flood(rng, candidate.x, candidate.y, objective, spill);
+			fill.flood(rng, candidate.x, candidate.y, objective, startWithWater, spill);
 			if (spill.isEmpty())
 				continue;
 			final int sz = spill.size();
@@ -783,6 +802,7 @@ public class DungeonGenerator {
 				DungeonBuilder.setSymbol(dungeon, spilt, DungeonSymbol.DEEP_WATER);
 				filled++;
 			}
+			DungeonBuilder.addWaterPool(dungeon, new ListZone(new ArrayList<Coord>(spill)));
 			if (logger != null && logger.isInfoEnabled())
 				infoLog("Created water pool of size " + sz);
 			draw(dungeon);
@@ -875,7 +895,11 @@ public class DungeonGenerator {
 		 * This bound is quite important. Increasing it makes dungeon generation
 		 * slower, but creates more packed dungeons (more small rooms).
 		 */
-		outer: while (frustration < 8) {
+		/*
+		 * Try a bit harder when #startWithWater is set, as these dungeons
+		 * typically waster some space.
+		 */
+		outer: while (frustration < 8 + (startWithWater ? 4 : 0)) {
 			frustration++;
 			/* +1 to account for the surrounding wall */
 			final int maxWidth = getMaxRoomSideSize(true, rng.nextInt(10) == 0) + 1;
@@ -1397,6 +1421,11 @@ public class DungeonGenerator {
 
 		/** The underlying dungeon */
 		protected final Dungeon dungeon;
+		/**
+		 * true if water is generated before rooms. In this case, no need to
+		 * look for nearby walkable cells.
+		 */
+		protected final boolean startWithWater;
 
 		/** See {@link #isMet()} for the relation between all these fields */
 
@@ -1406,8 +1435,9 @@ public class DungeonGenerator {
 
 		protected int walkableNeighbors = 0;
 
-		public FloodFillObjective(Dungeon dungeon) {
+		public FloodFillObjective(Dungeon dungeon, boolean startWithWater) {
 			this.dungeon = dungeon;
+			this.startWithWater = startWithWater;
 		}
 
 		protected void prepare(int szObjective) {
@@ -1422,7 +1452,7 @@ public class DungeonGenerator {
 			if (dones == null)
 				dones = new HashSet<Coord>();
 			dones.add(c);
-			if (isCardinallyAdjacentToWalkable(c))
+			if (!startWithWater && isCardinallyAdjacentToWalkable(c))
 				walkableNeighbors++;
 		}
 
@@ -1432,7 +1462,7 @@ public class DungeonGenerator {
 			if (sz < sizeObjective)
 				/* Size objective isn't met */
 				return false;
-			if (walkableNeighbors < 3)
+			if (!startWithWater && walkableNeighbors < 3)
 				/* It must be connected to a walkable area by at least */
 				return false;
 			return true;
@@ -1734,6 +1764,6 @@ public class DungeonGenerator {
 	 */
 	private static enum Stage {
 		/* In the order in which they are executed */
-		INIT, ROOMS, PASSAGES_IN_ALMOST_ADJACENT_ROOMS, CORRIDORS, STAIRS, ENSURE_DENSITY, WATER
+		INIT, WATER_START, ROOMS, PASSAGES_IN_ALMOST_ADJACENT_ROOMS, CORRIDORS, STAIRS, ENSURE_DENSITY, WATER
 	}
 }

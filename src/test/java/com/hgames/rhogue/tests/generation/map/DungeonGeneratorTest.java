@@ -25,7 +25,7 @@ public class DungeonGeneratorTest {
 		final int width = 60;
 		final int height = 40;
 		final DungeonGenerators dgens = new DungeonGenerators(new RNG(SEED), width, height);
-		generate(dgens.guaranteesOneCircularRoom(), drawer);
+		generate(dgens.guaranteesOneCircularRoom(true), drawer);
 	}
 
 	private static void generate(DungeonGenerator dgen, IDungeonDrawer drawer) {

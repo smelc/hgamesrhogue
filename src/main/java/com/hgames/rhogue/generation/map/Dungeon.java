@@ -64,6 +64,9 @@ public class Dungeon {
 	Coord upwardStair;
 	Coord downwardStair;
 
+	/** Deep water */
+	/* @Nullable */ List<Zone> waterPools;
+
 	/**
 	 * A fresh instance backed up by {@code map}.
 	 * 
