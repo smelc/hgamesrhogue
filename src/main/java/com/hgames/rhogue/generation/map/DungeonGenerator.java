@@ -434,30 +434,30 @@ public class DungeonGenerator {
 				}
 			}
 			/*
-			 * Now cleanup dungeon.waterPools, because pools may have become
-			 * empty
+			 * Now cleanup dungeon.waterPools: remove lonelies and then delete
+			 * empty pools.
 			 */
 			if (dungeon.waterPools != null) {
 				final Iterator<ListZone> it = dungeon.waterPools.iterator();
 				while (it.hasNext()) {
 					final ListZone next = it.next();
-					if (needCleanUp.contains(next)) {
-						final List<Coord> all = next.getState();
-						final CellDoer callback = new CellDoer() {
-							@Override
-							public void doOnCell(Coord c) {
-								/* Remove from the pool */
-								final boolean rmed = all.remove(c);
-								if (rmed)
-									/* Adapt cell->Zone cache */
-									gdata.cellToEncloser[c.x][c.y] = null;
-								draw(dungeon);
-							}
-						};
-						DungeonGeneratorHelper.replaceLonelies(next, callback);
-						if (next.isEmpty())
-							it.remove();
-					}
+					if (!needCleanUp.contains(next))
+						continue;
+					final List<Coord> all = next.getState();
+					/* /!\ Mutes 'all' */
+					DungeonGeneratorHelper.replaceLonelies(next, new CellDoer() {
+						@Override
+						public void doOnCell(Coord c) {
+							/* Remove from the pool */
+							assert !all.contains(c) : c + " should have been removed already";
+							DungeonBuilder.setSymbol(dungeon, c, DungeonSymbol.WALL);
+							/* Adapt cell->Zone cache */
+							gdata.cellToEncloser[c.x][c.y] = null;
+							draw(dungeon);
+						}
+					});
+					if (next.isEmpty())
+						it.remove();
 				}
 			}
 		}

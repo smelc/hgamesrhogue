@@ -261,6 +261,30 @@ public class Dungeon {
 				throw Exceptions.newUnmatchedISE(sym);
 			}
 		}
+		/* All zones are non-empty */
+		{
+			for (Zone z : rooms) {
+				if (z.isEmpty()) {
+					assert false : "Room " + z + " is empty";
+					return false;
+				}
+			}
+			for (Zone z : corridors) {
+				if (z.isEmpty()) {
+					assert false : "Corridor " + z + " is empty";
+					return false;
+				}
+			}
+			if (waterPools != null) {
+				for (Zone z : waterPools) {
+					if (z.isEmpty()) {
+						assert false : "Deep water pool " + z + " is empty";
+						return false;
+					}
+				}
+			}
+		}
+
 		/* FIXME Check that stairs are correct */
 		return true;
 	}
