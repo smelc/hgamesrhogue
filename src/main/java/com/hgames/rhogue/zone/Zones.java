@@ -74,7 +74,7 @@ public class Zones {
 	 * @param zones
 	 * @return The sum of {@code zones}'s size.
 	 */
-	public static int size(List<Zone> zones) {
+	public static int size(List<? extends Zone> zones) {
 		int result = 0;
 		final int sz = zones.size();
 		for (int i = 0; i < sz; i++)

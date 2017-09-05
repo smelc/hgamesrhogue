@@ -385,12 +385,105 @@ public class DungeonGenerator {
 		return dungeon;
 	}
 
-	protected void generateRooms(GenerationData gdata) {
-		while (true) {
-			final boolean done = generateRoom(gdata);
-			if (!done)
-				/* Cannot place any more room */
-				break;
+	protected void generateRooms(final GenerationData gdata) {
+		final Dungeon dungeon = gdata.dungeon;
+		if (startWithWater) {
+			/*
+			 * Generation tuned to generate close to water pools. That's what
+			 * allow to connect rooms and pools (the normal generation below is
+			 * too restrictive to do that, since it only considers wall-only
+			 * areas).
+			 */
+			final EnumSet<DungeonSymbol> overwritten = EnumSet.of(DungeonSymbol.WALL,
+					DungeonSymbol.DEEP_WATER);
+			final int nbPools = dungeon.waterPools == null ? 0 : dungeon.waterPools.size();
+			final Set<ListZone> needCleanUp = new HashSet<ListZone>();
+			nextPool: for (int i = 0; i < nbPools; i++) {
+				final Zone waterPool = dungeon.waterPools.get(i);
+				final int nbr = Math.max(1, waterPool.size() / 16);
+				final RoomGeneratorHelper tlStarts = new RoomGeneratorHelper() {
+					@Override
+					public Iterator<Coord> getCoords() {
+						final List<Coord> internalBorder = waterPool.getInternalBorder();
+						return internalBorder.iterator();
+					}
+
+					@Override
+					public void prepareRegistration(Zone z) {
+						/*
+						 * We need to remove the members of the room that
+						 * overlap with water, hereby shrinking water pools.
+						 */
+						for (Coord inRoom : z) {
+							for (int j = 0; j < nbPools; j++) {
+								final ListZone pool = dungeon.waterPools.get(j);
+								final boolean rmed = pool.getState().remove(inRoom);
+								if (rmed) {
+									needCleanUp.add(pool);
+									gdata.cellToEncloser[inRoom.x][inRoom.y] = null;
+								}
+							}
+						}
+						draw(dungeon);
+					}
+				};
+				for (int j = 0; j < nbr; j++) {
+					final boolean done = generateRoom(gdata, tlStarts, overwritten);
+					if (!done)
+						continue nextPool;
+				}
+			}
+			/*
+			 * Now cleanup dungeon.waterPools, because pools may have become
+			 * empty
+			 */
+			if (dungeon.waterPools != null) {
+				final Iterator<ListZone> it = dungeon.waterPools.iterator();
+				while (it.hasNext()) {
+					final ListZone next = it.next();
+					if (needCleanUp.contains(next)) {
+						final List<Coord> all = next.getState();
+						final CellDoer callback = new CellDoer() {
+							@Override
+							public void doOnCell(Coord c) {
+								/* Remove from the pool */
+								final boolean rmed = all.remove(c);
+								if (rmed)
+									/* Adapt cell->Zone cache */
+									gdata.cellToEncloser[c.x][c.y] = null;
+								draw(dungeon);
+							}
+						};
+						DungeonGeneratorHelper.replaceLonelies(next, callback);
+						if (next.isEmpty())
+							it.remove();
+					}
+				}
+			}
+		}
+
+		{
+			/* Normal generation */
+			final EnumSet<DungeonSymbol> overwritten = EnumSet.of(DungeonSymbol.WALL);
+			final RoomGeneratorHelper tlStarts = new RoomGeneratorHelper() {
+				@Override
+				public Iterator<Coord> getCoords() {
+					return new GridIterators.RectangleRandomStartAndDirection(width, height,
+							rng.nextInt(width), rng.nextInt(height),
+							rng.getRandomElement(Direction.CARDINALS));
+				}
+
+				@Override
+				public void prepareRegistration(Zone z) {
+					/* Nothing to do */
+				}
+			};
+			while (true) {
+				final boolean done = generateRoom(gdata, tlStarts, overwritten);
+				if (!done)
+					/* Cannot place any more room */
+					break;
+			}
 		}
 	}
 
@@ -415,8 +508,11 @@ public class DungeonGenerator {
 				final Zone z1 = ZONE_PAIR_BUF[1];
 				assert z1 != null;
 				assert z0 != z1;
+				final Coord doorCandidate = Coord.get(x, y);
 				Multimaps.addToListMultimap(connectedsToCandidates, orderedPair(gdata, z0, z1),
-						Coord.get(x, y));
+						doorCandidate);
+				assert DungeonBuilder.findZoneContaining(dungeon, x, y) == null : "Candidate for door: "
+						+ doorCandidate + " should not be in a zone";
 			}
 		}
 		/*
@@ -448,7 +544,7 @@ public class DungeonGenerator {
 			final DungeonSymbol sym = rng.next(101) <= doorProbability ? DungeonSymbol.DOOR
 					: DungeonSymbol.FLOOR;
 			final Zone zdoor = new SingleCellZone(door);
-			addZone(gdata, zdoor, null, false);
+			addZone(gdata, zdoor, null, ZoneType.CORRIDOR);
 			DungeonBuilder.addConnection(dungeon, z0, zdoor);
 			DungeonBuilder.addConnection(dungeon, z1, zdoor);
 			DungeonBuilder.setSymbol(dungeon, door.x, door.y, sym);
@@ -519,7 +615,7 @@ public class DungeonGenerator {
 					// is a Rectangle, but it may if it a ZoneUnion.
 					assert !built.contains(zEndpoint);
 					assert !built.contains(destEndpoint);
-					final Zone recorded = addZone(gdata, built, null, false);
+					final Zone recorded = addZone(gdata, built, null, ZoneType.CORRIDOR);
 					DungeonBuilder.addConnection(dungeon, z, recorded);
 					DungeonBuilder.addConnection(dungeon, dest, recorded);
 					// Punch corridor
@@ -655,7 +751,7 @@ public class DungeonGenerator {
 		final int nbdc = disconnectedComponents.size();
 		int reachable = Zones.size(dungeon.rooms);
 		reachable += Zones.size(dungeon.corridors);
-		final int msz = mapSize();
+		final int msz = dungeon.size();
 		if (0 < nbdc) {
 			infoLog("Found " + nbdc + " disconnected component" + plural(nbdc));
 			final List<Zone> connectedRooms = new ArrayList<Zone>(dungeon.rooms);
@@ -735,7 +831,7 @@ public class DungeonGenerator {
 
 	/** @return The size under which a disconnected component is wallified */
 	protected int getWallificationBound() {
-		return mapSize() / 24;
+		return (width * height) / 24;
 	}
 
 	/** Turns a zone into walls, hereby removing it */
@@ -776,9 +872,9 @@ public class DungeonGenerator {
 		}
 		/* The number of cells filled */
 		int filled = 0;
-		final FloodFill fill = createFloodFill(gdata);
+		final FloodFill fill = new DungeonFloodFill(gdata.dungeon.map, width, height);
 		final FloodFillObjective objective = new FloodFillObjective(dungeon, startWithWater);
-		final int msz = mapSize();
+		final int msz = dungeon.size();
 		final int totalObjective = (msz / 100) * waterPercentage;
 		final int poolObjective = totalObjective / waterPools;
 		int poolsDone = 0;
@@ -802,39 +898,12 @@ public class DungeonGenerator {
 				DungeonBuilder.setSymbol(dungeon, spilt, DungeonSymbol.DEEP_WATER);
 				filled++;
 			}
-			DungeonBuilder.addWaterPool(dungeon, new ListZone(new ArrayList<Coord>(spill)));
+			addZone(gdata, new ListZone(new ArrayList<Coord>(spill)), null, ZoneType.DEEP_WATER);
 			if (logger != null && logger.isInfoEnabled())
 				infoLog("Created water pool of size " + sz);
 			draw(dungeon);
 			poolsDone++;
 		}
-	}
-
-	protected Splash<DungeonSymbol> createSplash() {
-		final EnumSet<DungeonSymbol> impassable = EnumSet.noneOf(DungeonSymbol.class);
-		for (DungeonSymbol sym : DungeonSymbol.values()) {
-			switch (sym) {
-			case CHASM:
-			case DEEP_WATER:
-			case DOOR:
-			case FLOOR:
-			case GRASS:
-			case HIGH_GRASS:
-			case SHALLOW_WATER:
-			case STAIR_DOWN:
-			case STAIR_UP:
-				impassable.add(sym);
-				continue;
-			case WALL:
-				continue;
-			}
-			throw Exceptions.newUnmatchedISE(sym);
-		}
-		return new Splash<DungeonSymbol>(impassable);
-	}
-
-	protected FloodFill createFloodFill(GenerationData gdata) {
-		return new DungeonFloodFill(gdata.dungeon.map, width, height);
 	}
 
 	protected int getMaxRoomSideSize(boolean widthOrHeight, boolean spiceItUp) {
@@ -845,10 +914,6 @@ public class DungeonGenerator {
 		final int result = widthOrHeight ? rng.between(minRoomWidth, maxRoomWidth + 1)
 				: rng.between(minRoomHeight, maxRoomHeight + 1);
 		return result * (spiceItUp ? 2 : 1);
-	}
-
-	protected final int mapSize() {
-		return width * height;
 	}
 
 	protected void draw(Dungeon dungeon) {
@@ -888,7 +953,26 @@ public class DungeonGenerator {
 		return true;
 	}
 
-	private boolean generateRoom(GenerationData gdata) {
+	/**
+	 * @author smelC
+	 */
+	private interface RoomGeneratorHelper extends CoordsProvider {
+
+		void prepareRegistration(Zone z);
+
+	}
+
+	/**
+	 * @param gdata
+	 * @param rgh
+	 *            Providers for choosing the top left coordinate of rooms built
+	 *            and custom stuff to do before registering a zone built.
+	 * @param overwritten
+	 *            The symbols that the rooms can overwrite.
+	 * @return Whether a room could be generated.
+	 */
+	private boolean generateRoom(GenerationData gdata, RoomGeneratorHelper rgh,
+			EnumSet<DungeonSymbol> overwritten) {
 		final Dungeon dungeon = gdata.dungeon;
 		int frustration = 0;
 		/*
@@ -905,8 +989,7 @@ public class DungeonGenerator {
 			final int maxWidth = getMaxRoomSideSize(true, rng.nextInt(10) == 0) + 1;
 			final int maxHeight = getMaxRoomSideSize(false, rng.nextInt(10) == 0) + 1;
 			/* Top-left coordinate */
-			final Iterator<Coord> tlPlacer = new GridIterators.RectangleRandomStartAndDirection(width, height,
-					rng.nextInt(width), rng.nextInt(height), rng.getRandomElement(Direction.CARDINALS));
+			final Iterator<Coord> tlPlacer = rgh.getCoords();
 			while (true) {
 				if (!tlPlacer.hasNext())
 					continue outer;
@@ -930,8 +1013,9 @@ public class DungeonGenerator {
 				 * .extend() to avoid generating adjacent rooms. This is a smart
 				 * trick (as opposed to extending the rooms already created).
 				 */
-				if (!isOnly(dungeon, Rectangle.Utils.cells(new Rectangle.Impl(blCandidate, mw, mh).extend()),
-						DungeonSymbol.WALL))
+				if (!DungeonBuilder.isOnly(dungeon,
+						Rectangle.Utils.cells(new Rectangle.Impl(blCandidate, mw, mh).extend()), overwritten,
+						true))
 					continue;
 				assert dungeon.isValid(brCandidate);
 				assert !Dungeons.isOnEdge(dungeon, brCandidate);
@@ -943,8 +1027,9 @@ public class DungeonGenerator {
 				if (zone != null) {
 					assert !DungeonBuilder.anyOnEdge(dungeon, zone.iterator());
 					// infoLog("Generated room: " + zone);
+					rgh.prepareRegistration(zone);
 					/* Record the zone */
-					addZone(gdata, zone, new Rectangle.Impl(blCandidate, mw, mh), true);
+					addZone(gdata, zone, new Rectangle.Impl(blCandidate, mw, mh), ZoneType.ROOM);
 					/* Punch it */
 					DungeonBuilder.setSymbols(dungeon, zone.iterator(), DungeonSymbol.FLOOR);
 					draw(dungeon);
@@ -1035,42 +1120,44 @@ public class DungeonGenerator {
 			assert false;
 			throw new IllegalStateException("Cannot find zone containing " + x1 + "," + y1);
 		}
+		assert DungeonBuilder.hasRoomOrCorridor(dungeon, z1);
 		final Zone z2 = gdata.findZoneContaining(x2, y2);
 		if (z2 == null) {
 			assert false;
 			throw new IllegalStateException("Cannot find zone containing " + x1 + "," + y1);
 		}
+		assert DungeonBuilder.hasRoomOrCorridor(dungeon, z2);
 		ZONE_PAIR_BUF[0] = z1;
 		ZONE_PAIR_BUF[1] = z2;
 		return true;
 	}
 
 	/**
-	 * @return Whether zone is valid in dungeon and only contains {@code sym}
+	 * @param gdata
+	 * @param z
+	 *            An instance of {@link ListZone} if ztype is
+	 *            {@link ZoneType#DEEP_WATER}.
+	 * @param boundingBox
+	 * @param ztype
 	 */
-	private boolean isOnly(Dungeon dungeon, Iterator<Coord> zone, DungeonSymbol sym) {
-		while (zone.hasNext()) {
-			final Coord c = zone.next();
-			final DungeonSymbol dsym = dungeon.getSymbol(c.x, c.y);
-			if (dsym == null)
-				/* Out of bounds */
-				return false;
-			if (dsym != sym)
-				/* Not the expected symbol */
-				return false;
-		}
-		return true;
-	}
-
 	private Zone addZone(GenerationData gdata, Zone z, /* @Nullable */ Rectangle boundingBox,
-			boolean roomOrCorridor) {
-		final Zone recorded = needCaching(z) ? new CachingZone(z) : z;
-		DungeonBuilder.addZone(gdata.dungeon, recorded, boundingBox, roomOrCorridor);
+			ZoneType ztype) {
+		final Dungeon dungeon = gdata.dungeon;
+		final Zone recorded = needCaching(z, ztype) ? new CachingZone(z) : z;
+		switch (ztype) {
+		case CORRIDOR:
+		case ROOM:
+			DungeonBuilder.addZone(dungeon, recorded, boundingBox, ztype == ZoneType.ROOM);
+			break;
+		case DEEP_WATER:
+			DungeonBuilder.addWaterPool(dungeon, (ListZone) z);
+			break;
+		}
 		for (Coord c : recorded) {
 			final Zone prev = gdata.cellToEncloser[c.x][c.y];
 			if (prev != null)
-				throw new IllegalStateException(
-						"Cell " + c + " belongs to zone " + prev + " already. Cannot map it to " + recorded);
+				throw new IllegalStateException("Cell " + c + " (" + dungeon.map[c.x][c.y]
+						+ ") belongs to zone " + prev + " already. Cannot map it to " + recorded);
 			gdata.cellToEncloser[c.x][c.y] = recorded;
 		}
 		gdata.recordRoomOrdering(recorded);
@@ -1254,7 +1341,7 @@ public class DungeonGenerator {
 		 * .##
 		 * </pre>
 		 */
-		if (!haveACrossRoad(COORD_LIST_BUF))
+		if (!DungeonGeneratorHelper.haveACrossRoad(COORD_LIST_BUF))
 			return false;
 		COORD_LIST_BUF.clear();
 		return true;
@@ -1366,28 +1453,9 @@ public class DungeonGenerator {
 		throw Exceptions.newUnmatchedISE(sym);
 	}
 
-	/**
-	 * @param list
-	 * @return {@code true} if there's a member of {@code list} to which all
-	 *         other members are adjacent.
-	 */
-	private static boolean haveACrossRoad(List<Coord> list) {
-		final int size = list.size();
-		outer: for (int i = 0; i < size; i++) {
-			final Coord c = list.get(i);
-			for (int j = 0; j < size; j++) {
-				if (i == j)
-					continue;
-				final Coord other = list.get(i);
-				if (!c.isAdjacent(other))
-					continue outer;
-			}
-			return true;
-		}
-		return true;
-	}
-
-	private static boolean needCaching(Zone z) {
+	private static boolean needCaching(Zone z, ZoneType ztype) {
+		if (!ztype.needsCaching())
+			return false;
 		if (z instanceof Rectangle)
 			// (NO-BBOX)
 			return false;
@@ -1755,6 +1823,25 @@ public class DungeonGenerator {
 			}
 		}
 
+	}
+
+	/**
+	 * @author smelC
+	 */
+	private static enum ZoneType {
+		ROOM, CORRIDOR, DEEP_WATER;
+
+		boolean needsCaching() {
+			switch (this) {
+			case CORRIDOR:
+			case ROOM:
+				return true;
+			case DEEP_WATER:
+				/* No caching, since these zones are muted */
+				return false;
+			}
+			throw Exceptions.newUnmatchedISE(this);
+		}
 	}
 
 	/**

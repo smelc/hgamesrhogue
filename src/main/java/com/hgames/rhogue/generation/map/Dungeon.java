@@ -10,6 +10,7 @@ import java.util.Map;
 import com.hgames.lib.Exceptions;
 
 import squidpony.squidgrid.mapping.Rectangle;
+import squidpony.squidgrid.zone.ListZone;
 import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
@@ -65,7 +66,7 @@ public class Dungeon {
 	Coord downwardStair;
 
 	/** Deep water */
-	/* @Nullable */ List<Zone> waterPools;
+	/* @Nullable */ List<ListZone> waterPools;
 
 	/**
 	 * A fresh instance backed up by {@code map}.
@@ -211,7 +212,7 @@ public class Dungeon {
 		/* Connections are correct */
 		for (Map.Entry<Zone, ? extends Collection<? extends Zone>> entry : connections.entrySet()) {
 			final Zone z = entry.getKey();
-			if (!DungeonBuilder.hasZone(this, z)) {
+			if (!DungeonBuilder.hasRoomOrCorridor(this, z)) {
 				assert false;
 				return false;
 			}
@@ -221,7 +222,7 @@ public class Dungeon {
 				return false;
 			}
 			for (Zone dest : connectedTo) {
-				if (!DungeonBuilder.hasZone(this, dest)) {
+				if (!DungeonBuilder.hasRoomOrCorridor(this, dest)) {
 					assert false;
 					return false;
 				}

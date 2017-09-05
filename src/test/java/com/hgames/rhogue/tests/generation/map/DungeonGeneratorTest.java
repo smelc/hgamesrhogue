@@ -15,6 +15,7 @@ public class DungeonGeneratorTest {
 
 	/** The seed used */
 	public static final int SEED = 38;
+	// FIXME CH See seed 42, 43 for a lonely water cell
 	// FIXME CH See seed 54 for a lonely door
 
 	/**

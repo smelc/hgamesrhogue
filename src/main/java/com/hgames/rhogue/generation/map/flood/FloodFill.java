@@ -153,7 +153,7 @@ public abstract class FloodFill {
 	}
 
 	protected void removeLonelies(Collection<? extends Coord> result) {
-		for (int i = 0; i < Integer.MAX_VALUE; i++) {
+		while (true) {
 			final int effect = removeLonelies0(result);
 			if (effect == 0)
 				break;

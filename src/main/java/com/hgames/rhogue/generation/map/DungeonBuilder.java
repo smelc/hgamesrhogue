@@ -1,8 +1,8 @@
 package com.hgames.rhogue.generation.map;
 
-import com.hgames.rhogue.zone.Zones;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -10,8 +10,10 @@ import java.util.Map;
 import java.util.Set;
 
 import com.hgames.lib.collection.Multimaps;
+import com.hgames.rhogue.zone.Zones;
 
 import squidpony.squidgrid.mapping.Rectangle;
+import squidpony.squidgrid.zone.ListZone;
 import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
@@ -35,8 +37,8 @@ class DungeonBuilder {
 		assert z1 != z2;
 		if (z1 == z2)
 			throw new IllegalStateException("A zone should not be connected to itself");
-		assert hasZone(dungeon, z1);
-		assert hasZone(dungeon, z2);
+		assert hasRoomOrCorridor(dungeon, z1);
+		assert hasRoomOrCorridor(dungeon, z2);
 		Multimaps.addToListMultimapIfAbsent(dungeon.connections, z1, z2);
 		Multimaps.addToListMultimapIfAbsent(dungeon.connections, z2, z1);
 	}
@@ -49,10 +51,10 @@ class DungeonBuilder {
 	}
 
 	/** Prefer this method over direct mutations, it eases debugging. */
-	static void addWaterPool(Dungeon dungeon, Zone pool) {
+	static void addWaterPool(Dungeon dungeon, ListZone pool) {
 		assert !hasZone(dungeon, pool);
 		if (dungeon.waterPools == null)
-			dungeon.waterPools = new ArrayList<Zone>();
+			dungeon.waterPools = new ArrayList<ListZone>();
 		else
 			assert !dungeon.waterPools.contains(pool);
 		dungeon.waterPools.add(pool);
@@ -241,12 +243,44 @@ class DungeonBuilder {
 		return dungeon.waterPools == null ? 0 : Zones.size(dungeon.waterPools);
 	}
 
+	static boolean hasRoomOrCorridor(Dungeon dungeon, Zone z) {
+		return dungeon.rooms.contains(z) || dungeon.corridors.contains(z);
+	}
+
 	static boolean hasStairs(Dungeon dungeon) {
 		return dungeon.upwardStair != null && dungeon.downwardStair != null;
 	}
 
+	static boolean hasWaterPool(Dungeon dungeon, Zone z) {
+		return dungeon.waterPools != null && dungeon.waterPools.contains(z);
+	}
+
 	static boolean hasZone(Dungeon dungeon, Zone z) {
-		return dungeon.rooms.contains(z) || dungeon.corridors.contains(z);
+		return hasRoomOrCorridor(dungeon, z) || hasWaterPool(dungeon, z);
+	}
+
+	/**
+	 * @boolean checkValidity Whether to return {@code false} on out of bounds
+	 *          coordinates.
+	 * @return Whether zone is valid in dungeon and only contains members of
+	 *         {@code syms}
+	 */
+	static boolean isOnly(Dungeon dungeon, Iterator<Coord> zone, EnumSet<DungeonSymbol> syms,
+			boolean checkValidity) {
+		while (zone.hasNext()) {
+			final Coord c = zone.next();
+			final DungeonSymbol sym = dungeon.getSymbol(c.x, c.y);
+			if (sym == null) {
+				/* Out of bounds */
+				if (checkValidity)
+					return false;
+				continue;
+			}
+			if (!syms.contains(sym))
+				/* Not the expected symbol */
+				return false;
+		}
+		return true;
 	}
 
 	static boolean isRoom(Dungeon dungeon, Zone z) {
