@@ -87,4 +87,9 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 	public Zone extend() {
 		return new NineOrTenCellsZone(Coord.get(x, y), true);
 	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + "[" + getCenter() + "]";
+	}
 }

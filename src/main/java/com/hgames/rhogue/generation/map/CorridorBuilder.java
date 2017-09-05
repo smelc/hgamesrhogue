@@ -19,6 +19,8 @@ import squidpony.squidmath.RNG;
 /**
  * @author smelC
  */
+// FIXME CH Introduce an interface, and split this implem
+// into two, separating 'allowATurn' and 'bresenham'.
 class CorridorBuilder {
 
 	private final Dungeon dungeon;
@@ -69,6 +71,8 @@ class CorridorBuilder {
 		if (!bresenham)
 			return null;
 		result = buildBresenham(stable, start, end);
+		if (result == null)
+			return null;
 		result = postprocess(result, start, end, startEndBuf, true);
 		return result;
 	}
@@ -124,7 +128,7 @@ class CorridorBuilder {
 	 * @return Whether it's okay to turn this cell into a corridor, looking only
 	 *         at this cell.
 	 */
-	protected boolean isSingleCellCarvingAllowed(Coord c) {
+	protected boolean isSingleCellCarvingAllowed(Coord c, boolean bresenham_) {
 		assert dungeon.isValid(c);
 		if (Dungeons.isOnEdge(dungeon, c))
 			return false;
@@ -132,8 +136,9 @@ class CorridorBuilder {
 		if (sym == null)
 			return false;
 		switch (sym) {
-		case CHASM:
 		case DEEP_WATER:
+			return bresenham_;
+		case CHASM:
 		case DOOR:
 		case FLOOR:
 		case GRASS:
@@ -272,11 +277,24 @@ class CorridorBuilder {
 						chosenTurn = candidate1;
 					else
 						chosenTurn = candidate2;
-					result.add(chosenTurn);
+					final Coord finally_;
+					if (isSingleCellCarvingAllowed(chosenTurn, true))
+						finally_ = chosenTurn;
+					else {
+						final Coord other = chosenTurn == candidate1 ? candidate2 : candidate1;
+						if (!isSingleCellCarvingAllowed(other, true))
+							return null;
+						finally_ = other;
+					}
+					assert isSingleCellCarvingAllowed(finally_, true);
+					result.add(finally_);
 				}
 			}
-			if (!extremity)
+			if (!extremity) {
+				if (!isSingleCellCarvingAllowed(now, true))
+					return null;
 				result.add(now);
+			}
 			prev = now;
 		}
 		assert Collections.isSet(result);
@@ -335,7 +353,7 @@ class CorridorBuilder {
 		assert result.contains(start);
 		assert result.contains(end);
 		for (Coord inCorridor : result) {
-			if (!isSingleCellCarvingAllowed(inCorridor))
+			if (!isSingleCellCarvingAllowed(inCorridor, false))
 				return null;
 		}
 		return result;

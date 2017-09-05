@@ -14,9 +14,9 @@ import squidpony.squidmath.RNG;
 public class DungeonGeneratorTest {
 
 	/** The seed used */
-	public static final int SEED = 38;
-	// FIXME CH See seed 42, 43 for a lonely water cell
-	// FIXME CH See seed 54 for a lonely door
+	public static final int SEED = 32;
+	// FIXME CH See seed 36 for disconnected component
+	// FIXME CH See seed 54 for lonely doors
 
 	/**
 	 * @param args

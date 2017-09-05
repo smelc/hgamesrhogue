@@ -563,7 +563,7 @@ public class DungeonGenerator {
 	 *            The possible destinations (should be rooms too).
 	 * @return The number of corridors built
 	 */
-	protected int generateCorridors(GenerationData gdata, List<Zone> rooms, List<Zone> dests,
+	protected int generateCorridors(GenerationData gdata, Collection<Zone> rooms, List<Zone> dests,
 			boolean onlyPerfectCarving, boolean bresenham) {
 		final Dungeon dungeon = gdata.dungeon;
 		final int nbr = rooms.size();
@@ -572,8 +572,7 @@ public class DungeonGenerator {
 				nbr);
 		final int nbd = dests.size();
 		final double maxDist = (width + height) / 6;
-		for (int i = 0; i < nbr; i++) {
-			final Zone z = rooms.get(i);
+		for (Zone z : rooms) {
 			assert DungeonBuilder.isRoom(dungeon, z);
 			final Coord zc = z.getCenter();
 			assert !zoneToOtherZones.keySet().contains(z);
@@ -660,7 +659,7 @@ public class DungeonGenerator {
 	/** @return Whether the stairs could be placed */
 	private boolean generateStairs(GenerationData gdata) {
 		final Dungeon dungeon = gdata.dungeon;
-		final Coord up = generateStair(gdata, true);
+		final Coord up = generateStair(gdata, true, null, false);
 		if (up == null) {
 			warnLog("Cannot place upward stair");
 			return false;
@@ -668,7 +667,7 @@ public class DungeonGenerator {
 			infoLog("Placed upward stair at " + up);
 		assert dungeon.getSymbol(dungeon.upwardStair) == DungeonSymbol.STAIR_UP;
 		draw(dungeon);
-		final Coord down = generateStair(gdata, false);
+		final Coord down = generateStair(gdata, false, null, false);
 		if (down == null) {
 			warnLog("Cannot place downward stair");
 			return false;
@@ -679,10 +678,19 @@ public class DungeonGenerator {
 		return true;
 	}
 
-	/** @return Where it got generated, if it did (otherwise null) */
-	protected /* @Nullable */ Coord generateStair(GenerationData gdata, boolean upOrDown) {
+	/**
+	 * @param objective
+	 *            Where to place the stair, or null to let this method choose.
+	 * @param lastHope
+	 *            true if failing will doom generation for sure.
+	 * @return Where it got generated, if it did (otherwise null)
+	 */
+	protected /* @Nullable */ Coord generateStair(GenerationData gdata, boolean upOrDown,
+			/* @Nullable */ Coord objective, boolean lastHope) {
 		final Dungeon dungeon = gdata.dungeon;
-		/* @Nullable */ Coord objective = upOrDown ? upStairObjective : downStairObjective;
+		if (objective == null)
+			/* Find objective on our own */
+			objective = upOrDown ? upStairObjective : downStairObjective;
 		assert objective == null || dungeon.isValid(objective);
 		final /* @Nullable */ Coord other = upOrDown ? dungeon.downwardStair : dungeon.upwardStair;
 		if (objective == null) {
@@ -734,10 +742,15 @@ public class DungeonGenerator {
 			if (isStairCandidate(dungeon, next))
 				queue.add(next);
 		}
-		if (queue.isEmpty())
+		if (queue.isEmpty()) {
+			infoLog("No candidate for stair " + (upOrDown ? "up" : "down"));
 			return null;
+		}
+
 		if (logger != null && logger.isInfoEnabled())
 			infoLog(queue.size() + " stair candidate" + (queue.size() == 1 ? "" : "s"));
+		final Coord[] qCopy = new Coord[queue.size()];
+		int qIdx = 0;
 		while (!queue.isEmpty()) {
 			final Coord candidate = queue.remove();
 			if (other == null
@@ -745,8 +758,28 @@ public class DungeonGenerator {
 				if (punchStair(gdata, candidate, upOrDown))
 					return candidate;
 			}
+			qCopy[qIdx++] = candidate;
 		}
-		return null;
+		if (lastHope)
+			return null;
+		if (other == null)
+			return null;
+		/*
+		 * It may be a connectivity problem, if the stair objective is only
+		 * close to rooms that aren't connected to the other stair. Let's try to
+		 * fix that.
+		 */
+		infoLog("Could not generate " + (upOrDown ? "upward" : "downward")
+				+ " stair, trying to fix connectivity issue (around " + objective + ") if any.");
+		final List<Zone> dests = new ArrayList<Zone>(gdata.zonesConnectedTo(true, false, other));
+		final Collection<Zone> sources = gdata.zonesConnectedTo(true, false, qCopy);
+		int built = generateCorridors(gdata, sources, dests, false, true);
+		if (built == 0) {
+			infoLog("Could not fix connectivity issue. Failing.");
+			return null;
+		} else
+			infoLog("Fixed connectivity issue by creating " + built + " corridor" + (built == 1 ? "" : "s"));
+		return generateStair(gdata, upOrDown, objective, true);
 	}
 
 	/** @return Whether punching was done */
@@ -796,12 +829,15 @@ public class DungeonGenerator {
 				 */
 				final int extension = treatDisconnectedComponent(gdata, connectedRooms,
 						disconnectedComponent);
-				if (0 < extension) {
+				if (0 == extension) {
+					if (logger != null && logger.isInfoEnabled())
+						infoLog("Could not treat a disconnected component of size " + sz);
+				} else {
 					reachable += extension;
-					infoLog("Connected component (consisting of " + nbdc + " zone" + plural(sz) + ") of size "
-							+ extension);
-				} else
-					infoLog("Could not treat a disconnected component");
+					if (logger != null && logger.isInfoEnabled())
+						infoLog("Connected component (consisting of " + nbdc + " zone" + plural(sz)
+								+ ") of size " + extension);
+				}
 			}
 		}
 		return (msz / 6) < reachable;
@@ -1183,6 +1219,8 @@ public class DungeonGenerator {
 			DungeonBuilder.addWaterPool(dungeon, (ListZone) z);
 			break;
 		}
+		if (logger != null && logger.isDebugEnabled())
+			debugLog("Recording " + ztype + " zone: " + z);
 		for (Coord c : recorded) {
 			final Zone prev = gdata.cellToEncloser[c.x][c.y];
 			if (prev != null)
@@ -1431,10 +1469,15 @@ public class DungeonGenerator {
 		return x == c.y && y == c.y ? c : Coord.get(x, y);
 	}
 
+	protected final void debugLog(String log) {
+		if (logger != null)
+			logger.debugLog(Tags.GENERATION, log);
+	}
+
 	/**
-	 * You should avoid calling this method too muchif {@code logger} is null or
-	 * if info isn't enabled, because building {@code log} can be costly if it's
-	 * not a constant.
+	 * You should avoid calling this method too much if {@code logger} is null
+	 * or if info isn't enabled, because building {@code log} can be costly if
+	 * it's not a constant.
 	 * 
 	 * @param log
 	 */
@@ -1725,49 +1768,24 @@ public class DungeonGenerator {
 			return false;
 		}
 
-		protected Set<Zone> zonesConnectedTo(Coord... starts) {
-			prepareBuffer();
-			final Set<Zone> result = new LinkedHashSet<Zone>(DungeonBuilder.getNumberOfZones(dungeon) / 2);
-			/* Cells in 'todo' are cells reachable from 'from' */
-			final Queue<Coord> todo = new LinkedList<Coord>();
-			for (Coord start : starts)
-				todo.add(start);
-			final Direction[] moves = Direction.CARDINALS;
-			while (!todo.isEmpty()) {
-				final Coord next = todo.remove();
-				if (buf[next.x][next.y])
-					continue;
-				for (Direction dir : moves) {
-					final Coord neighbor = next.translate(dir);
-					if (buf[neighbor.x][neighbor.y]) {
-						/* Done already */
-						continue;
+		protected List<Zone> zonesConnectedTo(boolean considerRooms, boolean considerCorridors,
+				Coord... starts) {
+			final List<Zone> result = new ArrayList<Zone>(zonesConnectedTo(starts));
+			if (!considerRooms || !considerCorridors) {
+				final Iterator<Zone> it = result.iterator();
+				while (it.hasNext()) {
+					final Zone next = it.next();
+					assert DungeonBuilder.hasRoomOrCorridor(dungeon, next);
+					final boolean room = DungeonBuilder.isRoom(dungeon, next);
+					if (room) {
+						if (!considerRooms)
+							it.remove();
+					} else {
+						/* A corridor */
+						if (!considerCorridors)
+							it.remove();
 					}
-					final DungeonSymbol sym = dungeon.getSymbol(neighbor);
-					if (sym == null)
-						continue;
-					switch (sym) {
-					case CHASM:
-					case DEEP_WATER:
-					case STAIR_DOWN:
-					case STAIR_UP:
-					case WALL:
-						continue;
-					case DOOR:
-					case FLOOR:
-					case GRASS:
-					case HIGH_GRASS:
-					case SHALLOW_WATER:
-						final Zone z = cellToEncloser[neighbor.x][neighbor.y];
-						result.add(z);
-						todo.add(neighbor);
-						continue;
-					}
-					throw Exceptions.newUnmatchedISE(sym);
 				}
-				assert !buf[next.x][next.y];
-				// Record it was done
-				buf[next.x][next.y] = true;
 			}
 			return result;
 		}
@@ -1838,6 +1856,53 @@ public class DungeonGenerator {
 						"That's approximately " + (int) ((1000f / mapSize) * total) + "ms per 1K cells.");
 			for (Stage stage : Stage.values())
 				logger.infoLog(tag, "Stage " + stage + " took " + timings.get(stage) + "ms");
+		}
+
+		private Set<Zone> zonesConnectedTo(Coord... starts) {
+			prepareBuffer();
+			final Set<Zone> result = new LinkedHashSet<Zone>(DungeonBuilder.getNumberOfZones(dungeon) / 2);
+			/* Cells in 'todo' are cells reachable from 'from' */
+			final Queue<Coord> todo = new LinkedList<Coord>();
+			for (Coord start : starts)
+				todo.add(start);
+			final Direction[] moves = Direction.CARDINALS;
+			while (!todo.isEmpty()) {
+				final Coord next = todo.remove();
+				if (buf[next.x][next.y])
+					continue;
+				for (Direction dir : moves) {
+					final Coord neighbor = next.translate(dir);
+					if (buf[neighbor.x][neighbor.y]) {
+						/* Done already */
+						continue;
+					}
+					final DungeonSymbol sym = dungeon.getSymbol(neighbor);
+					if (sym == null)
+						continue;
+					switch (sym) {
+					case CHASM:
+					case DEEP_WATER:
+					case STAIR_DOWN:
+					case STAIR_UP:
+					case WALL:
+						continue;
+					case DOOR:
+					case FLOOR:
+					case GRASS:
+					case HIGH_GRASS:
+					case SHALLOW_WATER:
+						final Zone z = cellToEncloser[neighbor.x][neighbor.y];
+						result.add(z);
+						todo.add(neighbor);
+						continue;
+					}
+					throw Exceptions.newUnmatchedISE(sym);
+				}
+				assert !buf[next.x][next.y];
+				// Record it was done
+				buf[next.x][next.y] = true;
+			}
+			return result;
 		}
 
 		private void prepareBuffer() {

@@ -65,7 +65,9 @@ class DungeonBuilder {
 	static void addZone(Dungeon dungeon, Zone z, /* @Nullable */ Rectangle boundingBox,
 			boolean roomOrCorridor) {
 		/* Zone should not intersect with existing zones */
-		assert findIntersectingZones(dungeon, z, true, true, true) == null;
+		assert findIntersectingZones(dungeon, z, true, true, true) == null : ("Cannot add zone " + z
+				+ ". It overlaps with an existing zone: "
+				+ findIntersectingZones(dungeon, z, true, true, true));
 		/* Check that bounding box (if any) is correct */
 		assert boundingBox == null || boundingBox.contains(z);
 		// System.out.println("Adding zone: " + z);
