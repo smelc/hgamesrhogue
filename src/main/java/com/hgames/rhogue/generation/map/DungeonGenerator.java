@@ -30,6 +30,10 @@ import com.hgames.lib.collection.Multimaps;
 import com.hgames.lib.collection.multiset.EnumMultiset;
 import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.Tags;
+import com.hgames.rhogue.generation.map.corridor.BresenhamCorridorBuilder;
+import com.hgames.rhogue.generation.map.corridor.CorridorBuilders;
+import com.hgames.rhogue.generation.map.corridor.ICorridorBuilder;
+import com.hgames.rhogue.generation.map.corridor.OneOrTwoLinesCorridorBuilder;
 import com.hgames.rhogue.generation.map.flood.DungeonFloodFill;
 import com.hgames.rhogue.generation.map.flood.FloodFill;
 import com.hgames.rhogue.generation.map.flood.IFloodObjective;
@@ -561,10 +565,17 @@ public class DungeonGenerator {
 	 *            The rooms to build corridors from.
 	 * @param dests
 	 *            The possible destinations (should be rooms too).
+	 * @param perfect
+	 *            See {@link CorridorBuilders}. Roughly: true to only carve
+	 *            through walls and through cells next to walls. Otherwise
+	 *            loosen the leash.
+	 * @param bresenham
+	 *            Whether to {@link BresenhamCorridorBuilder} or
+	 *            {@link OneOrTwoLinesCorridorBuilder}.
 	 * @return The number of corridors built
 	 */
 	protected int generateCorridors(GenerationData gdata, Collection<Zone> rooms, List<Zone> dests,
-			boolean onlyPerfectCarving, boolean bresenham) {
+			boolean perfect, boolean bresenham) {
 		final Dungeon dungeon = gdata.dungeon;
 		final int nbr = rooms.size();
 		/* A Zone, to the other zones; ordered by the distance of the centers */
@@ -593,7 +604,7 @@ public class DungeonGenerator {
 			if (!otherZones.isEmpty())
 				zoneToOtherZones.put(z, otherZones);
 		}
-		final CorridorBuilder cc = new CorridorBuilder(gdata.dungeon, true, bresenham, onlyPerfectCarving);
+		final ICorridorBuilder cc = CorridorBuilders.create(gdata.dungeon, perfect, bresenham);
 		final Coord[] startEndBuffer = new Coord[2];
 		final Coord[] connection = new Coord[2];
 		boolean needWaterPoolsCleanup = false;

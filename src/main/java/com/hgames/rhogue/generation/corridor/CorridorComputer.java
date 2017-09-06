@@ -19,6 +19,8 @@ import squidpony.squidmath.Coord;
  * @author smelC
  * @see Corridors
  */
+@Deprecated
+@SuppressWarnings("deprecation")
 public class CorridorComputer {
 
 	protected final char[][] map;

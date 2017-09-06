@@ -18,6 +18,7 @@ import squidpony.squidmath.Coord;
  * @author smelC
  * @see CorridorComputer
  */
+@Deprecated
 public class Corridors {
 
 	/*
