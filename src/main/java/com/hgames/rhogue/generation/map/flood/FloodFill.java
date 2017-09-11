@@ -139,6 +139,9 @@ public abstract class FloodFill {
 		final List<Coord> border = new ListZone(new ArrayList<Coord>(result)).getInternalBorder();
 		while (0 < eaters) {
 			final Coord eatCenter = rng.getRandomElement(border);
+			// At the first roll, 'eatCenter' is in 'result'
+			// (by spec of 'getInternalBorder')
+			assert 0 < eaters || result.contains(eatCenter);
 			final DoerInACircle doer = new DoerInACircle() {
 				@Override
 				protected boolean doOnACell(int x, int y) {

@@ -56,6 +56,9 @@ public class Dungeon {
 	/** Members of {@link #rooms} that aren't connected to the stairs. */
 	/* @Nullable */ List<Zone> disconnectedRooms;
 
+	/** Members of {@link #rooms} that are surrounded by deep water. */
+	/* @Nullable */ List<Zone> waterIslands;
+
 	/**
 	 * The zones to which a zone is directly connected. Keys and values belong
 	 * both to {@link #rooms} and {@link #corridors}.
@@ -139,10 +142,16 @@ public class Dungeon {
 	 *         structure, you should likely not modify it.
 	 */
 	public List<Zone> getDisconnectedRooms() {
-		if (disconnectedRooms == null)
-			return Collections.emptyList();
-		else
-			return disconnectedRooms;
+		return disconnectedRooms == null ? Collections.<Zone> emptyList() : disconnectedRooms;
+	}
+
+	/**
+	 * @return The member of {@link #getRooms()} that are water-islands
+	 *         (surround by deep water) This is a reference to an internal
+	 *         structure, you should likely not modify it.
+	 */
+	public List<Zone> getWaterIslands() {
+		return waterIslands == null ? Collections.<Zone> emptyList() : waterIslands;
 	}
 
 	/**
@@ -286,6 +295,9 @@ public class Dungeon {
 		}
 
 		/* FIXME Check that stairs are correct */
+		/* FIXME Check that disconnectedRooms are correct */
+		/* FIXME Check that waterIslands are correct */
+
 		return true;
 	}
 }

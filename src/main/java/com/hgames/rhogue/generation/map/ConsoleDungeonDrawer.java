@@ -1,8 +1,4 @@
-package com.hgames.rhogue.tests.generation.map;
-
-import com.hgames.rhogue.generation.map.DungeonSymbol;
-import com.hgames.rhogue.generation.map.IDungeonDrawer;
-import com.hgames.rhogue.generation.map.IDungeonSymbolDrawer;
+package com.hgames.rhogue.generation.map;
 
 /**
  * An implementation of {@link IDungeonDrawer} that draws to {@code System.out}.

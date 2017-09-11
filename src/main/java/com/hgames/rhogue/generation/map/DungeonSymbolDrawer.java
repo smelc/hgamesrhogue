@@ -1,8 +1,6 @@
-package com.hgames.rhogue.tests.generation.map;
+package com.hgames.rhogue.generation.map;
 
 import com.hgames.lib.Exceptions;
-import com.hgames.rhogue.generation.map.DungeonSymbol;
-import com.hgames.rhogue.generation.map.IDungeonSymbolDrawer;
 
 /**
  * A standard implementation of {@link IDungeonSymbolDrawer}.

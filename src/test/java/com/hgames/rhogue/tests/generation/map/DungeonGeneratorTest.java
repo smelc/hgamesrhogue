@@ -1,7 +1,9 @@
 package com.hgames.rhogue.tests.generation.map;
 
+import com.hgames.rhogue.generation.map.ConsoleDungeonDrawer;
 import com.hgames.rhogue.generation.map.DungeonGenerator;
 import com.hgames.rhogue.generation.map.DungeonGenerators;
+import com.hgames.rhogue.generation.map.DungeonSymbolDrawer;
 import com.hgames.rhogue.generation.map.IDungeonDrawer;
 
 import squidpony.squidmath.RNG;
@@ -14,7 +16,7 @@ import squidpony.squidmath.RNG;
 public class DungeonGeneratorTest {
 
 	/** The seed used */
-	public static final int SEED = 32;
+	public static final int SEED = 34;
 	// FIXME CH See seed 36 for disconnected component
 	// FIXME CH See seed 54 for lonely doors
 

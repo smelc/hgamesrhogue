@@ -51,6 +51,13 @@ class DungeonBuilder {
 		dungeon.disconnectedRooms.add(z);
 	}
 
+	static void addWaterIsland(Dungeon dungeon, Zone z) {
+		assert dungeon.getRooms().contains(z);
+		if (dungeon.waterIslands == null)
+			dungeon.waterIslands = new ArrayList<Zone>();
+		dungeon.waterIslands.add(z);
+	}
+
 	/** Prefer this method over direct mutations, it eases debugging. */
 	static void addWaterPool(Dungeon dungeon, ListZone pool) {
 		assert !hasZone(dungeon, pool);
@@ -288,6 +295,16 @@ class DungeonBuilder {
 
 	static boolean isRoom(Dungeon dungeon, Zone z) {
 		return dungeon.rooms.contains(z);
+	}
+
+	static boolean isSurroundedBy(Dungeon dungeon, Zone z, EnumSet<DungeonSymbol> allowed) {
+		for (Coord c : z.getExternalBorder()) {
+			assert !z.contains(c);
+			final DungeonSymbol sym = dungeon.getSymbol(c);
+			if (!allowed.contains(sym))
+				return false;
+		}
+		return true;
 	}
 
 	/**

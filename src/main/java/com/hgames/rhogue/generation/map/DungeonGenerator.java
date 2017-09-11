@@ -40,7 +40,6 @@ import com.hgames.rhogue.generation.map.flood.IFloodObjective;
 import com.hgames.rhogue.generation.map.lifetime.Lifetime;
 import com.hgames.rhogue.grid.GridIterators;
 import com.hgames.rhogue.rng.ProbabilityTable;
-import com.hgames.rhogue.tests.generation.map.ConsoleDungeonDrawer;
 import com.hgames.rhogue.zone.CachingZone;
 import com.hgames.rhogue.zone.SingleCellZone;
 import com.hgames.rhogue.zone.Zones;
@@ -138,6 +137,8 @@ public class DungeonGenerator {
 	 * {@link #waterPercentage} is 0.
 	 */
 	protected int waterPools = 2;
+
+	protected int waterIslands = 0;
 
 	/**
 	 * The number of unconnected rooms (w.r.t. to the stairs) to aim for. Useful
@@ -312,11 +313,15 @@ public class DungeonGenerator {
 	 * @param pools
 	 *            An int in [0, Integer.MAX_VALUE]. The number of pools to
 	 *            create. Or anything negative not to change it.
+	 * @param islands
+	 *            An int in [0, Integer.MAX_VALUE]. The number of islands to
+	 *            generate. An island is a room solely surrounded by deep water.
+	 *            Or anything negative not to change it.
 	 * @return {@code this}
 	 * @throws IllegalStateException
 	 *             If {@code percent} is greater than 100.
 	 */
-	public DungeonGenerator setWaterObjective(boolean startWithWater, int percent, int pools) {
+	public DungeonGenerator setWaterObjective(boolean startWithWater, int percent, int pools, int islands) {
 		this.startWithWater = startWithWater;
 		if (0 <= percent) {
 			if (100 < percent)
@@ -327,6 +332,8 @@ public class DungeonGenerator {
 		if (0 <= pools)
 			this.waterPools = pools;
 		/* else do not change it */
+		if (0 <= islands)
+			this.waterIslands = islands;
 		return this;
 	}
 
@@ -840,10 +847,8 @@ public class DungeonGenerator {
 				 */
 				final int extension = treatDisconnectedComponent(gdata, connectedRooms,
 						disconnectedComponent);
-				if (0 == extension) {
-					if (logger != null && logger.isInfoEnabled())
-						infoLog("Could not treat a disconnected component of size " + sz);
-				} else {
+				assert 0 <= extension;
+				if (0 < extension) {
 					reachable += extension;
 					if (logger != null && logger.isInfoEnabled())
 						infoLog("Connected component (consisting of " + nbdc + " zone" + plural(sz)
@@ -867,20 +872,28 @@ public class DungeonGenerator {
 		final Dungeon dungeon = gdata.dungeon;
 		final int sz = Zones.size(component);
 		final int csz = component.size();
+		if (csz == 1) {
+			/* Component is a single room */
+			final Zone z = component.get(0);
+			/* Can it be used to honor #disconnectedRoomsObjective ? */
+			if (dungeon.getDisconnectedRooms().size() < disconnectedRoomsObjective) {
+				infoLog("Used a size " + sz
+						+ " disconnected room to fulfill the disconnected rooms objective.");
+				DungeonBuilder.addDisconnectedRoom(dungeon, z);
+				return 0;
+			}
+			/* Can it be used to honor #waterIslands ? */
+			if (dungeon.getWaterIslands().size() < waterIslands
+					&& DungeonBuilder.isSurroundedBy(dungeon, z, EnumSet.of(DungeonSymbol.DEEP_WATER))) {
+				infoLog("Used a size " + sz + " disconnected room to fulfill the water islands objective.");
+				DungeonBuilder.addWaterIsland(dungeon, z);
+				return 0;
+			}
+		}
+
 		final int bound = getWallificationBound();
 		if (sz < bound) {
 			/* Component is small, replace it with walls (hereby removing it) */
-			if (csz == 1) {
-				/*
-				 * Component is a single room. Can it be used to honor
-				 * #disconnectedRoomsObjective ?
-				 */
-				if (disconnectedRoomsObjective < dungeon.getDisconnectedRooms().size()) {
-					DungeonBuilder.addDisconnectedRoom(dungeon, component.get(0));
-					return 0;
-				}
-			}
-
 			for (int i = 0; i < csz; i++) {
 				final Zone z = component.get(i);
 				wallify(gdata, z);
@@ -897,13 +910,16 @@ public class DungeonGenerator {
 		 * To ensure 'generateCorridors' precondition that we give it only rooms
 		 */
 		component.removeAll(dungeon.corridors);
-		final int nbc = generateCorridors(gdata, component, connectedRooms, true, true);
+		final int nbc = generateCorridors(gdata, component, connectedRooms, false, true);
 		final boolean connected = 0 < nbc;
 		if (connected) {
 			connectedRooms.addAll(component);
 			return nbCellsInComponent;
-		} else
+		} else {
+			if (logger != null && logger.isInfoEnabled())
+				infoLog("Could not treat a disconnected component of size " + sz);
 			return 0;
+		}
 	}
 
 	/** @return The size under which a disconnected component is wallified */
@@ -998,6 +1014,10 @@ public class DungeonGenerator {
 			assert dungeon.invariant();
 			drawer.draw(dungeon.getMap());
 		}
+	}
+
+	protected void debugDraw(Dungeon dungeon) {
+		new ConsoleDungeonDrawer(new DungeonSymbolDrawer()).draw(dungeon.map);
 	}
 
 	/**
