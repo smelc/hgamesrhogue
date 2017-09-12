@@ -380,7 +380,7 @@ public class DungeonGenerator {
 		generatePassagesInAlmostAdjacentRooms(gdata);
 		draw(gdata.dungeon);
 		gdata.startStage(Stage.CORRIDORS);
-		generateCorridors(gdata, dungeon.rooms, dungeon.rooms, true, false);
+		generateCorridors(gdata, dungeon.rooms, dungeon.rooms, new ICorridorControl.Impl(true, false));
 		/* Must be called before 'generateWater' */
 		gdata.startStage(Stage.STAIRS);
 		final boolean good = generateStairs(gdata);
@@ -568,21 +568,78 @@ public class DungeonGenerator {
 	}
 
 	/**
+	 * @author smelC
+	 */
+	private interface ICorridorControl {
+
+		/**
+		 * @return See {@link CorridorBuilders}. Roughly: true to only carve
+		 *         through walls and through cells next to walls. Otherwise
+		 *         loosen the leash.
+		 */
+		public boolean getPerfect();
+
+		/**
+		 * @return bresenham Whether to {@link BresenhamCorridorBuilder} or
+		 *         {@link OneOrTwoLinesCorridorBuilder}.
+		 */
+		public boolean getBresenham();
+
+		/**
+		 * @return The maximum length of corridors.
+		 */
+		public int getLengthLimit();
+
+		/**
+		 * @author smelC
+		 */
+		static class Impl implements ICorridorControl {
+
+			private final boolean perfect;
+			private final boolean bresenham;
+			private final int limit;
+
+			protected Impl(boolean perfect, boolean bresenham, int limit) {
+				this.perfect = perfect;
+				this.bresenham = bresenham;
+				if (limit < 0)
+					throw new IllegalStateException(
+							"Limit of length of corridors must be >= 0. Received: " + limit);
+				this.limit = limit;
+			}
+
+			protected Impl(boolean perfect, boolean bresenham) {
+				this(perfect, bresenham, Integer.MAX_VALUE);
+			}
+
+			@Override
+			public boolean getPerfect() {
+				return perfect;
+			}
+
+			@Override
+			public boolean getBresenham() {
+				return bresenham;
+			}
+
+			@Override
+			public int getLengthLimit() {
+				return limit;
+			}
+
+		}
+
+	}
+
+	/**
 	 * @param rooms
 	 *            The rooms to build corridors from.
 	 * @param dests
 	 *            The possible destinations (should be rooms too).
-	 * @param perfect
-	 *            See {@link CorridorBuilders}. Roughly: true to only carve
-	 *            through walls and through cells next to walls. Otherwise
-	 *            loosen the leash.
-	 * @param bresenham
-	 *            Whether to {@link BresenhamCorridorBuilder} or
-	 *            {@link OneOrTwoLinesCorridorBuilder}.
 	 * @return The number of corridors built
 	 */
 	protected int generateCorridors(GenerationData gdata, Collection<Zone> rooms, List<Zone> dests,
-			boolean perfect, boolean bresenham) {
+			ICorridorControl control) {
 		final Dungeon dungeon = gdata.dungeon;
 		final int nbr = rooms.size();
 		/* A Zone, to the other zones; ordered by the distance of the centers */
@@ -611,6 +668,8 @@ public class DungeonGenerator {
 			if (!otherZones.isEmpty())
 				zoneToOtherZones.put(z, otherZones);
 		}
+		final boolean perfect = control.getPerfect();
+		final boolean bresenham = control.getBresenham();
 		final ICorridorBuilder cc = CorridorBuilders.create(gdata.dungeon, perfect, bresenham);
 		final Coord[] startEndBuffer = new Coord[2];
 		final Coord[] connection = new Coord[2];
@@ -794,7 +853,7 @@ public class DungeonGenerator {
 				+ " stair, trying to fix connectivity issue (around " + objective + ") if any.");
 		final List<Zone> dests = new ArrayList<Zone>(gdata.zonesConnectedTo(true, false, other));
 		final Collection<Zone> sources = gdata.zonesConnectedTo(true, false, qCopy);
-		int built = generateCorridors(gdata, sources, dests, false, true);
+		int built = generateCorridors(gdata, sources, dests, new ICorridorControl.Impl(false, true));
 		if (built == 0) {
 			infoLog("Could not fix connectivity issue. Failing.");
 			return null;
@@ -924,7 +983,8 @@ public class DungeonGenerator {
 		 * To ensure 'generateCorridors' precondition that we give it only rooms
 		 */
 		component.removeAll(dungeon.corridors);
-		final int nbc = generateCorridors(gdata, component, connectedRooms, false, true);
+		final int nbc = generateCorridors(gdata, component, connectedRooms,
+				new ICorridorControl.Impl(false, true));
 		final boolean connected = 0 < nbc;
 		if (connected) {
 			connectedRooms.addAll(component);
