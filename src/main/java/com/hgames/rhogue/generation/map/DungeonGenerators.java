@@ -50,7 +50,7 @@ public class DungeonGenerators {
 	public DungeonGenerator guaranteesOneCircularRoom(boolean startWithWater) {
 		final DungeonGenerator result = new DungeonGenerator(rng, width, height);
 		if (startWithWater)
-			result.setWaterObjective(startWithWater, 20, 1, 1);
+			result.setWaterObjective(startWithWater, 20, 1, 0);
 		result.installRoomGenerator(new CircularRoomGenerator(rng), 100, new OneShot());
 		result.installRoomGenerator(new RectangleRoomGenerator(rng), 1, Eternity.INSTANCE);
 		return result;

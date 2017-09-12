@@ -638,7 +638,10 @@ public class DungeonGenerator {
 					// is a Rectangle, but it may if it a ZoneUnion.
 					assert !built.contains(zEndpoint);
 					assert !built.contains(destEndpoint);
-					if (bresenham) {
+					if (perfect) {
+						assert EnumSet.of(DungeonSymbol.WALL)
+								.containsAll(DungeonBuilder.getSymbols(dungeon, built));
+					} else {
 						/* Corridor can go through DEEP_WATER */
 						if (buf != null)
 							buf.clear();
@@ -893,7 +896,18 @@ public class DungeonGenerator {
 
 		final int bound = getWallificationBound();
 		if (sz < bound) {
-			/* Component is small, replace it with walls (hereby removing it) */
+			/* Component is small */
+			/* It is a water island actually ? */
+			if (csz == 1 && DungeonBuilder.isSurroundedBy(dungeon, component.get(0),
+					EnumSet.of(DungeonSymbol.DEEP_WATER))) {
+				/*
+				 * Yes it's a water island. Try to connect it with shallow
+				 * water; coz such islands can be fun.
+				 */
+				// FIXME CH Do something
+			}
+
+			/* Replace it with walls (hereby removing it) */
 			for (int i = 0; i < csz; i++) {
 				final Zone z = component.get(i);
 				wallify(gdata, z);

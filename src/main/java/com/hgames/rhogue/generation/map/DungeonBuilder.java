@@ -253,6 +253,22 @@ class DungeonBuilder {
 		return dungeon.waterPools == null ? 0 : Zones.size(dungeon.waterPools);
 	}
 
+	/**
+	 * @param dungeon
+	 * @param z
+	 * @return The symbols in {@code z}.
+	 */
+	static EnumSet<DungeonSymbol> getSymbols(Dungeon dungeon, Zone z) {
+		final EnumSet<DungeonSymbol> result = EnumSet.noneOf(DungeonSymbol.class);
+		for (Coord c : z) {
+			final boolean added = result.add(dungeon.getSymbol(c));
+			if (added && result.size() == DungeonSymbol.values().length)
+				/* We're done */
+				break;
+		}
+		return result;
+	}
+
 	static boolean hasRoomOrCorridor(Dungeon dungeon, Zone z) {
 		return dungeon.rooms.contains(z) || dungeon.corridors.contains(z);
 	}
