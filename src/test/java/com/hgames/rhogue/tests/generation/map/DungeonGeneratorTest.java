@@ -17,7 +17,7 @@ public class DungeonGeneratorTest {
 
 	/** The seed used */
 	public static final int SEED = 34;
-	// FIXME CH See seed 36 for disconnected component
+	// FIXME CH See seed 36 for disconnected component (unstable on lower right)
 	// FIXME CH See seed 54 for lonely doors
 
 	/**

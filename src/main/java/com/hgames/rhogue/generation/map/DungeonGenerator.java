@@ -30,10 +30,8 @@ import com.hgames.lib.collection.Multimaps;
 import com.hgames.lib.collection.multiset.EnumMultiset;
 import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.Tags;
-import com.hgames.rhogue.generation.map.corridor.BresenhamCorridorBuilder;
 import com.hgames.rhogue.generation.map.corridor.CorridorBuilders;
 import com.hgames.rhogue.generation.map.corridor.ICorridorBuilder;
-import com.hgames.rhogue.generation.map.corridor.OneOrTwoLinesCorridorBuilder;
 import com.hgames.rhogue.generation.map.flood.DungeonFloodFill;
 import com.hgames.rhogue.generation.map.flood.FloodFill;
 import com.hgames.rhogue.generation.map.flood.IFloodObjective;
@@ -380,7 +378,8 @@ public class DungeonGenerator {
 		generatePassagesInAlmostAdjacentRooms(gdata);
 		draw(gdata.dungeon);
 		gdata.startStage(Stage.CORRIDORS);
-		generateCorridors(gdata, dungeon.rooms, dungeon.rooms, new ICorridorControl.Impl(true, false));
+		generateCorridors(gdata, dungeon.rooms, dungeon.rooms,
+				new ICorridorControl.Impl(dungeon, true, false, false));
 		/* Must be called before 'generateWater' */
 		gdata.startStage(Stage.STAIRS);
 		final boolean good = generateStairs(gdata);
@@ -573,22 +572,24 @@ public class DungeonGenerator {
 	private interface ICorridorControl {
 
 		/**
-		 * @return See {@link CorridorBuilders}. Roughly: true to only carve
-		 *         through walls and through cells next to walls. Otherwise
-		 *         loosen the leash.
+		 * @return Whether {@link #getBuilder()} is a perfect corridor builder
+		 *         (see {@link CorridorBuilders})
+		 * 
+		 *         <p>
+		 *         Roughly: returns true if carving can only go through through
+		 *         walls and through cells next to walls. Otherwise loosen the
+		 *         leash.
+		 *         </p>
 		 */
 		public boolean getPerfect();
-
-		/**
-		 * @return bresenham Whether to {@link BresenhamCorridorBuilder} or
-		 *         {@link OneOrTwoLinesCorridorBuilder}.
-		 */
-		public boolean getBresenham();
 
 		/**
 		 * @return The maximum length of corridors.
 		 */
 		public int getLengthLimit();
+
+		/** @return The corridor builder to use. */
+		public ICorridorBuilder getBuilder();
 
 		/**
 		 * @author smelC
@@ -596,20 +597,22 @@ public class DungeonGenerator {
 		static class Impl implements ICorridorControl {
 
 			private final boolean perfect;
-			private final boolean bresenham;
+			private final ICorridorBuilder builder;
 			private final int limit;
 
-			protected Impl(boolean perfect, boolean bresenham, int limit) {
+			protected Impl(Dungeon dungeon, boolean perfect, boolean bresenhamFirst, boolean useSnd,
+					int limit) {
 				this.perfect = perfect;
-				this.bresenham = bresenham;
+				this.builder = useSnd ? CorridorBuilders.createCombination(dungeon, perfect, bresenhamFirst)
+						: CorridorBuilders.create(dungeon, perfect, bresenhamFirst);
 				if (limit < 0)
 					throw new IllegalStateException(
 							"Limit of length of corridors must be >= 0. Received: " + limit);
 				this.limit = limit;
 			}
 
-			protected Impl(boolean perfect, boolean bresenham) {
-				this(perfect, bresenham, Integer.MAX_VALUE);
+			protected Impl(Dungeon dungeon, boolean perfect, boolean bresenham, boolean useSnd) {
+				this(dungeon, perfect, bresenham, useSnd, Integer.MAX_VALUE);
 			}
 
 			@Override
@@ -618,8 +621,8 @@ public class DungeonGenerator {
 			}
 
 			@Override
-			public boolean getBresenham() {
-				return bresenham;
+			public ICorridorBuilder getBuilder() {
+				return builder;
 			}
 
 			@Override
@@ -647,6 +650,7 @@ public class DungeonGenerator {
 				nbr);
 		final int nbd = dests.size();
 		final double maxDist = (width + height) / 6;
+		boolean someChance = false;
 		for (Zone z : rooms) {
 			assert DungeonBuilder.isRoom(dungeon, z);
 			final Coord zc = z.getCenter();
@@ -665,16 +669,20 @@ public class DungeonGenerator {
 					continue;
 				otherZones.add(Pair.of(dist, other));
 			}
-			if (!otherZones.isEmpty())
+			if (!otherZones.isEmpty()) {
 				zoneToOtherZones.put(z, otherZones);
+				someChance |= true;
+			}
 		}
+		if (!someChance)
+			return 0;
 		final boolean perfect = control.getPerfect();
-		final boolean bresenham = control.getBresenham();
-		final ICorridorBuilder cc = CorridorBuilders.create(gdata.dungeon, perfect, bresenham);
+		final int lenLimit = control.getLengthLimit();
+		final ICorridorBuilder builder = control.getBuilder();
 		final Coord[] startEndBuffer = new Coord[2];
 		final Coord[] connection = new Coord[2];
 		boolean needWaterPoolsCleanup = false;
-		final Set<Coord> buf = bresenham ? new HashSet<Coord>() : null;
+		final Set<Coord> buf = new HashSet<Coord>();
 		int result = 0;
 		for (Zone z : zoneToOtherZones.keySet()) {
 			final List<Pair<Double, Zone>> candidateDests = zoneToOtherZones.get(z);
@@ -691,44 +699,56 @@ public class DungeonGenerator {
 					continue;
 				final Coord zEndpoint = connection[0];
 				final Coord destEndpoint = connection[1];
-				final Zone built = cc.build(rng, zEndpoint, destEndpoint, startEndBuffer);
-				if (built != null) {
-					// (NO_CORRIDOR_BBOX). This doesn't trigger if 'built'
-					// is a Rectangle, but it may if it a ZoneUnion.
-					assert !built.contains(zEndpoint);
-					assert !built.contains(destEndpoint);
-					if (perfect) {
-						assert EnumSet.of(DungeonSymbol.WALL)
-								.containsAll(DungeonBuilder.getSymbols(dungeon, built));
-					} else {
-						/* Corridor can go through DEEP_WATER */
-						if (buf != null)
-							buf.clear();
-						final boolean rm = DungeonBuilder.removeFromWaterPools(dungeon, built, buf);
-						if (rm) {
-							needWaterPoolsCleanup = true;
-							for (Coord c : buf) {
-								gdata.cellToEncloser[c.x][c.y] = null;
-								/*
-								 * To preserve invariant that unbound cell have
-								 * the WALL symbol.
-								 */
-								DungeonBuilder.setSymbol(dungeon, c, DungeonSymbol.WALL);
-							}
-							draw(dungeon);
-						}
-					}
-					final Zone recorded = addZone(gdata, built, null, ZoneType.CORRIDOR);
-					DungeonBuilder.addConnection(dungeon, z, recorded);
-					DungeonBuilder.addConnection(dungeon, dest, recorded);
-					// Punch corridor
-					for (Coord c : built) {
-						DungeonBuilder.setSymbol(dungeon, c, buf != null && buf.contains(c)
-								? DungeonSymbol.SHALLOW_WATER : DungeonSymbol.FLOOR);
-					}
-					draw(dungeon);
-					result++;
+				final Zone built = builder.build(rng, zEndpoint, destEndpoint, startEndBuffer);
+				if (built == null) {
+					/* Can do some debug here if needed */
+					// if (lenLimit < Integer.MAX_VALUE) {
+					// DungeonBuilder.setSymbol(dungeon, zEndpoint,
+					// DungeonSymbol.HIGH_GRASS);
+					// DungeonBuilder.setSymbol(dungeon, destEndpoint,
+					// DungeonSymbol.HIGH_GRASS);
+					// }
+					continue;
 				}
+
+				if (lenLimit < Integer.MAX_VALUE && lenLimit < built.size())
+					/* Too long */
+					continue;
+				// (NO_CORRIDOR_BBOX). This doesn't trigger if 'built'
+				// is a Rectangle, but it may if it a ZoneUnion.
+				assert !built.contains(zEndpoint);
+				assert !built.contains(destEndpoint);
+				if (perfect) {
+					assert EnumSet.of(DungeonSymbol.WALL)
+							.containsAll(DungeonBuilder.getSymbols(dungeon, built));
+				} else {
+					/* Corridor can go through DEEP_WATER */
+					if (buf != null)
+						buf.clear();
+					final boolean rm = DungeonBuilder.removeFromWaterPools(dungeon, built, buf);
+					if (rm) {
+						needWaterPoolsCleanup = true;
+						for (Coord c : buf) {
+							gdata.cellToEncloser[c.x][c.y] = null;
+							/*
+							 * To preserve invariant that unbound cell have the
+							 * WALL symbol.
+							 */
+							DungeonBuilder.setSymbol(dungeon, c, DungeonSymbol.WALL);
+						}
+						draw(dungeon);
+					}
+				}
+				final Zone recorded = addZone(gdata, built, null, ZoneType.CORRIDOR);
+				DungeonBuilder.addConnection(dungeon, z, recorded);
+				DungeonBuilder.addConnection(dungeon, dest, recorded);
+				// Punch corridor
+				for (Coord c : built) {
+					DungeonBuilder.setSymbol(dungeon, c, buf != null && buf.contains(c)
+							? DungeonSymbol.SHALLOW_WATER : DungeonSymbol.FLOOR);
+				}
+				draw(dungeon);
+				result++;
 			}
 		}
 		if (needWaterPoolsCleanup)
@@ -853,7 +873,8 @@ public class DungeonGenerator {
 				+ " stair, trying to fix connectivity issue (around " + objective + ") if any.");
 		final List<Zone> dests = new ArrayList<Zone>(gdata.zonesConnectedTo(true, false, other));
 		final Collection<Zone> sources = gdata.zonesConnectedTo(true, false, qCopy);
-		int built = generateCorridors(gdata, sources, dests, new ICorridorControl.Impl(false, true));
+		int built = generateCorridors(gdata, sources, dests,
+				new ICorridorControl.Impl(dungeon, false, true, false));
 		if (built == 0) {
 			infoLog("Could not fix connectivity issue. Failing.");
 			return null;
@@ -956,14 +977,24 @@ public class DungeonGenerator {
 		final int bound = getWallificationBound();
 		if (sz < bound) {
 			/* Component is small */
-			/* It is a water island actually ? */
+			/* Is it kindof a water island ? */
 			if (csz == 1 && DungeonBuilder.isSurroundedBy(dungeon, component.get(0),
-					EnumSet.of(DungeonSymbol.DEEP_WATER))) {
+					EnumSet.of(DungeonSymbol.DEEP_WATER, DungeonSymbol.WALL))) {
 				/*
 				 * Yes it's a water island. Try to connect it with shallow
 				 * water; coz such islands can be fun.
 				 */
-				// FIXME CH Do something
+				// FIXME CH Why doesn't this work perfectly on seed 35 ?
+				final Zone z = component.get(0);
+				final int built = generateCorridors(gdata, component, connectedRooms,
+						new ICorridorControl.Impl(dungeon, false, true, true,
+								Math.max(z.getWidth(), z.getHeight()) * 2));
+				// FIXME CH Generate doors on these corridors ?
+				if (0 < built) {
+					if (logger != null && logger.isInfoEnabled())
+						infoLog("Connected a water island of size " + csz);
+					return csz;
+				}
 			}
 
 			/* Replace it with walls (hereby removing it) */
@@ -979,12 +1010,10 @@ public class DungeonGenerator {
 		}
 
 		final int nbCellsInComponent = Zones.size(component);
-		/*
-		 * To ensure 'generateCorridors' precondition that we give it only rooms
-		 */
+		/* To ensure 'generateCorridors' precondition that it gets only rooms */
 		component.removeAll(dungeon.corridors);
 		final int nbc = generateCorridors(gdata, component, connectedRooms,
-				new ICorridorControl.Impl(false, true));
+				new ICorridorControl.Impl(dungeon, false, true, true));
 		final boolean connected = 0 < nbc;
 		if (connected) {
 			connectedRooms.addAll(component);

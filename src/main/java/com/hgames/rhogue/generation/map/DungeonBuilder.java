@@ -123,7 +123,7 @@ class DungeonBuilder {
 	}
 
 	/**
-	 * Sets {@code sym} everywhere in {@code dungeon}.
+	 * Sets {@code sym} everywhere in {@code it}.
 	 * 
 	 * @param sym
 	 */
@@ -131,6 +131,21 @@ class DungeonBuilder {
 		while (it.hasNext()) {
 			final Coord c = it.next();
 			dungeon.map[c.x][c.y] = sym;
+		}
+	}
+
+	/**
+	 * Sets {@code sym} for cells in {@code it} whose symbol is not in
+	 * {@cod except}
+	 * 
+	 * @param sym
+	 */
+	static void setSymbolsExcept(Dungeon dungeon, Iterator<Coord> it, DungeonSymbol sym,
+			EnumSet<DungeonSymbol> except) {
+		while (it.hasNext()) {
+			final Coord c = it.next();
+			if (!except.contains(dungeon.getSymbol(c)))
+				dungeon.map[c.x][c.y] = sym;
 		}
 	}
 

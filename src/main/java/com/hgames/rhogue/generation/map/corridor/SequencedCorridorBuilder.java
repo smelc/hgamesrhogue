@@ -26,7 +26,7 @@ public class SequencedCorridorBuilder implements ICorridorBuilder {
 		for (ICorridorBuilder builder : builders) {
 			final Zone z = builder.build(rng, start, end, startEndBuf);
 			if (z != null)
-				return null;
+				return z;
 		}
 		return null;
 	}
