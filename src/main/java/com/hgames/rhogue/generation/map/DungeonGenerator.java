@@ -16,7 +16,6 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
@@ -27,7 +26,6 @@ import com.hgames.lib.Pair;
 import com.hgames.lib.Stopwatch;
 import com.hgames.lib.choice.DoublePriorityCell;
 import com.hgames.lib.collection.Multimaps;
-import com.hgames.lib.collection.multiset.EnumMultiset;
 import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.Tags;
 import com.hgames.rhogue.generation.map.corridor.CorridorBuilders;
@@ -36,6 +34,8 @@ import com.hgames.rhogue.generation.map.flood.DungeonFloodFill;
 import com.hgames.rhogue.generation.map.flood.FloodFill;
 import com.hgames.rhogue.generation.map.flood.IFloodObjective;
 import com.hgames.rhogue.generation.map.lifetime.Lifetime;
+import com.hgames.rhogue.generation.map.stair.BadStairGenerator;
+import com.hgames.rhogue.generation.map.stair.IStairGenerator;
 import com.hgames.rhogue.grid.GridIterators;
 import com.hgames.rhogue.rng.ProbabilityTable;
 import com.hgames.rhogue.zone.CachingZone;
@@ -643,6 +643,7 @@ public class DungeonGenerator {
 	 */
 	protected int generateCorridors(GenerationData gdata, Collection<Zone> rooms, List<Zone> dests,
 			ICorridorControl control) {
+		final int lenLimit = control.getLengthLimit();
 		final Dungeon dungeon = gdata.dungeon;
 		final int nbr = rooms.size();
 		/* A Zone, to the other zones; ordered by the distance of the centers */
@@ -664,9 +665,10 @@ public class DungeonGenerator {
 					continue;
 				final Coord oc = other.getCenter();
 				final double dist = zc.distance(oc);
-				if (maxDist < dist)
+				if (maxDist < dist) {
 					/* Too far away */
 					continue;
+				}
 				otherZones.add(Pair.of(dist, other));
 			}
 			if (!otherZones.isEmpty()) {
@@ -677,7 +679,6 @@ public class DungeonGenerator {
 		if (!someChance)
 			return 0;
 		final boolean perfect = control.getPerfect();
-		final int lenLimit = control.getLengthLimit();
 		final ICorridorBuilder builder = control.getBuilder();
 		final Coord[] startEndBuffer = new Coord[2];
 		final Coord[] connection = new Coord[2];
@@ -788,61 +789,9 @@ public class DungeonGenerator {
 	protected /* @Nullable */ Coord generateStair(GenerationData gdata, boolean upOrDown,
 			/* @Nullable */ Coord objective, boolean lastHope) {
 		final Dungeon dungeon = gdata.dungeon;
-		if (objective == null)
-			/* Find objective on our own */
-			objective = upOrDown ? upStairObjective : downStairObjective;
-		assert objective == null || dungeon.isValid(objective);
-		final /* @Nullable */ Coord other = upOrDown ? dungeon.downwardStair : dungeon.upwardStair;
-		if (objective == null) {
-			if (other == null) {
-				objective = getRandomCell(null);
-				if (logger != null && logger.isInfoEnabled())
-					infoLog((upOrDown ? "upward" : "downward") + " stair objective chosen randomly");
-			} else {
-				final int random = rng.nextInt(4);
-				switch (random) {
-				case 0:
-				case 1:
-				case 2:
-					final Direction otherDir = getDirectionFromMapCenter(other);
-					if (logger != null && logger.isInfoEnabled())
-						infoLog("other stair is in direction: " + otherDir);
-					final int disturb = rng.nextInt(2);
-					Direction chosenDir = otherDir.opposite();
-					if (1 == disturb)
-						chosenDir = chosenDir.clockwise();
-					else if (2 == disturb)
-						chosenDir = chosenDir.counterClockwise();
-					objective = getRandomCell(chosenDir);
-					if (logger != null && logger.isInfoEnabled())
-						infoLog((upOrDown ? "upward" : "downward") + " stair objective chosen in direction: "
-								+ chosenDir);
-					break;
-				case 3:
-					if (logger != null && logger.isInfoEnabled())
-						infoLog((upOrDown ? "upward" : "downward") + " stair objective chosen randomly");
-					objective = getRandomCell(null);
-					break;
-				default:
-					throw new IllegalStateException(
-							"Rng is incorrect. Received " + random + " when calling nextInt(4)");
-				}
-			}
-		}
-		assert objective != null;
-		if (logger != null && logger.isInfoEnabled())
-			infoLog("Stair objective: " + objective);
-
-		final int rSize = ((width + height) / 6) + 1;
-		final Iterator<Coord> it = new GridIterators.GrowingRectangle(objective, rSize);
-		final PriorityQueue<Coord> queue = new PriorityQueue<Coord>(rSize * 4,
-				newDistanceComparatorFrom(objective));
-		while (it.hasNext()) {
-			final Coord next = it.next();
-			if (isStairCandidate(dungeon, next))
-				queue.add(next);
-		}
-		if (queue.isEmpty()) {
+		final IStairGenerator generator = getStairGenerator(gdata, objective, upOrDown);
+		final Queue<Coord> queue = generator.candidates();
+		if (queue == null || queue.isEmpty()) {
 			infoLog("No candidate for stair " + (upOrDown ? "up" : "down"));
 			return null;
 		}
@@ -851,6 +800,7 @@ public class DungeonGenerator {
 			infoLog(queue.size() + " stair candidate" + (queue.size() == 1 ? "" : "s"));
 		final Coord[] qCopy = new Coord[queue.size()];
 		int qIdx = 0;
+		final /* @Nullable */ Coord other = dungeon.getStair(!upOrDown);
 		while (!queue.isEmpty()) {
 			final Coord candidate = queue.remove();
 			if (other == null
@@ -881,6 +831,12 @@ public class DungeonGenerator {
 		} else
 			infoLog("Fixed connectivity issue by creating " + built + " corridor" + (built == 1 ? "" : "s"));
 		return generateStair(gdata, upOrDown, objective, true);
+	}
+
+	protected IStairGenerator getStairGenerator(GenerationData gdata, /* @Nullable */ Coord objective,
+			boolean upOrDown) {
+		final Dungeon dungeon = gdata.dungeon;
+		return new BadStairGenerator(logger, rng, dungeon, objective, upOrDown);
 	}
 
 	/** @return Whether punching was done */
@@ -1413,142 +1369,6 @@ public class DungeonGenerator {
 		return !COORD_LIST_BUF.isEmpty();
 	}
 
-	/*
-	 * This method makes the assumption that grass hasn't been generated yet It
-	 * could be changed by giving an EnumSet<DungeonSymbol> to
-	 * nbNeighborsOfType.
-	 */
-	protected boolean isStairCandidate(Dungeon dungeon, Coord c) {
-		final DungeonSymbol sym = dungeon.getSymbol(c);
-		if (sym == null)
-			return false;
-		switch (sym) {
-		case CHASM:
-		case DEEP_WATER:
-		case DOOR:
-		case FLOOR:
-		case GRASS:
-		case HIGH_GRASS:
-		case SHALLOW_WATER:
-		case STAIR_DOWN:
-		case STAIR_UP:
-			return false;
-		case WALL:
-			break;
-		}
-		/* Cardinal neighbors */
-		final EnumMultiset<DungeonSymbol> cneighbors = Dungeons.getNeighbors(dungeon, c.x, c.y, false);
-		boolean reachable = false;
-		/* This pattern to avoid missing a case */
-		for (DungeonSymbol dsym : DungeonSymbol.values()) {
-			switch (dsym) {
-			case CHASM:
-			case DEEP_WATER:
-				/* No constraint */
-				continue;
-			case GRASS:
-			case SHALLOW_WATER:
-			case FLOOR:
-				if (cneighbors.contains(dsym))
-					reachable |= true;
-				continue;
-			case DOOR:
-			case HIGH_GRASS:
-			case STAIR_DOWN:
-			case STAIR_UP:
-				if (cneighbors.contains(dsym))
-					/* Stair should not be cardinally adjacent to those */
-					return false;
-				continue;
-			case WALL:
-				/* Constraint checked on diagonal neighbors (see below) */
-				continue;
-			}
-			throw Exceptions.newUnmatchedISE(dsym);
-		}
-		if (!reachable)
-			/* Not cardinally accessible from a safe cell */
-			return false;
-		/* Diagonal neighbors */
-		COORD_LIST_BUF.clear();
-		int nbw = 0;
-		for (Direction dir : Direction.OUTWARDS) {
-			final Coord neighbor = c.translate(dir);
-			final DungeonSymbol dsym = dungeon.getSymbol(neighbor);
-			if (dsym == null)
-				continue;
-			switch (dsym) {
-			case CHASM:
-			case DEEP_WATER:
-			case HIGH_GRASS:
-				continue;
-			case FLOOR:
-			case GRASS:
-			case SHALLOW_WATER:
-				/* Can safely go from such cells to the candidate stair */
-				COORD_LIST_BUF.add(neighbor);
-				continue;
-			case DOOR:
-			case STAIR_DOWN:
-			case STAIR_UP:
-				/* Stair should not be adjacent to a door or stair */
-				return false;
-			case WALL:
-				nbw++;
-				continue;
-			}
-			throw Exceptions.newUnmatchedISE(dsym);
-		}
-		/**
-		 * Because we want stairs in such positions:
-		 * 
-		 * <pre>
-		 * ###
-		 * #>#
-		 * ...
-		 * </pre>
-		 * 
-		 * because we wanna avoid
-		 * 
-		 * <pre>
-		 * .##
-		 * #>#
-		 * ...
-		 * </pre>
-		 * 
-		 * which would force cause possible placement weirdness upon arriving
-		 * into the level (since placement in different rooms would be
-		 * possible).
-		 */
-		if (nbw < 5)
-			return false;
-		/**
-		 * Because we wanna forbid stairs in such positions:
-		 * 
-		 * <pre>
-		 * ####
-		 * #>##
-		 * #..#
-		 * </pre>
-		 */
-		final int sources = COORD_LIST_BUF.size();
-		if (sources < 3)
-			return false;
-		/**
-		 * Check that all sources are adjacent to each other. To avoid:
-		 * 
-		 * <pre>
-		 * ..#
-		 * #>#
-		 * .##
-		 * </pre>
-		 */
-		if (!DungeonGeneratorHelper.haveACrossRoad(COORD_LIST_BUF))
-			return false;
-		COORD_LIST_BUF.clear();
-		return true;
-	}
-
 	/**
 	 * @param dir
 	 * @return A random cell. In the direction {@code dir} (think about the map
@@ -1586,11 +1406,6 @@ public class DungeonGenerator {
 			assert y < width;
 			return Coord.get(x, y);
 		}
-	}
-
-	protected final Direction getDirectionFromMapCenter(Coord c) {
-		final Coord center = Coord.get(width / 2, height / 2);
-		return Direction.getCardinalDirection(c.x - center.x, c.y - center.y);
 	}
 
 	/**
@@ -1671,15 +1486,6 @@ public class DungeonGenerator {
 			return false;
 		else
 			return true;
-	}
-
-	private static Comparator<Coord> newDistanceComparatorFrom(final Coord c) {
-		return new Comparator<Coord>() {
-			@Override
-			public int compare(Coord o1, Coord o2) {
-				return Double.compare(o1.distance(c), o2.distance(c));
-			}
-		};
 	}
 
 	private static final Comparator<Pair<Double, Zone>> ORDERER = new Comparator<Pair<Double, Zone>>() {

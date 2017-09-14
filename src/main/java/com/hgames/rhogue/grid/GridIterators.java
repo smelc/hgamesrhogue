@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import com.hgames.lib.Exceptions;
+import com.hgames.lib.Objects;
 import com.hgames.lib.collection.Collections;
 
 import squidpony.squidgrid.Direction;
@@ -47,7 +48,7 @@ public class GridIterators {
 		 * @throw IllegalStateException If {@code maxDiagonalSize < 0}.
 		 */
 		public GrowingRectangle(Coord center, int maxOffset) {
-			this.center = center;
+			this.center = Objects.checkNotNull(center);
 			if (maxOffset < 0)
 				throw new IllegalStateException();
 			this.maxOffset = maxOffset;
