@@ -452,6 +452,7 @@ public class DungeonGenerator {
 			/* Normal generation */
 			final EnumSet<DungeonSymbol> overwritten = EnumSet.of(DungeonSymbol.WALL);
 			final RoomGeneratorHelper tlStarts = new RoomGeneratorHelper() {
+
 				@Override
 				public Iterator<Coord> getCoords() {
 					return new GridIterators.RectangleRandomStartAndDirection(width, height,
@@ -465,6 +466,7 @@ public class DungeonGenerator {
 				}
 			};
 			while (true) {
+
 				final boolean done = generateRoom(gdata, tlStarts, overwritten);
 				if (!done)
 					/* Cannot place any more room */
@@ -945,10 +947,10 @@ public class DungeonGenerator {
 		}
 
 		final int bound = getWallificationBound();
-		if (sz < bound) {
-			/* Component is small */
+		if (csz == 1) {
+			/* Component is a single room */
 			/* Is it kindof a water island ? */
-			if (csz == 1 && DungeonBuilder.isSurroundedBy(dungeon, component.get(0),
+			if (DungeonBuilder.isSurroundedBy(dungeon, component.get(0),
 					EnumSet.of(DungeonSymbol.DEEP_WATER, DungeonSymbol.WALL))) {
 				/*
 				 * Yes it's a water island. Try to connect it with shallow
@@ -966,7 +968,10 @@ public class DungeonGenerator {
 					return csz;
 				}
 			}
+		}
 
+		if (sz < bound && sz < getWallificationBound()) {
+			/* Component is small */
 			/* Replace it with walls (hereby removing it) */
 			for (int i = 0; i < csz; i++) {
 				final Zone z = component.get(i);
@@ -995,9 +1000,11 @@ public class DungeonGenerator {
 		}
 	}
 
-	/** @return The size under which a disconnected component is wallified */
+	/**
+	 * @return The size under which a disconnected component can be wallified
+	 */
 	protected int getWallificationBound() {
-		return (width * height) / 24;
+		return (width * height) / 128;
 	}
 
 	/** Turns a zone into walls, hereby removing it */
@@ -1762,6 +1769,25 @@ public class DungeonGenerator {
 			if (considerCorridors)
 				result.addAll(dungeon.corridors);
 			result.removeAll(zonesConnectedTo(starts));
+			return result;
+		}
+
+		@SuppressWarnings("unused")
+		protected Zone findZoneAdjacentToStairCandidate(Coord candidate) {
+			/*
+			 * This works because stair candidates should be cardinally adjacent
+			 * to at most one zone.
+			 */
+			Zone result = null;
+			for (Direction dir : Direction.CARDINALS) {
+				final Coord neighbor = candidate.translate(dir);
+				final Zone z = findZoneContaining(neighbor.x, neighbor.y);
+				if (z != null) {
+					if (result != null)
+						assert false;
+					result = z;
+				}
+			}
 			return result;
 		}
 

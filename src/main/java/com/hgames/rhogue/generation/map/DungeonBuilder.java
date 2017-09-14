@@ -339,6 +339,26 @@ class DungeonBuilder {
 	}
 
 	/**
+	 * @param dungeon
+	 * @param z
+	 * @param objective
+	 * @return Whether at least {@code objective} cells are reacahable from
+	 *         {@code z}.
+	 */
+	static boolean reachesAtLeast(Dungeon dungeon, Zone z, int objective) {
+		int result = z.size();
+		if (objective <= result)
+			return true;
+		final Iterator<Zone> connectedsToZ = new DungeonZonesCrawler(dungeon, z).iterator();
+		while (connectedsToZ.hasNext()) {
+			result += connectedsToZ.next().size();
+			if (objective <= result)
+				return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Remove all members of {@code z} from {@code dungeon}'s water pools.
 	 * 
 	 * @param dungeon

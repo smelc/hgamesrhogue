@@ -66,9 +66,13 @@ public class StairGenerator extends AbstractStairGenerator {
 			/* The dungeon's center */
 			final Coord dcenter = Coord.get(width / 2, height / 2);
 			DP_CELL.clear();
+			final int reachObjective = getMinStairComponentSize();
 			for (int i = 0; i < nbr; i++) {
 				final Zone room = rooms.get(i);
 				final Coord rcenter = room.getCenter();
+				if (!reachesAtLeast(room, reachObjective))
+					/* This zone isn't connected enough */
+					continue;
 				if (!isCenteredDungeonWise(rcenter, width, height))
 					return rcenter;
 				DP_CELL.union(room, rcenter.distance(dcenter));
@@ -166,6 +170,32 @@ public class StairGenerator extends AbstractStairGenerator {
 
 	protected boolean areConnected(Zone z0, Zone z1) {
 		return connections.areConnected(z0, z1, Integer.MAX_VALUE);
+	}
+
+	/** @return The minimum size of a zone connected to a stair */
+	protected int getMinStairComponentSize() {
+		final int width = dungeon.getWidth();
+		final int height = dungeon.getHeight();
+		return (width * height) / 32;
+	}
+
+	/**
+	 * @param z
+	 * @param objective
+	 * @return Whether at least {@code objective} cells are reachable from
+	 *         {@code z}.
+	 */
+	private boolean reachesAtLeast(Zone z, int objective) {
+		int result = z.size();
+		if (objective <= result)
+			return true;
+		final Iterator<Zone> connectedsToZ = new DungeonZonesCrawler(dungeon, z).iterator();
+		while (connectedsToZ.hasNext()) {
+			result += connectedsToZ.next().size();
+			if (objective <= result)
+				return true;
+		}
+		return false;
 	}
 
 	/**
