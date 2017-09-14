@@ -22,20 +22,22 @@ import java.util.Set;
 import com.hgames.lib.Arrays;
 import com.hgames.lib.Exceptions;
 import com.hgames.lib.Ints;
-import com.hgames.lib.Pair;
 import com.hgames.lib.Stopwatch;
 import com.hgames.lib.choice.DoublePriorityCell;
 import com.hgames.lib.collection.Multimaps;
+import com.hgames.lib.collection.list.Lists;
+import com.hgames.lib.collection.pair.Pair;
 import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.Tags;
+import com.hgames.rhogue.generation.map.connection.IConnectionFinder;
 import com.hgames.rhogue.generation.map.corridor.CorridorBuilders;
 import com.hgames.rhogue.generation.map.corridor.ICorridorBuilder;
 import com.hgames.rhogue.generation.map.flood.DungeonFloodFill;
 import com.hgames.rhogue.generation.map.flood.FloodFill;
 import com.hgames.rhogue.generation.map.flood.IFloodObjective;
 import com.hgames.rhogue.generation.map.lifetime.Lifetime;
-import com.hgames.rhogue.generation.map.stair.BadStairGenerator;
 import com.hgames.rhogue.generation.map.stair.IStairGenerator;
+import com.hgames.rhogue.generation.map.stair.StairGenerator;
 import com.hgames.rhogue.grid.GridIterators;
 import com.hgames.rhogue.rng.ProbabilityTable;
 import com.hgames.rhogue.zone.CachingZone;
@@ -667,6 +669,12 @@ public class DungeonGenerator {
 				final double dist = zc.distance(oc);
 				if (maxDist < dist) {
 					/* Too far away */
+					// if (lenLimit < Integer.MAX_VALUE) {
+					// System.out.println(maxDist);
+					// System.out.println(dist);
+					// DungeonBuilder.setSymbol(dungeon, other.getCenter(),
+					// DungeonSymbol.HIGH_GRASS);
+					// }
 					continue;
 				}
 				otherZones.add(Pair.of(dist, other));
@@ -790,25 +798,24 @@ public class DungeonGenerator {
 			/* @Nullable */ Coord objective, boolean lastHope) {
 		final Dungeon dungeon = gdata.dungeon;
 		final IStairGenerator generator = getStairGenerator(gdata, objective, upOrDown);
-		final Queue<Coord> queue = generator.candidates();
-		if (queue == null || queue.isEmpty()) {
+		final Iterator<Coord> candidates = generator.candidates();
+		if (candidates == null || !candidates.hasNext()) {
 			infoLog("No candidate for stair " + (upOrDown ? "up" : "down"));
 			return null;
 		}
 
-		if (logger != null && logger.isInfoEnabled())
-			infoLog(queue.size() + " stair candidate" + (queue.size() == 1 ? "" : "s"));
-		final Coord[] qCopy = new Coord[queue.size()];
-		int qIdx = 0;
+		/* 'lastHope' => 'trieds' won't be used */
+		final List<Coord> trieds = lastHope ? null : new ArrayList<Coord>(32);
 		final /* @Nullable */ Coord other = dungeon.getStair(!upOrDown);
-		while (!queue.isEmpty()) {
-			final Coord candidate = queue.remove();
+		while (candidates.hasNext()) {
+			final Coord candidate = candidates.next();
 			if (other == null
 					|| (!other.equals(candidate) && gdata.pathExists(other, candidate, false, false))) {
 				if (punchStair(gdata, candidate, upOrDown))
 					return candidate;
 			}
-			qCopy[qIdx++] = candidate;
+			if (trieds != null)
+				trieds.add(candidate);
 		}
 		if (lastHope)
 			return null;
@@ -821,8 +828,9 @@ public class DungeonGenerator {
 		 */
 		infoLog("Could not generate " + (upOrDown ? "upward" : "downward")
 				+ " stair, trying to fix connectivity issue (around " + objective + ") if any.");
-		final List<Zone> dests = new ArrayList<Zone>(gdata.zonesConnectedTo(true, false, other));
-		final Collection<Zone> sources = gdata.zonesConnectedTo(true, false, qCopy);
+		final List<Zone> dests = new ArrayList<Zone>(
+				gdata.zonesConnectedTo(true, false, Collections.singletonList(other)));
+		final Collection<Zone> sources = gdata.zonesConnectedTo(true, false, trieds);
 		int built = generateCorridors(gdata, sources, dests,
 				new ICorridorControl.Impl(dungeon, false, true, false));
 		if (built == 0) {
@@ -836,7 +844,13 @@ public class DungeonGenerator {
 	protected IStairGenerator getStairGenerator(GenerationData gdata, /* @Nullable */ Coord objective,
 			boolean upOrDown) {
 		final Dungeon dungeon = gdata.dungeon;
-		return new BadStairGenerator(logger, rng, dungeon, objective, upOrDown);
+		final IConnectionFinder connections = new IConnectionFinder() {
+			@Override
+			public boolean areConnected(Zone z0, Zone z1, int intermediates) {
+				return DungeonBuilder.areConnected(dungeon, z0, z1, intermediates);
+			}
+		};
+		return new StairGenerator(logger, rng, dungeon, objective, upOrDown, gdata, connections);
 	}
 
 	/** @return Whether punching was done */
@@ -863,8 +877,8 @@ public class DungeonGenerator {
 		final Dungeon dungeon = gdata.dungeon;
 		if (!DungeonBuilder.hasStairs(dungeon))
 			throw new IllegalStateException("ensureDensity method requires stairs to be set");
-		final List<Zone> disconnectedZones = gdata.zonesDisconnectedFrom(true, true, dungeon.upwardStair,
-				dungeon.downwardStair);
+		final List<Zone> disconnectedZones = gdata.zonesDisconnectedFrom(true, true,
+				Lists.newArrayList(dungeon.upwardStair, dungeon.downwardStair));
 		final List<List<Zone>> disconnectedComponents = DungeonBuilder.connectedComponents(dungeon,
 				disconnectedZones);
 		final int nbdc = disconnectedComponents.size();
@@ -1581,7 +1595,7 @@ public class DungeonGenerator {
 	 * 
 	 * @author smelC
 	 */
-	private static class GenerationData {
+	private static class GenerationData implements ICellToZone {
 
 		protected final Dungeon dungeon;
 		/**
@@ -1709,7 +1723,7 @@ public class DungeonGenerator {
 		}
 
 		protected List<Zone> zonesConnectedTo(boolean considerRooms, boolean considerCorridors,
-				Coord... starts) {
+				List<Coord> starts) {
 			final List<Zone> result = new ArrayList<Zone>(zonesConnectedTo(starts));
 			if (!considerRooms || !considerCorridors) {
 				final Iterator<Zone> it = result.iterator();
@@ -1739,7 +1753,7 @@ public class DungeonGenerator {
 		 * @return Zones that are not reachable from {@code starts}.
 		 */
 		protected List<Zone> zonesDisconnectedFrom(boolean considerRooms, boolean considerCorridors,
-				Coord... starts) {
+				List<Coord> starts) {
 			final int sz = (considerRooms ? dungeon.rooms.size() : 0)
 					+ (considerCorridors ? dungeon.corridors.size() : 0);
 			final List<Zone> result = new ArrayList<Zone>(sz / 8);
@@ -1798,27 +1812,30 @@ public class DungeonGenerator {
 				logger.infoLog(tag, "Stage " + stage + " took " + timings.get(stage) + "ms");
 		}
 
-		private Set<Zone> zonesConnectedTo(Coord... starts) {
+		private Set<Zone> zonesConnectedTo(List<Coord> starts) {
 			prepareBuffer();
 			final Set<Zone> result = new LinkedHashSet<Zone>(DungeonBuilder.getNumberOfZones(dungeon) / 2);
 			/* Cells in 'todo' are cells reachable from 'from' */
 			final Queue<Coord> todo = new LinkedList<Coord>();
-			for (Coord start : starts)
-				todo.add(start);
+			final int nbs = starts.size();
+			for (int i = 0; i < nbs; i++)
+				todo.add(starts.get(i));
 			final Direction[] moves = Direction.CARDINALS;
 			while (!todo.isEmpty()) {
 				final Coord next = todo.remove();
 				if (buf[next.x][next.y])
 					continue;
+				assert dungeon.isValid(next);
 				for (Direction dir : moves) {
 					final Coord neighbor = next.translate(dir);
+					final DungeonSymbol sym = dungeon.getSymbol(neighbor);
+					if (sym == null)
+						/* Out of bounds */
+						continue;
 					if (buf[neighbor.x][neighbor.y]) {
 						/* Done already */
 						continue;
 					}
-					final DungeonSymbol sym = dungeon.getSymbol(neighbor);
-					if (sym == null)
-						continue;
 					switch (sym) {
 					case CHASM:
 					case DEEP_WATER:
@@ -1856,6 +1873,13 @@ public class DungeonGenerator {
 						buf[x][y] &= false;
 				}
 			}
+		}
+
+		@Override
+		// Implementation of ICellToZone which gives the Zone containing a
+		// coord.
+		public /* @Nullable */ Zone get(Coord c) {
+			return cellToEncloser[c.x][c.y];
 		}
 
 	}

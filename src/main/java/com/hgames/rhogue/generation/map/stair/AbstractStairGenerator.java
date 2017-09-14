@@ -2,14 +2,11 @@ package com.hgames.rhogue.generation.map.stair;
 
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.PriorityQueue;
-import java.util.Queue;
 
 import com.hgames.lib.Objects;
 import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.Tags;
 import com.hgames.rhogue.generation.map.Dungeon;
-import com.hgames.rhogue.grid.GridIterators;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
@@ -47,23 +44,20 @@ public abstract class AbstractStairGenerator extends SkeletalStairGenerator {
 	}
 
 	@Override
-	public Queue<Coord> candidates() {
+	public Iterator<Coord> candidates() {
 		final Coord objective = getObjective();
 		if (objective == null)
 			return null;
 		if (logger != null && logger.isInfoEnabled())
 			logger.infoLog(Tags.GENERATION, "Stair objective: " + objective);
-		final Queue<Coord> result = candidates0(objective);
-		if (result == null || result.isEmpty()) {
+		final Iterator<Coord> result = candidates0(objective);
+		assert result != null;
+		if (!result.hasNext() && logger != null && logger.isInfoEnabled())
 			logger.infoLog(Tags.GENERATION, "No candidate for stair " + (upOrDown ? "up" : "down"));
-			return null;
-		}
-
-		if (logger != null && logger.isInfoEnabled())
-			logger.infoLog(Tags.GENERATION,
-					result.size() + " stair candidate" + (result.size() == 1 ? "" : "s"));
 		return result;
 	}
+
+	protected abstract Iterator<Coord> candidates0(Coord objective);
 
 	private Coord getObjective() {
 		return initialObjective == null ? getObjective0() : initialObjective;
@@ -73,32 +67,6 @@ public abstract class AbstractStairGenerator extends SkeletalStairGenerator {
 	 * @return Where to generate the stair, approximately.
 	 */
 	protected abstract Coord getObjective0();
-
-	/**
-	 * @param center
-	 * @return Candidates for stairs close to {@code center}. Or null.
-	 */
-	protected /* @Nullable */ Queue<Coord> candidates0(Coord center) {
-		final int width = dungeon.getWidth();
-		final int height = dungeon.getHeight();
-		final int rSize = ((width + height) / 6) + 1;
-		final Iterator<Coord> it = new GridIterators.GrowingRectangle(center, rSize);
-		final PriorityQueue<Coord> queue = new PriorityQueue<Coord>(rSize * 4,
-				newDistanceComparatorFrom(center));
-		int trials = 0;
-		while (it.hasNext()) {
-			final Coord next = it.next();
-			trials++;
-			if (isValidCandidate(next))
-				queue.add(next);
-		}
-		if (queue.isEmpty()) {
-			if (logger != null && logger.isInfoEnabled())
-				logger.infoLog(Tags.GENERATION, trials + " cell" + (trials == 1 ? "" : "s")
-						+ " have been unsuccessfully tried for the stair " + (upOrDown ? "up" : "down"));
-		}
-		return queue;
-	}
 
 	/**
 	 * @param dir
@@ -143,14 +111,17 @@ public abstract class AbstractStairGenerator extends SkeletalStairGenerator {
 
 	/**
 	 * @param c
+	 * @param inverted
 	 * @return A {@link Comparator} that orders {@link Coord coords} according
-	 *         to their distance to {@code c}.
+	 *         to their distance to {@code c} (by closeness if {@code inverted}
+	 *         is {@code false}, otherwise by distance).
 	 */
-	protected static Comparator<Coord> newDistanceComparatorFrom(final Coord c) {
+	protected static Comparator<Coord> newDistanceComparatorFrom(final Coord c, final boolean inverted) {
 		return new Comparator<Coord>() {
 			@Override
 			public int compare(Coord o1, Coord o2) {
-				return Double.compare(o1.distance(c), o2.distance(c));
+				final int base = Double.compare(o1.distance(c), o2.distance(c));
+				return inverted ? -base : base;
 			}
 		};
 	}

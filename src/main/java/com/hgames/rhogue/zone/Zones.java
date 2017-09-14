@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.hgames.lib.Pair;
+import com.hgames.lib.collection.pair.Pair;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.DungeonUtility;

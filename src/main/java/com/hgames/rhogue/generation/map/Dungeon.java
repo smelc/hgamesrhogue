@@ -155,6 +155,16 @@ public class Dungeon {
 	}
 
 	/**
+	 * @param z
+	 * @return The neighbors of {@code z}. It's either a room or a corridor.
+	 */
+	public List<Zone> getNeighbors(Zone z) {
+		assert DungeonBuilder.hasZone(this, z);
+		final List<Zone> result = connections.get(z);
+		return result == null ? Collections.<Zone> emptyList() : result;
+	}
+
+	/**
 	 * @param c
 	 * @return Whether {@code c} is a valid coordinate in {@code this}.
 	 */

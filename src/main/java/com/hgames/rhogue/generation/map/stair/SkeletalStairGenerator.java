@@ -24,6 +24,10 @@ public abstract class SkeletalStairGenerator implements IStairGenerator {
 
 	private static final List<Coord> COORD_LIST_BUF = new ArrayList<Coord>(4);
 
+	/**
+	 * @param dungeon
+	 *            The dungeon for which the stair should be generated.
+	 */
 	protected SkeletalStairGenerator(Dungeon dungeon) {
 		this.dungeon = Objects.checkNotNull(dungeon);
 	}

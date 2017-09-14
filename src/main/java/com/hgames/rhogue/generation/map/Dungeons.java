@@ -53,6 +53,15 @@ public class Dungeons {
 
 	/**
 	 * @param dungeon
+	 * @param z
+	 * @return Whether {@code z} is a room or corridor in {@code z}.
+	 */
+	public static boolean hasRoomOrCorridor(Dungeon dungeon, Zone z) {
+		return DungeonBuilder.hasRoomOrCorridor(dungeon, z);
+	}
+
+	/**
+	 * @param dungeon
 	 * @param c
 	 * @return Whether {@code c} is on {@code dungeon}'s edge.
 	 */
