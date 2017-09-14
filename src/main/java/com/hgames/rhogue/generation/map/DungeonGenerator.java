@@ -24,6 +24,7 @@ import com.hgames.lib.Exceptions;
 import com.hgames.lib.Ints;
 import com.hgames.lib.Stopwatch;
 import com.hgames.lib.choice.DoublePriorityCell;
+import com.hgames.lib.choice.PriorityCell;
 import com.hgames.lib.collection.Multimaps;
 import com.hgames.lib.collection.list.Lists;
 import com.hgames.lib.collection.pair.Pair;
@@ -152,7 +153,7 @@ public class DungeonGenerator {
 	protected /* @Nullable */ Coord downStairObjective;
 
 	private static final Zone[] ZONE_PAIR_BUF = new Zone[2];
-	private static final List<Coord> COORD_LIST_BUF = new ArrayList<Coord>(4);
+	private static final PriorityCell<Zone> ZPCELL = PriorityCell.createEmpty();
 	private static final DoublePriorityCell<Coord> DP_CELL = DoublePriorityCell.createEmpty();
 
 	/**
@@ -690,10 +691,11 @@ public class DungeonGenerator {
 		final boolean perfect = control.getPerfect();
 		final ICorridorBuilder builder = control.getBuilder();
 		final Coord[] startEndBuffer = new Coord[2];
-		final Coord[] connection = new Coord[2];
 		boolean needWaterPoolsCleanup = false;
 		final Set<Coord> buf = new HashSet<Coord>();
 		int result = 0;
+		final List<Coord> buf1 = new ArrayList<Coord>();
+		final List<Coord> buf2 = new ArrayList<Coord>();
 		for (Zone z : zoneToOtherZones.keySet()) {
 			final List<Pair<Double, Zone>> candidateDests = zoneToOtherZones.get(z);
 			if (candidateDests == null)
@@ -704,30 +706,36 @@ public class DungeonGenerator {
 				final Zone dest = candidateDests.get(j).getSnd();
 				if (DungeonBuilder.areConnected(dungeon, z, dest, 3))
 					continue;
-				final boolean found = getZonesConnectionEndpoints(gdata, z, dest, connection);
+				final boolean found = getZonesConnectionEndpoints(gdata, z, dest, buf1, buf2);
 				if (!found)
 					continue;
-				final Coord zEndpoint = connection[0];
-				final Coord destEndpoint = connection[1];
-				final Zone built = builder.build(rng, zEndpoint, destEndpoint, startEndBuffer);
-				if (built == null) {
-					/* Can do some debug here if needed */
-					// if (lenLimit == Integer.MAX_VALUE) {
-					// DungeonBuilder.setSymbol(dungeon, zEndpoint,
-					// DungeonSymbol.HIGH_GRASS);
-					// DungeonBuilder.setSymbol(dungeon, destEndpoint,
-					// DungeonSymbol.HIGH_GRASS);
-					// }
-					continue;
+				assert !buf1.isEmpty() && !buf2.isEmpty();
+				ZPCELL.clear();
+				final int b1sz = buf1.size();
+				final int b2sz = buf2.size();
+				for (int k = 0; k < b1sz; k++) {
+					final Coord zEndpoint = buf1.get(k);
+					for (int l = 0; l < b2sz; l++) {
+						final Coord destEndpoint = buf2.get(l);
+						final Zone built = builder.build(rng, zEndpoint, destEndpoint, startEndBuffer);
+						if (built == null)
+							continue;
+						assert !built.contains(zEndpoint);
+						assert !built.contains(destEndpoint);
+						/* Favor turnless corridors */
+						final int prio = ((built instanceof Rectangle || built.size() == 1) ? 1 : 2)
+								* built.size();
+						ZPCELL.union(built, prio);
+					}
 				}
-
+				final Zone built = ZPCELL.get();
+				if (built == null)
+					continue;
 				if (lenLimit < Integer.MAX_VALUE && lenLimit < built.size())
 					/* Too long */
 					continue;
 				// (NO_CORRIDOR_BBOX). This doesn't trigger if 'built'
 				// is a Rectangle, but it may if it a ZoneUnion.
-				assert !built.contains(zEndpoint);
-				assert !built.contains(destEndpoint);
 				if (perfect) {
 					assert EnumSet.of(DungeonSymbol.WALL)
 							.containsAll(DungeonBuilder.getSymbols(dungeon, built));
@@ -1013,7 +1021,8 @@ public class DungeonGenerator {
 		final Dungeon dungeon = gdata.dungeon;
 		assert DungeonBuilder.hasZone(dungeon, z);
 		removeZone(gdata, z);
-		DungeonBuilder.setSymbols(dungeon, z.iterator(), DungeonSymbol.WALL);
+		DungeonBuilder.setSymbolsExcept(dungeon, z.iterator(), DungeonSymbol.GRASS,
+				EnumSet.of(DungeonSymbol.HIGH_GRASS));
 		draw(dungeon);
 	}
 
@@ -1102,11 +1111,10 @@ public class DungeonGenerator {
 	}
 
 	/**
-	 * @param connection
 	 * @return Whether something was found.
 	 */
-	private boolean getZonesConnectionEndpoints(GenerationData gdata, Zone z1, Zone z2, Coord[] connection) {
-		assert connection.length == 2;
+	private boolean getZonesConnectionEndpoints(GenerationData gdata, Zone z1, Zone z2, List<Coord> buf1,
+			List<Coord> buf2) {
 		if (z1 == z2) {
 			assert false;
 			return false;
@@ -1114,21 +1122,23 @@ public class DungeonGenerator {
 		final Dungeon dungeon = gdata.dungeon;
 		assert DungeonBuilder.hasZone(dungeon, z1);
 		assert DungeonBuilder.hasZone(dungeon, z2);
-		final Direction fromz1toz2 = Direction.toGoTo(z1.getCenter(), z2.getCenter());
+		final Direction fromz1toz2 = toGoFromZoneToZone(z1.getCenter(), z2.getCenter());
 		assert fromz1toz2 != Direction.NONE;
-		getConnectionCandidates(gdata, z1, fromz1toz2);
-		if (COORD_LIST_BUF.isEmpty())
+		getConnectionCandidates(gdata, z1, fromz1toz2, buf1);
+		if (buf1.isEmpty())
 			return false;
-		final Coord z1Endpoint = rng.getRandomElement(COORD_LIST_BUF);
-		assert z1.contains(z1Endpoint);
-		getConnectionCandidates(gdata, z2, fromz1toz2.opposite());
-		if (COORD_LIST_BUF.isEmpty())
+		getConnectionCandidates(gdata, z2, fromz1toz2.opposite(), buf2);
+		if (buf2.isEmpty())
 			return false;
-		final Coord z2Endpoint = rng.getRandomElement(COORD_LIST_BUF);
-		assert z2.contains(z2Endpoint);
-		connection[0] = z1Endpoint;
-		connection[1] = z2Endpoint;
 		return true;
+	}
+
+	private static Direction toGoFromZoneToZone(Coord c1, Coord c2) {
+		// To return cardinals only: (look bad)
+		// final int x = c2.x - c1.x;
+		// final int y = c2.y - c1.y;
+		// return Direction.getCardinalDirection(x, y);
+		return Direction.toGoTo(c1, c2);
 	}
 
 	/**
@@ -1352,27 +1362,27 @@ public class DungeonGenerator {
 	}
 
 	/**
-	 * Fills {@link #COORD_LIST_BUF} with the candidates for building a
-	 * connection towards {@code dir} in {@code z}. They should all belong to
-	 * {@code z} {@link Zone#getInternalBorder() internal border}.
+	 * Fills {@code buf} with the candidates for building a connection towards
+	 * {@code dir} in {@code z}. They should all belong to {@code z}
+	 * {@link Zone#getInternalBorder() internal border}.
 	 * 
 	 * @param gdata
 	 * @param z
 	 * @param dir
 	 * @return Whether something was found.
 	 */
-	private boolean getConnectionCandidates(GenerationData gdata, Zone z, Direction dir) {
+	private boolean getConnectionCandidates(GenerationData gdata, Zone z, Direction dir, List<Coord> buf) {
 		if (dir == Direction.NONE)
 			throw new IllegalStateException();
-		COORD_LIST_BUF.clear();
+		buf.clear();
 		final boolean zIsARectangle = z instanceof Rectangle;
 		if (zIsARectangle && dir.isCardinal()) {
 			// (NO-BBOX)
 			// Rectangle.Utils.getBorder requires a cardinal direction
-			Rectangle.Utils.getBorder((Rectangle) z, dir, COORD_LIST_BUF);
+			Rectangle.Utils.getBorder((Rectangle) z, dir, buf);
 		} else if (z instanceof SingleCellZone) {
 			// (NO-BBOX)
-			COORD_LIST_BUF.add(z.getCenter());
+			buf.add(z.getCenter());
 		} else {
 			final Rectangle bbox = zIsARectangle ? (Rectangle) z : gdata.dungeon.boundingBoxes.get(z);
 			assert bbox != null;
@@ -1386,9 +1396,9 @@ public class DungeonGenerator {
 			}
 			final Coord coord = DP_CELL.get();
 			if (coord != null)
-				COORD_LIST_BUF.add(coord);
+				buf.add(coord);
 		}
-		return !COORD_LIST_BUF.isEmpty();
+		return !buf.isEmpty();
 	}
 
 	/**
