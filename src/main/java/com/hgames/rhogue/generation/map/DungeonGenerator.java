@@ -616,7 +616,7 @@ public class DungeonGenerator {
 			}
 
 			protected Impl(Dungeon dungeon, boolean perfect, boolean bresenham, boolean useSnd) {
-				this(dungeon, perfect, bresenham, useSnd, Integer.MAX_VALUE);
+				this(dungeon, perfect, bresenham, useSnd, (dungeon.width + dungeon.height) / 6);
 			}
 
 			@Override
@@ -654,7 +654,6 @@ public class DungeonGenerator {
 		final Map<Zone, List<Pair<Double, Zone>>> zoneToOtherZones = new LinkedHashMap<Zone, List<Pair<Double, Zone>>>(
 				nbr);
 		final int nbd = dests.size();
-		final double maxDist = (width + height) / 6;
 		boolean someChance = false;
 		for (Zone z : rooms) {
 			assert DungeonBuilder.isRoom(dungeon, z);
@@ -669,10 +668,10 @@ public class DungeonGenerator {
 					continue;
 				final Coord oc = other.getCenter();
 				final double dist = zc.distance(oc);
-				if (maxDist < dist) {
+				if (lenLimit < dist) {
 					/* Too far away */
-					// if (lenLimit < Integer.MAX_VALUE) {
-					// System.out.println(maxDist);
+					// if (lenLimit == Integer.MAX_VALUE) {
+					// System.out.println(lenLimit);
 					// System.out.println(dist);
 					// DungeonBuilder.setSymbol(dungeon, other.getCenter(),
 					// DungeonSymbol.HIGH_GRASS);
@@ -713,7 +712,7 @@ public class DungeonGenerator {
 				final Zone built = builder.build(rng, zEndpoint, destEndpoint, startEndBuffer);
 				if (built == null) {
 					/* Can do some debug here if needed */
-					// if (lenLimit < Integer.MAX_VALUE) {
+					// if (lenLimit == Integer.MAX_VALUE) {
 					// DungeonBuilder.setSymbol(dungeon, zEndpoint,
 					// DungeonSymbol.HIGH_GRASS);
 					// DungeonBuilder.setSymbol(dungeon, destEndpoint,
@@ -828,13 +827,15 @@ public class DungeonGenerator {
 		 * close to rooms that aren't connected to the other stair. Let's try to
 		 * fix that.
 		 */
-		infoLog("Could not generate " + (upOrDown ? "upward" : "downward")
-				+ " stair, trying to fix connectivity issue (around " + objective + ") if any.");
 		final List<Zone> dests = new ArrayList<Zone>(
 				gdata.zonesConnectedTo(true, false, Collections.singletonList(other)));
+		assert !dests.isEmpty();
 		final Collection<Zone> sources = gdata.zonesConnectedTo(true, false, trieds);
+		infoLog("Could not generate " + (upOrDown ? "upward" : "downward")
+				+ " stair, trying to fix connectivity issue (around " + objective + ") if any ("
+				+ sources.size() + " sources and " + dests.size() + " destinations).");
 		int built = generateCorridors(gdata, sources, dests,
-				new ICorridorControl.Impl(dungeon, false, true, false));
+				new ICorridorControl.Impl(dungeon, false, true, false, Integer.MAX_VALUE));
 		if (built == 0) {
 			infoLog("Could not fix connectivity issue. Failing.");
 			return null;
@@ -988,7 +989,7 @@ public class DungeonGenerator {
 		/* To ensure 'generateCorridors' precondition that it gets only rooms */
 		component.removeAll(dungeon.corridors);
 		final int nbc = generateCorridors(gdata, component, connectedRooms,
-				new ICorridorControl.Impl(dungeon, false, true, true));
+				new ICorridorControl.Impl(dungeon, false, true, true, nbCellsInComponent / 2));
 		final boolean connected = 0 < nbc;
 		if (connected) {
 			connectedRooms.addAll(component);
