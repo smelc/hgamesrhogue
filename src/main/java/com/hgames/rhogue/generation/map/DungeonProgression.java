@@ -3,6 +3,8 @@ package com.hgames.rhogue.generation.map;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.hgames.rhogue.generation.map.draw.IDungeonDrawer;
+
 /**
  * A drawer that stores dungeon being built efficiently, for retrieving them
  * later on.

@@ -19,22 +19,26 @@ import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**
- * Methods to mutate a {@link Dungeon}. Do not change visibilities, they are
- * intended.
+ * API to mutate a {@link Dungeon}.
  * 
  * @author smelC
  */
-class DungeonBuilder {
+public class DungeonBuilder {
+
+	protected final Dungeon dungeon;
+
+	DungeonBuilder(Dungeon dungeon) {
+		this.dungeon = dungeon;
+	}
 
 	/**
 	 * Adds a connection between {@code z1} and {@code z2} in {@code dungeon},
 	 * taking care of reflexivity.
 	 * 
-	 * @param dungeon
 	 * @param z1
 	 * @param z2
 	 */
-	static void addConnection(Dungeon dungeon, Zone z1, Zone z2) {
+	public void addConnection(Zone z1, Zone z2) {
 		assert z1 != z2;
 		if (z1 == z2)
 			throw new IllegalStateException("A zone should not be connected to itself");
@@ -44,22 +48,31 @@ class DungeonBuilder {
 		Multimaps.addToListMultimapIfAbsent(dungeon.connections, z2, z1);
 	}
 
-	static void addDisconnectedRoom(Dungeon dungeon, Zone z) {
+	/**
+	 * @param z
+	 */
+	public void addDisconnectedRoom(Zone z) {
 		assert dungeon.getRooms().contains(z);
 		if (dungeon.disconnectedRooms == null)
 			dungeon.disconnectedRooms = new ArrayList<Zone>();
 		dungeon.disconnectedRooms.add(z);
 	}
 
-	static void addWaterIsland(Dungeon dungeon, Zone z) {
+	/**
+	 * @param z
+	 */
+	public void addWaterIsland(Zone z) {
 		assert dungeon.getRooms().contains(z);
 		if (dungeon.waterIslands == null)
 			dungeon.waterIslands = new ArrayList<Zone>();
 		dungeon.waterIslands.add(z);
 	}
 
-	/** Prefer this method over direct mutations, it eases debugging. */
-	static void addWaterPool(Dungeon dungeon, ListZone pool) {
+	/**
+	 * @param pool
+	 *            The pool to add.
+	 */
+	public void addWaterPool(ListZone pool) {
 		assert !hasZone(dungeon, pool);
 		if (dungeon.waterPools == null)
 			dungeon.waterPools = new ArrayList<ListZone>();
@@ -68,13 +81,18 @@ class DungeonBuilder {
 		dungeon.waterPools.add(pool);
 	}
 
-	/** Prefer this method over direct mutations, it eases debugging. */
-	static void addZone(Dungeon dungeon, Zone z, /* @Nullable */ Rectangle boundingBox,
-			boolean roomOrCorridor) {
+	/**
+	 * @param z
+	 *            The zone to add
+	 * @param boundingBox
+	 *            {@code z}'s bounding box, or null.
+	 * @param roomOrCorridor
+	 *            Whether {@code z} is a room or a corridor.
+	 */
+	public void addZone(Zone z, /* @Nullable */ Rectangle boundingBox, boolean roomOrCorridor) {
 		/* Zone should not intersect with existing zones */
 		assert findIntersectingZones(dungeon, z, true, true, true) == null : ("Cannot add zone " + z
-				+ ". It overlaps with an existing zone: "
-				+ findIntersectingZones(dungeon, z, true, true, true));
+				+ ". It overlaps with an existing zone: " + findIntersectingZones(dungeon, z, true, true, true));
 		/* Check that bounding box (if any) is correct */
 		assert boundingBox == null || boundingBox.contains(z);
 		// System.out.println("Adding zone: " + z);
@@ -89,7 +107,11 @@ class DungeonBuilder {
 		}
 	}
 
-	static void removeZone(Dungeon dungeon, Zone z) {
+	/**
+	 * @param z
+	 *            The zone to remove.
+	 */
+	public void removeZone(Zone z) {
 		boolean done = dungeon.rooms.remove(z);
 		if (!done)
 			done = dungeon.corridors.remove(z);
@@ -101,8 +123,14 @@ class DungeonBuilder {
 			destinations.remove(z);
 	}
 
-	/** Prefer this method over direct mutations, it eases debugging. */
-	static void setStair(Dungeon dungeon, int x, int y, boolean upOrDown) {
+	/**
+	 * Prefer this method over direct mutations, it eases debugging.
+	 * 
+	 * @param x
+	 * @param y
+	 * @param upOrDown
+	 */
+	public void setStair(int x, int y, boolean upOrDown) {
 		final DungeonSymbol sym = upOrDown ? DungeonSymbol.STAIR_UP : DungeonSymbol.STAIR_DOWN;
 		setSymbol(dungeon, x, y, sym);
 		final Coord c = Coord.get(x, y);
@@ -112,22 +140,36 @@ class DungeonBuilder {
 			dungeon.downwardStair = c;
 	}
 
-	/** Prefer this method over direct mutations, it eases debugging. */
-	static void setSymbol(Dungeon dungeon, Coord c, DungeonSymbol sym) {
+	/**
+	 * Prefer this method over direct mutations, it eases debugging.
+	 * 
+	 * @param c
+	 *            The cell to modify.
+	 * @param sym
+	 *            The symbol to set at {@code sym}.
+	 */
+	public void setSymbol(Coord c, DungeonSymbol sym) {
 		setSymbol(dungeon, c.x, c.y, sym);
 	}
 
-	/** Prefer this method over direct mutations, it eases debugging. */
-	static void setSymbol(Dungeon dungeon, int x, int y, DungeonSymbol sym) {
+	/**
+	 * Prefer this method over direct mutations, it eases debugging.
+	 *
+	 * @param x
+	 * @param y
+	 * @param sym
+	 */
+	public void setSymbol(int x, int y, DungeonSymbol sym) {
 		dungeon.map[x][y] = sym;
 	}
 
 	/**
 	 * Sets {@code sym} everywhere in {@code it}.
 	 * 
+	 * @param it
 	 * @param sym
 	 */
-	static void setSymbols(Dungeon dungeon, Iterator<Coord> it, DungeonSymbol sym) {
+	public void setSymbols(Iterator<Coord> it, DungeonSymbol sym) {
 		while (it.hasNext()) {
 			final Coord c = it.next();
 			dungeon.map[c.x][c.y] = sym;
@@ -138,10 +180,11 @@ class DungeonBuilder {
 	 * Sets {@code sym} for cells in {@code it} whose symbol is not in
 	 * {@cod except}
 	 * 
+	 * @param it
 	 * @param sym
+	 * @param except
 	 */
-	static void setSymbolsExcept(Dungeon dungeon, Iterator<Coord> it, DungeonSymbol sym,
-			EnumSet<DungeonSymbol> except) {
+	public void setSymbolsExcept(Iterator<Coord> it, DungeonSymbol sym, EnumSet<DungeonSymbol> except) {
 		while (it.hasNext()) {
 			final Coord c = it.next();
 			if (!except.contains(dungeon.getSymbol(c)))
@@ -154,7 +197,7 @@ class DungeonBuilder {
 	 * 
 	 * @param sym
 	 */
-	static void setAllSymbols(Dungeon dungeon, DungeonSymbol sym) {
+	public void setAllSymbols(DungeonSymbol sym) {
 		final int width = dungeon.getWidth();
 		final int height = dungeon.getHeight();
 		for (int x = 0; x < width; x++) {
@@ -164,7 +207,11 @@ class DungeonBuilder {
 		}
 	}
 
-	static boolean anyOnEdge(Dungeon dungeon, Iterator<Coord> it) {
+	/**
+	 * @param it
+	 * @return Whether a member of {@code it} is on the edge.
+	 */
+	public boolean anyOnEdge(Iterator<Coord> it) {
 		while (it.hasNext()) {
 			final Coord c = it.next();
 			if (Dungeons.isOnEdge(dungeon, c))
@@ -177,17 +224,15 @@ class DungeonBuilder {
 	 * Don't go crazy on this method, it is slow on zones that are connected via
 	 * many intermediates rooms/corridors.
 	 * 
-	 * @param dungeon
 	 * @param z0
 	 * @param z1
 	 * @return Whether {@code z0} and {@code z1} are connected.
 	 */
-	static boolean areConnected(Dungeon dungeon, Zone z0, Zone z1) {
-		return areConnected(dungeon, z0, z1, Integer.MAX_VALUE);
+	public boolean areConnected(Zone z0, Zone z1) {
+		return areConnected(z0, z1, Integer.MAX_VALUE);
 	}
 
 	/**
-	 * @param dungeon
 	 * @param z0
 	 * @param z1
 	 * @param intermediates
@@ -196,11 +241,11 @@ class DungeonBuilder {
 	 * @return Whether {@code z0} and {@code z1} are connected by at most
 	 *         {@code intermediates} zones.
 	 */
-	static boolean areConnected(Dungeon dungeon, Zone z0, Zone z1, int intermediates) {
+	public boolean areConnected(Zone z0, Zone z1, int intermediates) {
 		return areConnected(dungeon, z0, z1, intermediates, new HashSet<Zone>());
 	}
 
-	private static boolean areConnected(Dungeon dungeon, Zone z0, Zone z1, int intermediates, Set<Zone> z0s) {
+	private boolean areConnected(Zone z0, Zone z1, int intermediates, Set<Zone> z0s) {
 		if (intermediates < 1)
 			return false;
 		final List<Zone> list = dungeon.connections.get(z0);
@@ -212,13 +257,13 @@ class DungeonBuilder {
 			if (out.equals(z1))
 				return true;
 			final boolean added = z0s.add(out);
-			if (added && areConnected(dungeon, out, z1, intermediates - 1, z0s))
+			if (added && areConnected(out, z1, intermediates - 1, z0s))
 				return true;
 		}
 		return false;
 	}
 
-	static List<List<Zone>> connectedComponents(Dungeon dungeon, List<Zone> zones) {
+	static List<List<Zone>> connectedComponents(List<Zone> zones) {
 		if (zones.isEmpty())
 			return Collections.emptyList();
 		final List<List<Zone>> result = new ArrayList<List<Zone>>();
@@ -231,7 +276,7 @@ class DungeonBuilder {
 				final int csz = component.size();
 				for (int k = 0; k < csz; k++) {
 					final Zone z = component.get(k);
-					if (areConnected(dungeon, zone, z)) {
+					if (areConnected(zone, z)) {
 						component.add(zone);
 						continue nextZone;
 					}
@@ -246,24 +291,25 @@ class DungeonBuilder {
 	}
 
 	/**
-	 * @param dungeon
 	 * @param x
 	 * @param y
 	 * @return The room or corridor of {@code dungeon} that
 	 *         {@link Zone#contains(int, int)} {@code (x, y)}, or {@code null}
 	 *         if none.
 	 */
-	static /* @Nullable */ Zone findZoneContaining(Dungeon dungeon, int x, int y) {
+	public /* @Nullable */ Zone findZoneContaining(int x, int y) {
 		Zone result = findZoneContaining(dungeon.rooms, dungeon.boundingBoxes, x, y, true);
 		if (result != null)
 			return result;
 		return findZoneContaining(dungeon.corridors, dungeon.boundingBoxes, x, y, false);
 	}
 
-	static int getNumberOfZones(Dungeon dungeon) {
+	// FIXME CH Move me to Dungeons
+	public static int getNumberOfZones(Dungeon dungeon) {
 		return dungeon.rooms.size() + dungeon.corridors.size();
 	}
 
+	// FIXME CH Move me to Dungeons
 	static int getSizeOfWater(Dungeon dungeon) {
 		return dungeon.waterPools == null ? 0 : Zones.size(dungeon.waterPools);
 	}
@@ -273,6 +319,7 @@ class DungeonBuilder {
 	 * @param z
 	 * @return The symbols in {@code z}.
 	 */
+	// FIXME CH Move me to Dungeons
 	static EnumSet<DungeonSymbol> getSymbols(Dungeon dungeon, Zone z) {
 		final EnumSet<DungeonSymbol> result = EnumSet.noneOf(DungeonSymbol.class);
 		for (Coord c : z) {
@@ -306,8 +353,7 @@ class DungeonBuilder {
 	 * @return Whether zone is valid in dungeon and only contains members of
 	 *         {@code syms}
 	 */
-	static boolean isOnly(Dungeon dungeon, Iterator<Coord> zone, EnumSet<DungeonSymbol> syms,
-			boolean checkValidity) {
+	static boolean isOnly(Dungeon dungeon, Iterator<Coord> zone, EnumSet<DungeonSymbol> syms, boolean checkValidity) {
 		while (zone.hasNext()) {
 			final Coord c = zone.next();
 			final DungeonSymbol sym = dungeon.getSymbol(c.x, c.y);

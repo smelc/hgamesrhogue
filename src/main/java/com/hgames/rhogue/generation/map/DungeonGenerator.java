@@ -33,6 +33,8 @@ import com.hgames.rhogue.Tags;
 import com.hgames.rhogue.generation.map.connection.IConnectionFinder;
 import com.hgames.rhogue.generation.map.corridor.CorridorBuilders;
 import com.hgames.rhogue.generation.map.corridor.ICorridorBuilder;
+import com.hgames.rhogue.generation.map.draw.ConsoleDungeonDrawer;
+import com.hgames.rhogue.generation.map.draw.IDungeonDrawer;
 import com.hgames.rhogue.generation.map.flood.DungeonFloodFill;
 import com.hgames.rhogue.generation.map.flood.FloodFill;
 import com.hgames.rhogue.generation.map.flood.IFloodObjective;
@@ -282,8 +284,7 @@ public class DungeonGenerator {
 	 *            A coord or null.
 	 * @return {@code this}.
 	 */
-	public DungeonGenerator setStairsObjectives(/* @Nullable */Coord upStair,
-			/* @Nullable */Coord downStair) {
+	public DungeonGenerator setStairsObjectives(/* @Nullable */Coord upStair, /* @Nullable */Coord downStair) {
 		this.upStairObjective = upStair == null ? null : clamp(upStair);
 		this.downStairObjective = downStair == null ? null : clamp(downStair);
 		return this;
@@ -298,8 +299,7 @@ public class DungeonGenerator {
 	 */
 	public DungeonGenerator setDisconnectedRoomsObjective(int objective) {
 		if (objective < 0)
-			throw new IllegalStateException(
-					"Disconnected rooms objective must be >= 0. Received: " + objective);
+			throw new IllegalStateException("Disconnected rooms objective must be >= 0. Received: " + objective);
 		this.disconnectedRoomsObjective = objective;
 		return this;
 	}
@@ -350,8 +350,7 @@ public class DungeonGenerator {
 	 * @param lifetime
 	 * @return {@code this}.
 	 */
-	public DungeonGenerator installRoomGenerator(IRoomGenerator roomGenerator, int probability,
-			Lifetime lifetime) {
+	public DungeonGenerator installRoomGenerator(IRoomGenerator roomGenerator, int probability, Lifetime lifetime) {
 		this.roomGenerators.add(roomGenerator, probability);
 		this.rgLifetimes.put(roomGenerator, lifetime);
 		return this;
@@ -381,8 +380,7 @@ public class DungeonGenerator {
 		generatePassagesInAlmostAdjacentRooms(gdata);
 		draw(gdata.dungeon);
 		gdata.startStage(Stage.CORRIDORS);
-		generateCorridors(gdata, dungeon.rooms, dungeon.rooms,
-				new ICorridorControl.Impl(dungeon, true, false, false));
+		generateCorridors(gdata, dungeon.rooms, dungeon.rooms, new ICorridorControl.Impl(dungeon, true, false, false));
 		/* Must be called before 'generateWater' */
 		gdata.startStage(Stage.STAIRS);
 		final boolean good = generateStairs(gdata);
@@ -407,8 +405,7 @@ public class DungeonGenerator {
 			 * too restrictive to do that, since it only considers wall-only
 			 * areas).
 			 */
-			final EnumSet<DungeonSymbol> overwritten = EnumSet.of(DungeonSymbol.WALL,
-					DungeonSymbol.DEEP_WATER);
+			final EnumSet<DungeonSymbol> overwritten = EnumSet.of(DungeonSymbol.WALL, DungeonSymbol.DEEP_WATER);
 			final int nbPools = dungeon.waterPools == null ? 0 : dungeon.waterPools.size();
 			final Set<ListZone> needCleanUp = new HashSet<ListZone>();
 			nextPool: for (int i = 0; i < nbPools; i++) {
@@ -456,9 +453,8 @@ public class DungeonGenerator {
 
 				@Override
 				public Iterator<Coord> getCoords() {
-					return new GridIterators.RectangleRandomStartAndDirection(width, height,
-							rng.nextInt(width), rng.nextInt(height),
-							rng.getRandomElement(Direction.CARDINALS));
+					return new GridIterators.RectangleRandomStartAndDirection(width, height, rng.nextInt(width),
+							rng.nextInt(height), rng.getRandomElement(Direction.CARDINALS));
 				}
 
 				@Override
@@ -480,8 +476,7 @@ public class DungeonGenerator {
 	 * Cleanup {@link Dungeon#waterPools}: remove lonelies and then delete empty
 	 * pools.
 	 */
-	private void cleanWaterPools(final GenerationData gdata,
-			/* @Nullable */ Collection<? extends Zone> needCleanUp) {
+	private void cleanWaterPools(final GenerationData gdata, /* @Nullable */ Collection<? extends Zone> needCleanUp) {
 		final Dungeon dungeon = gdata.dungeon;
 		final Iterator<ListZone> it = dungeon.waterPools.iterator();
 		while (it.hasNext()) {
@@ -528,10 +523,9 @@ public class DungeonGenerator {
 				assert z1 != null;
 				assert z0 != z1;
 				final Coord doorCandidate = Coord.get(x, y);
-				Multimaps.addToListMultimap(connectedsToCandidates, orderedPair(gdata, z0, z1),
-						doorCandidate);
-				assert DungeonBuilder.findZoneContaining(dungeon, x, y) == null : "Candidate for door: "
-						+ doorCandidate + " should not be in a zone";
+				Multimaps.addToListMultimap(connectedsToCandidates, orderedPair(gdata, z0, z1), doorCandidate);
+				assert DungeonBuilder.findZoneContaining(dungeon, x, y) == null : "Candidate for door: " + doorCandidate
+						+ " should not be in a zone";
 			}
 		}
 		/*
@@ -560,8 +554,7 @@ public class DungeonGenerator {
 			}
 			final Coord door = cell.get();
 			assert door != null;
-			final DungeonSymbol sym = rng.next(101) <= doorProbability ? DungeonSymbol.DOOR
-					: DungeonSymbol.FLOOR;
+			final DungeonSymbol sym = rng.next(101) <= doorProbability ? DungeonSymbol.DOOR : DungeonSymbol.FLOOR;
 			final Zone zdoor = new SingleCellZone(door);
 			addZone(gdata, zdoor, null, ZoneType.CORRIDOR);
 			DungeonBuilder.addConnection(dungeon, z0, zdoor);
@@ -605,14 +598,12 @@ public class DungeonGenerator {
 			private final ICorridorBuilder builder;
 			private final int limit;
 
-			protected Impl(Dungeon dungeon, boolean perfect, boolean bresenhamFirst, boolean useSnd,
-					int limit) {
+			protected Impl(Dungeon dungeon, boolean perfect, boolean bresenhamFirst, boolean useSnd, int limit) {
 				this.perfect = perfect;
 				this.builder = useSnd ? CorridorBuilders.createCombination(dungeon, perfect, bresenhamFirst)
 						: CorridorBuilders.create(dungeon, perfect, bresenhamFirst);
 				if (limit < 0)
-					throw new IllegalStateException(
-							"Limit of length of corridors must be >= 0. Received: " + limit);
+					throw new IllegalStateException("Limit of length of corridors must be >= 0. Received: " + limit);
 				this.limit = limit;
 			}
 
@@ -660,8 +651,7 @@ public class DungeonGenerator {
 			assert DungeonBuilder.isRoom(dungeon, z);
 			final Coord zc = z.getCenter();
 			assert !zoneToOtherZones.keySet().contains(z);
-			final List<Pair<Double, Zone>> otherZones = new ArrayList<Pair<Double, Zone>>(
-					Math.max(0, nbr - 1));
+			final List<Pair<Double, Zone>> otherZones = new ArrayList<Pair<Double, Zone>>(Math.max(0, nbr - 1));
 			for (int j = 0; j < nbd; j++) {
 				final Zone other = dests.get(j);
 				assert DungeonBuilder.isRoom(dungeon, other);
@@ -702,9 +692,11 @@ public class DungeonGenerator {
 				continue;
 			final int nbcd = candidateDests.size();
 			Collections.sort(candidateDests, ORDERER);
-			for (int j = 0; j < connectivity && j < nbcd; j++) {
+			int connections = dungeon.getNeighbors(z).size();
+			for (int j = 0; j < connectivity && connections < connectivity && j < nbcd; j++) {
 				final Zone dest = candidateDests.get(j).getSnd();
-				if (DungeonBuilder.areConnected(dungeon, z, dest, 3))
+				// XXX CH Check it wouldn't exceed dest's connectivity ?
+				if (DungeonBuilder.areConnected(dungeon, z, dest, 6))
 					continue;
 				final boolean found = getZonesConnectionEndpoints(gdata, z, dest, buf1, buf2);
 				if (!found)
@@ -723,8 +715,7 @@ public class DungeonGenerator {
 						assert !built.contains(zEndpoint);
 						assert !built.contains(destEndpoint);
 						/* Favor turnless corridors */
-						final int prio = ((built instanceof Rectangle || built.size() == 1) ? 1 : 2)
-								* built.size();
+						final int prio = ((built instanceof Rectangle || built.size() == 1) ? 1 : 2) * built.size();
 						ZPCELL.union(built, prio);
 					}
 				}
@@ -737,8 +728,7 @@ public class DungeonGenerator {
 				// (NO_CORRIDOR_BBOX). This doesn't trigger if 'built'
 				// is a Rectangle, but it may if it a ZoneUnion.
 				if (perfect) {
-					assert EnumSet.of(DungeonSymbol.WALL)
-							.containsAll(DungeonBuilder.getSymbols(dungeon, built));
+					assert EnumSet.of(DungeonSymbol.WALL).containsAll(DungeonBuilder.getSymbols(dungeon, built));
 				} else {
 					/* Corridor can go through DEEP_WATER */
 					if (buf != null)
@@ -762,11 +752,12 @@ public class DungeonGenerator {
 				DungeonBuilder.addConnection(dungeon, dest, recorded);
 				// Punch corridor
 				for (Coord c : built) {
-					DungeonBuilder.setSymbol(dungeon, c, buf != null && buf.contains(c)
-							? DungeonSymbol.SHALLOW_WATER : DungeonSymbol.FLOOR);
+					DungeonBuilder.setSymbol(dungeon, c,
+							buf != null && buf.contains(c) ? DungeonSymbol.SHALLOW_WATER : DungeonSymbol.FLOOR);
 				}
 				draw(dungeon);
 				result++;
+				connections++;
 			}
 		}
 		if (needWaterPoolsCleanup)
@@ -818,8 +809,7 @@ public class DungeonGenerator {
 		final /* @Nullable */ Coord other = dungeon.getStair(!upOrDown);
 		while (candidates.hasNext()) {
 			final Coord candidate = candidates.next();
-			if (other == null
-					|| (!other.equals(candidate) && gdata.pathExists(other, candidate, false, false))) {
+			if (other == null || (!other.equals(candidate) && gdata.pathExists(other, candidate, false, false))) {
 				if (punchStair(gdata, candidate, upOrDown))
 					return candidate;
 			}
@@ -840,8 +830,8 @@ public class DungeonGenerator {
 		assert !dests.isEmpty();
 		final Collection<Zone> sources = gdata.zonesConnectedTo(true, false, trieds);
 		infoLog("Could not generate " + (upOrDown ? "upward" : "downward")
-				+ " stair, trying to fix connectivity issue (around " + objective + ") if any ("
-				+ sources.size() + " sources and " + dests.size() + " destinations).");
+				+ " stair, trying to fix connectivity issue (around " + objective + ") if any (" + sources.size()
+				+ " sources and " + dests.size() + " destinations).");
 		int built = generateCorridors(gdata, sources, dests,
 				new ICorridorControl.Impl(dungeon, false, true, false, Integer.MAX_VALUE));
 		if (built == 0) {
@@ -890,8 +880,7 @@ public class DungeonGenerator {
 			throw new IllegalStateException("ensureDensity method requires stairs to be set");
 		final List<Zone> disconnectedZones = gdata.zonesDisconnectedFrom(true, true,
 				Lists.newArrayList(dungeon.upwardStair, dungeon.downwardStair));
-		final List<List<Zone>> disconnectedComponents = DungeonBuilder.connectedComponents(dungeon,
-				disconnectedZones);
+		final List<List<Zone>> disconnectedComponents = DungeonBuilder.connectedComponents(dungeon, disconnectedZones);
 		final int nbdc = disconnectedComponents.size();
 		int reachable = Zones.size(dungeon.rooms);
 		reachable += Zones.size(dungeon.corridors);
@@ -909,14 +898,13 @@ public class DungeonGenerator {
 				 * /!\ This call mutes 'connectedRooms' and trashes
 				 * 'disconnectedComponent' /!\
 				 */
-				final int extension = treatDisconnectedComponent(gdata, connectedRooms,
-						disconnectedComponent);
+				final int extension = treatDisconnectedComponent(gdata, connectedRooms, disconnectedComponent);
 				assert 0 <= extension;
 				if (0 < extension) {
 					reachable += extension;
 					if (logger != null && logger.isInfoEnabled())
-						infoLog("Connected component (consisting of " + nbdc + " zone" + plural(sz)
-								+ ") of size " + extension);
+						infoLog("Connected component (consisting of " + nbdc + " zone" + plural(sz) + ") of size "
+								+ extension);
 				}
 			}
 		}
@@ -931,8 +919,7 @@ public class DungeonGenerator {
 	 *            The component. It should not be used anymore after this call.
 	 * @return The number of cells that got connected to the stairs.
 	 */
-	private int treatDisconnectedComponent(GenerationData gdata, List<Zone> connectedRooms,
-			List<Zone> component) {
+	private int treatDisconnectedComponent(GenerationData gdata, List<Zone> connectedRooms, List<Zone> component) {
 		final Dungeon dungeon = gdata.dungeon;
 		final int sz = Zones.size(component);
 		final int csz = component.size();
@@ -941,8 +928,7 @@ public class DungeonGenerator {
 			final Zone z = component.get(0);
 			/* Can it be used to honor #disconnectedRoomsObjective ? */
 			if (dungeon.getDisconnectedRooms().size() < disconnectedRoomsObjective) {
-				infoLog("Used a size " + sz
-						+ " disconnected room to fulfill the disconnected rooms objective.");
+				infoLog("Used a size " + sz + " disconnected room to fulfill the disconnected rooms objective.");
 				DungeonBuilder.addDisconnectedRoom(dungeon, z);
 				return 0;
 			}
@@ -967,9 +953,8 @@ public class DungeonGenerator {
 				 */
 				// FIXME CH Why doesn't this work perfectly on seed 35 ?
 				final Zone z = component.get(0);
-				final int built = generateCorridors(gdata, component, connectedRooms,
-						new ICorridorControl.Impl(dungeon, false, true, true,
-								Math.max(z.getWidth(), z.getHeight()) * 2));
+				final int built = generateCorridors(gdata, component, connectedRooms, new ICorridorControl.Impl(dungeon,
+						false, true, true, Math.max(z.getWidth(), z.getHeight()) * 2));
 				// FIXME CH Generate doors on these corridors ?
 				if (0 < built) {
 					if (logger != null && logger.isInfoEnabled())
@@ -1159,8 +1144,7 @@ public class DungeonGenerator {
 	 *            The symbols that the rooms can overwrite.
 	 * @return Whether a room could be generated.
 	 */
-	private boolean generateRoom(GenerationData gdata, RoomGeneratorHelper rgh,
-			EnumSet<DungeonSymbol> overwritten) {
+	private boolean generateRoom(GenerationData gdata, RoomGeneratorHelper rgh, EnumSet<DungeonSymbol> overwritten) {
 		final Dungeon dungeon = gdata.dungeon;
 		int frustration = 0;
 		/*
@@ -1202,8 +1186,7 @@ public class DungeonGenerator {
 				 * trick (as opposed to extending the rooms already created).
 				 */
 				if (!DungeonBuilder.isOnly(dungeon,
-						Rectangle.Utils.cells(new Rectangle.Impl(blCandidate, mw, mh).extend()), overwritten,
-						true))
+						Rectangle.Utils.cells(new Rectangle.Impl(blCandidate, mw, mh).extend()), overwritten, true))
 					continue;
 				assert dungeon.isValid(brCandidate);
 				assert !Dungeons.isOnEdge(dungeon, brCandidate);
@@ -1328,8 +1311,7 @@ public class DungeonGenerator {
 	 * @param boundingBox
 	 * @param ztype
 	 */
-	private Zone addZone(GenerationData gdata, Zone z, /* @Nullable */ Rectangle boundingBox,
-			ZoneType ztype) {
+	private Zone addZone(GenerationData gdata, Zone z, /* @Nullable */ Rectangle boundingBox, ZoneType ztype) {
 		final Dungeon dungeon = gdata.dungeon;
 		final Zone recorded = needCaching(z, ztype) ? new CachingZone(z) : z;
 		switch (ztype) {
@@ -1346,8 +1328,8 @@ public class DungeonGenerator {
 		for (Coord c : recorded) {
 			final Zone prev = gdata.cellToEncloser[c.x][c.y];
 			if (prev != null)
-				throw new IllegalStateException("Cell " + c + " (" + dungeon.map[c.x][c.y]
-						+ ") belongs to zone " + prev + " already. Cannot map it to " + recorded);
+				throw new IllegalStateException("Cell " + c + " (" + dungeon.map[c.x][c.y] + ") belongs to zone " + prev
+						+ " already. Cannot map it to " + recorded);
 			gdata.cellToEncloser[c.x][c.y] = recorded;
 		}
 		gdata.recordRoomOrdering(recorded);
@@ -1740,8 +1722,7 @@ public class DungeonGenerator {
 			return false;
 		}
 
-		protected List<Zone> zonesConnectedTo(boolean considerRooms, boolean considerCorridors,
-				List<Coord> starts) {
+		protected List<Zone> zonesConnectedTo(boolean considerRooms, boolean considerCorridors, List<Coord> starts) {
 			final List<Zone> result = new ArrayList<Zone>(zonesConnectedTo(starts));
 			if (!considerRooms || !considerCorridors) {
 				final Iterator<Zone> it = result.iterator();
@@ -1840,11 +1821,10 @@ public class DungeonGenerator {
 			final int width = dungeon.width;
 			final int height = dungeon.height;
 			final int mapSize = width * height;
-			logger.infoLog(tag, "Generated " + width + "x" + height + " dungeon (" + mapSize + " cells) in "
-					+ total + "ms.");
+			logger.infoLog(tag,
+					"Generated " + width + "x" + height + " dungeon (" + mapSize + " cells) in " + total + "ms.");
 			if (1000 < mapSize)
-				logger.infoLog(tag,
-						"That's approximately " + (int) ((1000f / mapSize) * total) + "ms per 1K cells.");
+				logger.infoLog(tag, "That's approximately " + (int) ((1000f / mapSize) * total) + "ms per 1K cells.");
 			for (Stage stage : Stage.values())
 				logger.infoLog(tag, "Stage " + stage + " took " + timings.get(stage) + "ms");
 		}
