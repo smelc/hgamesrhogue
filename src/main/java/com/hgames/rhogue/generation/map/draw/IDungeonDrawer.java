@@ -1,4 +1,6 @@
-package com.hgames.rhogue.generation.map;
+package com.hgames.rhogue.generation.map.draw;
+
+import com.hgames.rhogue.generation.map.DungeonSymbol;
 
 /**
  * @author smelC

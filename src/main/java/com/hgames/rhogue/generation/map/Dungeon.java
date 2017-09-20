@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.hgames.lib.Exceptions;
+import com.hgames.rhogue.generation.map.draw.Generic2DArrayDrawer;
+import com.hgames.rhogue.generation.map.draw.IDungeonSymbolDrawer;
 
 import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidgrid.zone.ListZone;
@@ -16,8 +18,9 @@ import squidpony.squidmath.Coord;
 
 /**
  * The type returned by {@link DungeonGenerator}. The API of this class is
- * intentionally only to retrieve the dungeon's structure. Mutation to the
- * dungeon are done via package-visible fields.
+ * intentionally only to retrieve the dungeon's structure. Mutation to dungeons
+ * are done via {@link #getBuilder()}, i.e. they should go through
+ * {@link DungeonBuilder}.
  * 
  * <p>
  * The API of this file is kept intentionally small. See {@link Dungeons} for
@@ -35,6 +38,9 @@ public class Dungeon {
 
 	protected final int width;
 	protected final int height;
+
+	/** The mutation API */
+	public final DungeonBuilder builder;
 
 	final List<Zone> rooms;
 	/**
@@ -78,6 +84,7 @@ public class Dungeon {
 	 */
 	Dungeon(DungeonSymbol[][] map) {
 		this.map = map;
+		this.builder = new DungeonBuilder(this);
 		final int estimatedNumberOfRooms = size() / 256;
 		this.rooms = new ArrayList<Zone>(estimatedNumberOfRooms);
 		this.boundingBoxes = new HashMap<Zone, Rectangle>(estimatedNumberOfRooms);
@@ -252,10 +259,12 @@ public class Dungeon {
 			for (int y = 0; y < height; y++) {
 				final DungeonSymbol sym = getSymbol(x, y);
 				switch (sym) {
-				case DOOR:
-				case FLOOR:
 				case GRASS:
 				case HIGH_GRASS:
+					/* To debug */
+					continue;
+				case DOOR:
+				case FLOOR:
 				case SHALLOW_WATER: {
 					final Zone zone = findZoneContaining(x, y);
 					if (zone == null) {
@@ -271,8 +280,8 @@ public class Dungeon {
 				case WALL:
 					final Zone zone = findZoneContaining(x, y);
 					if (zone != null) {
-						System.err.println(sym + " cell (" + x + "," + y
-								+ ") shouldn't belong to a zone (found " + zone + ").");
+						System.err.println(
+								sym + " cell (" + x + "," + y + ") shouldn't belong to a zone (found " + zone + ").");
 						return false;
 					}
 					continue;
@@ -309,5 +318,21 @@ public class Dungeon {
 		/* FIXME Check that waterIslands are correct */
 
 		return true;
+	}
+
+	/**
+	 * Debug method.
+	 * 
+	 * @return {@code this} pretty printed.
+	 */
+	public String dirtyPrint() {
+		final IDungeonSymbolDrawer sdrawer = new DungeonSymbolDrawer();
+		final Generic2DArrayDrawer<DungeonSymbol> drawer = new Generic2DArrayDrawer<DungeonSymbol>() {
+			@Override
+			protected char draw(DungeonSymbol t) {
+				return sdrawer.draw(t);
+			}
+		};
+		return drawer.draw(map);
 	}
 }
