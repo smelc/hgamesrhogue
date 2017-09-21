@@ -14,6 +14,7 @@ import com.hgames.lib.iterator.Iterators;
 import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.generation.map.Dungeon;
 import com.hgames.rhogue.generation.map.DungeonZonesCrawler;
+import com.hgames.rhogue.generation.map.Dungeons;
 import com.hgames.rhogue.generation.map.ICellToZone;
 import com.hgames.rhogue.generation.map.connection.IConnectionFinder;
 
@@ -56,8 +57,7 @@ public class StairGenerator extends AbstractStairGenerator {
 		final /* @Nullable */ Coord other = dungeon.getStair(!upOrDown);
 		if (other == null) {
 			/*
-			 * Choose a zone that is not in the center of the dungeon and take
-			 * its center.
+			 * Choose a zone that is not in the center of the dungeon and take its center.
 			 */
 			final int width = dungeon.getWidth();
 			final int height = dungeon.getHeight();
@@ -87,8 +87,7 @@ public class StairGenerator extends AbstractStairGenerator {
 			final List<Zone> rooms = dungeon.getRooms();
 			final int nbr = rooms.size();
 			/*
-			 * Order zones by distance from 'other'. Better zone is the one
-			 * farther away.
+			 * Order zones by distance from 'other'. Better zone is the one farther away.
 			 */
 			final PriorityQueue<Zone> candidates = new PriorityQueue<Zone>(nbr, new Comparator<Zone>() {
 				@Override
@@ -163,7 +162,7 @@ public class StairGenerator extends AbstractStairGenerator {
 		if (result == null) {
 			/* Fallback (bad) */
 			assert false;
-			result = dungeon.findZoneContaining(c.x, c.y);
+			result = Dungeons.findZoneContaining(dungeon, c.x, c.y);
 		}
 		return result;
 	}

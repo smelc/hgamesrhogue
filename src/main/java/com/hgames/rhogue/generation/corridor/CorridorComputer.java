@@ -20,7 +20,6 @@ import squidpony.squidmath.Coord;
  * @see Corridors
  */
 @Deprecated
-@SuppressWarnings("deprecation")
 public class CorridorComputer {
 
 	protected final char[][] map;

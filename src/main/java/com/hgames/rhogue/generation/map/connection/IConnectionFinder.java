@@ -15,14 +15,13 @@ import squidpony.squidgrid.zone.Zone;
 public interface IConnectionFinder {
 
 	/**
-	 * Don't go crazy on this method for big values of {@code intermediates}. If
-	 * you do, consider using {@link CachingConnectionFinder}.
+	 * Don't go crazy on this method for big values of {@code intermediates}.
 	 * 
 	 * @param z0
 	 * @param z1
 	 * @param intermediates
-	 *            A bound on the allowed intermediates. 1 is the minimum (a
-	 *            corridor connecting the two rooms).
+	 *            A bound on the allowed intermediates. 1 is the minimum (a corridor
+	 *            connecting the two rooms).
 	 * @return Whether {@code z0} and {@code z1} are connected by at most
 	 *         {@code intermediates} zones.
 	 */

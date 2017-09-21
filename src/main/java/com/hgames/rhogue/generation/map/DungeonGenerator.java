@@ -99,8 +99,8 @@ public class DungeonGenerator {
 	protected final int width;
 	protected final int height;
 	/**
-	 * An upper bound of the number of corridors to and from a room (ignores
-	 * doors punched because of rooms being adjacent).
+	 * An upper bound of the number of corridors to and from a room (ignores doors
+	 * punched because of rooms being adjacent).
 	 */
 	protected int connectivity = 3;
 	protected /* @Nullable */ IDungeonDrawer drawer;
@@ -120,9 +120,8 @@ public class DungeonGenerator {
 	protected int doorProbability = 50;
 
 	/**
-	 * Whether rooms whose width and height of size 1 are allowed. They look
-	 * like corridors, so they are ruled out by default; but it can be fun to
-	 * have them.
+	 * Whether rooms whose width and height of size 1 are allowed. They look like
+	 * corridors, so they are ruled out by default; but it can be fun to have them.
 	 */
 	protected boolean allowWidthOrHeightOneRooms = false;
 
@@ -136,16 +135,16 @@ public class DungeonGenerator {
 	protected int waterPercentage = 15;
 
 	/**
-	 * The number of zones to fill with water. Ignored if
-	 * {@link #waterPercentage} is 0.
+	 * The number of zones to fill with water. Ignored if {@link #waterPercentage}
+	 * is 0.
 	 */
 	protected int waterPools = 2;
 
 	protected int waterIslands = 0;
 
 	/**
-	 * The number of unconnected rooms (w.r.t. to the stairs) to aim for. Useful
-	 * for secret rooms that require carving.
+	 * The number of unconnected rooms (w.r.t. to the stairs) to aim for. Useful for
+	 * secret rooms that require carving.
 	 */
 	protected int disconnectedRoomsObjective = 0;
 
@@ -206,8 +205,8 @@ public class DungeonGenerator {
 	 * @param value
 	 *            Whether to allow rooms of width or height one (which allow
 	 *            dungeons like this: <a href=
-	 *            "https://twitter.com/hgamesdev/status/899609612554559489">
-	 *            image </a>). False by default.
+	 *            "https://twitter.com/hgamesdev/status/899609612554559489"> image
+	 *            </a>). False by default.
 	 * @return {@code this}
 	 */
 	public DungeonGenerator setAllowWidthOrHeightOneRooms(boolean value) {
@@ -249,16 +248,16 @@ public class DungeonGenerator {
 	 *            subset of the sizes).
 	 * @param maxWidth
 	 *            The maximum width of rooms (inclusive). The default is
-	 *            {@link #width} / 5. Give anything negative to keep the
-	 *            existing value (useful to only change a subset of the sizes).
+	 *            {@link #width} / 5. Give anything negative to keep the existing
+	 *            value (useful to only change a subset of the sizes).
 	 * @param minHeight
 	 *            The minimum width of rooms. The default is 2. Give anything
 	 *            negative to keep the existing value (useful to only change a
 	 *            subset of the sizes).
 	 * @param maxHeight
 	 *            The maximum height of rooms (inclusive). The default is
-	 *            {@link #height} / 5. Give anything negative to keep the
-	 *            existing value (useful to only change a subset of the sizes).
+	 *            {@link #height} / 5. Give anything negative to keep the existing
+	 *            value (useful to only change a subset of the sizes).
 	 * @return {@code this}
 	 */
 	public DungeonGenerator setRoomsBounds(int minWidth, int maxWidth, int minHeight, int maxHeight) {
@@ -274,9 +273,9 @@ public class DungeonGenerator {
 	}
 
 	/**
-	 * Sets objectives to place the stairs. By default there are no objectives
-	 * which means a first stair is placed randomly and the second stair is
-	 * placed far away from the first one.
+	 * Sets objectives to place the stairs. By default there are no objectives which
+	 * means a first stair is placed randomly and the second stair is placed far
+	 * away from the first one.
 	 * 
 	 * @param upStair
 	 *            A coord or null.
@@ -306,18 +305,17 @@ public class DungeonGenerator {
 
 	/**
 	 * @param startWithWater
-	 *            Whether to do water before rooms. This makes water more
-	 *            central.
+	 *            Whether to do water before rooms. This makes water more central.
 	 * @param percent
-	 *            An int in [0, 100]. The percentage of the map to turn into
-	 *            water. Or anything negative not to change it.
+	 *            An int in [0, 100]. The percentage of the map to turn into water.
+	 *            Or anything negative not to change it.
 	 * @param pools
-	 *            An int in [0, Integer.MAX_VALUE]. The number of pools to
-	 *            create. Or anything negative not to change it.
+	 *            An int in [0, Integer.MAX_VALUE]. The number of pools to create.
+	 *            Or anything negative not to change it.
 	 * @param islands
 	 *            An int in [0, Integer.MAX_VALUE]. The number of islands to
-	 *            generate. An island is a room solely surrounded by deep water.
-	 *            Or anything negative not to change it.
+	 *            generate. An island is a room solely surrounded by deep water. Or
+	 *            anything negative not to change it.
 	 * @return {@code this}
 	 * @throws IllegalStateException
 	 *             If {@code percent} is greater than 100.
@@ -339,8 +337,7 @@ public class DungeonGenerator {
 	}
 
 	/**
-	 * Record {@code roomGenerator} as a generator used by this dungeon
-	 * generator.
+	 * Record {@code roomGenerator} as a generator used by this dungeon generator.
 	 * 
 	 * @param roomGenerator
 	 *            The generator to record.
@@ -359,13 +356,13 @@ public class DungeonGenerator {
 	/** @return A fresh dungeon or null if it could not be generated. */
 	public Dungeon generate() {
 		/*
-		 * /!\ Don't forget to disable assertions when checking performances.
-		 * Assertions are by far the longest thing! /!\.
+		 * /!\ Don't forget to disable assertions when checking performances. Assertions
+		 * are by far the longest thing! /!\.
 		 */
 		final Stopwatch watch = (logger != null && logger.isInfoEnabled()) ? new Stopwatch() : null;
 		final DungeonSymbol[][] map = new DungeonSymbol[width][height];
 		final Dungeon dungeon = new Dungeon(map);
-		DungeonBuilder.setAllSymbols(dungeon, DungeonSymbol.WALL);
+		dungeon.getBuilder().setAllSymbols(DungeonSymbol.WALL);
 		if (width == 0 || height == 0)
 			// Nothing to do
 			return dungeon;
@@ -400,10 +397,9 @@ public class DungeonGenerator {
 		final Dungeon dungeon = gdata.dungeon;
 		if (startWithWater) {
 			/*
-			 * Generation tuned to generate close to water pools. That's what
-			 * allow to connect rooms and pools (the normal generation below is
-			 * too restrictive to do that, since it only considers wall-only
-			 * areas).
+			 * Generation tuned to generate close to water pools. That's what allow to
+			 * connect rooms and pools (the normal generation below is too restrictive to do
+			 * that, since it only considers wall-only areas).
 			 */
 			final EnumSet<DungeonSymbol> overwritten = EnumSet.of(DungeonSymbol.WALL, DungeonSymbol.DEEP_WATER);
 			final int nbPools = dungeon.waterPools == null ? 0 : dungeon.waterPools.size();
@@ -421,8 +417,8 @@ public class DungeonGenerator {
 					@Override
 					public void prepareRegistration(Zone z) {
 						/*
-						 * We need to remove the members of the room that
-						 * overlap with water, hereby shrinking water pools.
+						 * We need to remove the members of the room that overlap with water, hereby
+						 * shrinking water pools.
 						 */
 						for (Coord inRoom : z) {
 							for (int j = 0; j < nbPools; j++) {
@@ -478,6 +474,7 @@ public class DungeonGenerator {
 	 */
 	private void cleanWaterPools(final GenerationData gdata, /* @Nullable */ Collection<? extends Zone> needCleanUp) {
 		final Dungeon dungeon = gdata.dungeon;
+		final DungeonBuilder builder = dungeon.getBuilder();
 		final Iterator<ListZone> it = dungeon.waterPools.iterator();
 		while (it.hasNext()) {
 			final ListZone next = it.next();
@@ -490,7 +487,7 @@ public class DungeonGenerator {
 				public void doOnCell(Coord c) {
 					/* Remove from the pool */
 					assert !all.contains(c) : c + " should have been removed already";
-					DungeonBuilder.setSymbol(dungeon, c, DungeonSymbol.WALL);
+					builder.setSymbol(c, DungeonSymbol.WALL);
 					/* Adapt cell->Zone cache */
 					gdata.cellToEncloser[c.x][c.y] = null;
 					draw(dungeon);
@@ -502,8 +499,8 @@ public class DungeonGenerator {
 	}
 
 	/**
-	 * Generate doors/floors on cells that are {@link DungeonSymbol#WALL} and
-	 * which are between rooms.
+	 * Generate doors/floors on cells that are {@link DungeonSymbol#WALL} and which
+	 * are between rooms.
 	 * 
 	 * @param gdata
 	 */
@@ -524,13 +521,13 @@ public class DungeonGenerator {
 				assert z0 != z1;
 				final Coord doorCandidate = Coord.get(x, y);
 				Multimaps.addToListMultimap(connectedsToCandidates, orderedPair(gdata, z0, z1), doorCandidate);
-				assert DungeonBuilder.findZoneContaining(dungeon, x, y) == null : "Candidate for door: " + doorCandidate
+				assert Dungeons.findZoneContaining(dungeon, x, y) == null : "Candidate for door: " + doorCandidate
 						+ " should not be in a zone";
 			}
 		}
 		/*
-		 * Look for the door closest to the mean of the zones' centers. That's
-		 * the ideal door.
+		 * Look for the door closest to the mean of the zones' centers. That's the ideal
+		 * door.
 		 */
 		final DoublePriorityCell<Coord> cell = DoublePriorityCell.createEmpty();
 		for (Map.Entry<Pair<Zone, Zone>, List<Coord>> entry : connectedsToCandidates.entrySet()) {
@@ -538,7 +535,7 @@ public class DungeonGenerator {
 			final Pair<Zone, Zone> connecteds = entry.getKey();
 			final Zone z0 = connecteds.getFst();
 			final Zone z1 = connecteds.getSnd();
-			assert !DungeonBuilder.areConnected(dungeon, z0, z1, 1);
+			assert !Dungeons.areConnected(dungeon, z0, z1, 1);
 			final Coord ideal;
 			{
 				final Coord center0 = z0.getCenter();
@@ -557,9 +554,10 @@ public class DungeonGenerator {
 			final DungeonSymbol sym = rng.next(101) <= doorProbability ? DungeonSymbol.DOOR : DungeonSymbol.FLOOR;
 			final Zone zdoor = new SingleCellZone(door);
 			addZone(gdata, zdoor, null, ZoneType.CORRIDOR);
-			DungeonBuilder.addConnection(dungeon, z0, zdoor);
-			DungeonBuilder.addConnection(dungeon, z1, zdoor);
-			DungeonBuilder.setSymbol(dungeon, door.x, door.y, sym);
+			final DungeonBuilder builder = dungeon.getBuilder();
+			builder.addConnection(z0, zdoor);
+			builder.addConnection(z1, zdoor);
+			builder.setSymbol(door.x, door.y, sym);
 			draw(dungeon);
 		}
 	}
@@ -570,13 +568,12 @@ public class DungeonGenerator {
 	private interface ICorridorControl {
 
 		/**
-		 * @return Whether {@link #getBuilder()} is a perfect corridor builder
-		 *         (see {@link CorridorBuilders})
+		 * @return Whether {@link #getBuilder()} is a perfect corridor builder (see
+		 *         {@link CorridorBuilders})
 		 * 
 		 *         <p>
-		 *         Roughly: returns true if carving can only go through through
-		 *         walls and through cells next to walls. Otherwise loosen the
-		 *         leash.
+		 *         Roughly: returns true if carving can only go through through walls
+		 *         and through cells next to walls. Otherwise loosen the leash.
 		 *         </p>
 		 */
 		public boolean getPerfect();
@@ -641,6 +638,7 @@ public class DungeonGenerator {
 			ICorridorControl control) {
 		final int lenLimit = control.getLengthLimit();
 		final Dungeon dungeon = gdata.dungeon;
+		final DungeonBuilder builder = dungeon.getBuilder();
 		final int nbr = rooms.size();
 		/* A Zone, to the other zones; ordered by the distance of the centers */
 		final Map<Zone, List<Pair<Double, Zone>>> zoneToOtherZones = new LinkedHashMap<Zone, List<Pair<Double, Zone>>>(
@@ -648,13 +646,13 @@ public class DungeonGenerator {
 		final int nbd = dests.size();
 		boolean someChance = false;
 		for (Zone z : rooms) {
-			assert DungeonBuilder.isRoom(dungeon, z);
+			assert Dungeons.isRoom(dungeon, z);
 			final Coord zc = z.getCenter();
 			assert !zoneToOtherZones.keySet().contains(z);
 			final List<Pair<Double, Zone>> otherZones = new ArrayList<Pair<Double, Zone>>(Math.max(0, nbr - 1));
 			for (int j = 0; j < nbd; j++) {
 				final Zone other = dests.get(j);
-				assert DungeonBuilder.isRoom(dungeon, other);
+				assert Dungeons.isRoom(dungeon, other);
 				if (other == z)
 					continue;
 				final Coord oc = other.getCenter();
@@ -679,7 +677,7 @@ public class DungeonGenerator {
 		if (!someChance)
 			return 0;
 		final boolean perfect = control.getPerfect();
-		final ICorridorBuilder builder = control.getBuilder();
+		final ICorridorBuilder cbuilder = control.getBuilder();
 		final Coord[] startEndBuffer = new Coord[2];
 		boolean needWaterPoolsCleanup = false;
 		final Set<Coord> buf = new HashSet<Coord>();
@@ -696,7 +694,7 @@ public class DungeonGenerator {
 			for (int j = 0; j < connectivity && connections < connectivity && j < nbcd; j++) {
 				final Zone dest = candidateDests.get(j).getSnd();
 				// XXX CH Check it wouldn't exceed dest's connectivity ?
-				if (DungeonBuilder.areConnected(dungeon, z, dest, 6))
+				if (Dungeons.areConnected(dungeon, z, dest, 6))
 					continue;
 				final boolean found = getZonesConnectionEndpoints(gdata, z, dest, buf1, buf2);
 				if (!found)
@@ -709,7 +707,7 @@ public class DungeonGenerator {
 					final Coord zEndpoint = buf1.get(k);
 					for (int l = 0; l < b2sz; l++) {
 						final Coord destEndpoint = buf2.get(l);
-						final Zone built = builder.build(rng, zEndpoint, destEndpoint, startEndBuffer);
+						final Zone built = cbuilder.build(rng, zEndpoint, destEndpoint, startEndBuffer);
 						if (built == null)
 							continue;
 						assert !built.contains(zEndpoint);
@@ -728,31 +726,30 @@ public class DungeonGenerator {
 				// (NO_CORRIDOR_BBOX). This doesn't trigger if 'built'
 				// is a Rectangle, but it may if it a ZoneUnion.
 				if (perfect) {
-					assert EnumSet.of(DungeonSymbol.WALL).containsAll(DungeonBuilder.getSymbols(dungeon, built));
+					assert EnumSet.of(DungeonSymbol.WALL).containsAll(Dungeons.getSymbols(dungeon, built));
 				} else {
 					/* Corridor can go through DEEP_WATER */
 					if (buf != null)
 						buf.clear();
-					final boolean rm = DungeonBuilder.removeFromWaterPools(dungeon, built, buf);
+					final boolean rm = builder.removeFromWaterPools(built, buf);
 					if (rm) {
 						needWaterPoolsCleanup = true;
 						for (Coord c : buf) {
 							gdata.cellToEncloser[c.x][c.y] = null;
 							/*
-							 * To preserve invariant that unbound cell have the
-							 * WALL symbol.
+							 * To preserve invariant that unbound cell have the WALL symbol.
 							 */
-							DungeonBuilder.setSymbol(dungeon, c, DungeonSymbol.WALL);
+							builder.setSymbol(c, DungeonSymbol.WALL);
 						}
 						draw(dungeon);
 					}
 				}
 				final Zone recorded = addZone(gdata, built, null, ZoneType.CORRIDOR);
-				DungeonBuilder.addConnection(dungeon, z, recorded);
-				DungeonBuilder.addConnection(dungeon, dest, recorded);
+				builder.addConnection(z, recorded);
+				builder.addConnection(dest, recorded);
 				// Punch corridor
 				for (Coord c : built) {
-					DungeonBuilder.setSymbol(dungeon, c,
+					builder.setSymbol(c,
 							buf != null && buf.contains(c) ? DungeonSymbol.SHALLOW_WATER : DungeonSymbol.FLOOR);
 				}
 				draw(dungeon);
@@ -821,9 +818,8 @@ public class DungeonGenerator {
 		if (other == null)
 			return null;
 		/*
-		 * It may be a connectivity problem, if the stair objective is only
-		 * close to rooms that aren't connected to the other stair. Let's try to
-		 * fix that.
+		 * It may be a connectivity problem, if the stair objective is only close to
+		 * rooms that aren't connected to the other stair. Let's try to fix that.
 		 */
 		final List<Zone> dests = new ArrayList<Zone>(
 				gdata.zonesConnectedTo(true, false, Collections.singletonList(other)));
@@ -848,7 +844,7 @@ public class DungeonGenerator {
 		final IConnectionFinder connections = new IConnectionFinder() {
 			@Override
 			public boolean areConnected(Zone z0, Zone z1, int intermediates) {
-				return DungeonBuilder.areConnected(dungeon, z0, z1, intermediates);
+				return Dungeons.areConnected(dungeon, z0, z1, intermediates);
 			}
 		};
 		return new StairGenerator(logger, rng, dungeon, objective, upOrDown, gdata, connections);
@@ -857,30 +853,30 @@ public class DungeonGenerator {
 	/** @return Whether punching was done */
 	protected boolean punchStair(GenerationData gdata, Coord c, boolean upOrDown) {
 		final Dungeon dungeon = gdata.dungeon;
-		DungeonBuilder.setStair(dungeon, c.x, c.y, upOrDown);
+		dungeon.getBuilder().setStair(c.x, c.y, upOrDown);
 		return true;
 	}
 
 	/**
 	 * Make sure that at least 1/5th of the map is accessible. For that, find
 	 * disconnected rooms. For every disconnected component whose size is >
-	 * {@link #getWallificationBound()} of the map, try very hard to connect it
-	 * to the stairs. At the end check if 1/6th of the map is accessible.
+	 * {@link #getWallificationBound()} of the map, try very hard to connect it to
+	 * the stairs. At the end check if 1/6th of the map is accessible.
 	 * 
 	 * <p>
-	 * This method must be called before generating impassable terrain (deep
-	 * water, lava, etc.)
+	 * This method must be called before generating impassable terrain (deep water,
+	 * lava, etc.)
 	 * </p>
 	 * 
 	 * @return Whether the dungeon is valid.
 	 */
 	protected boolean ensureDensity(GenerationData gdata) {
 		final Dungeon dungeon = gdata.dungeon;
-		if (!DungeonBuilder.hasStairs(dungeon))
+		if (!Dungeons.hasStairs(dungeon))
 			throw new IllegalStateException("ensureDensity method requires stairs to be set");
 		final List<Zone> disconnectedZones = gdata.zonesDisconnectedFrom(true, true,
 				Lists.newArrayList(dungeon.upwardStair, dungeon.downwardStair));
-		final List<List<Zone>> disconnectedComponents = DungeonBuilder.connectedComponents(dungeon, disconnectedZones);
+		final List<List<Zone>> disconnectedComponents = Dungeons.connectedComponents(dungeon, disconnectedZones);
 		final int nbdc = disconnectedComponents.size();
 		int reachable = Zones.size(dungeon.rooms);
 		reachable += Zones.size(dungeon.corridors);
@@ -895,8 +891,7 @@ public class DungeonGenerator {
 				final List<Zone> disconnectedComponent = disconnectedComponents.get(i);
 				final int sz = Zones.size(disconnectedComponent);
 				/*
-				 * /!\ This call mutes 'connectedRooms' and trashes
-				 * 'disconnectedComponent' /!\
+				 * /!\ This call mutes 'connectedRooms' and trashes 'disconnectedComponent' /!\
 				 */
 				final int extension = treatDisconnectedComponent(gdata, connectedRooms, disconnectedComponent);
 				assert 0 <= extension;
@@ -921,6 +916,7 @@ public class DungeonGenerator {
 	 */
 	private int treatDisconnectedComponent(GenerationData gdata, List<Zone> connectedRooms, List<Zone> component) {
 		final Dungeon dungeon = gdata.dungeon;
+		final DungeonBuilder builder = dungeon.getBuilder();
 		final int sz = Zones.size(component);
 		final int csz = component.size();
 		if (csz == 1) {
@@ -929,14 +925,14 @@ public class DungeonGenerator {
 			/* Can it be used to honor #disconnectedRoomsObjective ? */
 			if (dungeon.getDisconnectedRooms().size() < disconnectedRoomsObjective) {
 				infoLog("Used a size " + sz + " disconnected room to fulfill the disconnected rooms objective.");
-				DungeonBuilder.addDisconnectedRoom(dungeon, z);
+				builder.addDisconnectedRoom(z);
 				return 0;
 			}
 			/* Can it be used to honor #waterIslands ? */
 			if (dungeon.getWaterIslands().size() < waterIslands
-					&& DungeonBuilder.isSurroundedBy(dungeon, z, EnumSet.of(DungeonSymbol.DEEP_WATER))) {
+					&& Dungeons.isSurroundedBy(dungeon, z, EnumSet.of(DungeonSymbol.DEEP_WATER))) {
 				infoLog("Used a size " + sz + " disconnected room to fulfill the water islands objective.");
-				DungeonBuilder.addWaterIsland(dungeon, z);
+				builder.addWaterIsland(z);
 				return 0;
 			}
 		}
@@ -945,11 +941,11 @@ public class DungeonGenerator {
 		if (csz == 1) {
 			/* Component is a single room */
 			/* Is it kindof a water island ? */
-			if (DungeonBuilder.isSurroundedBy(dungeon, component.get(0),
+			if (Dungeons.isSurroundedBy(dungeon, component.get(0),
 					EnumSet.of(DungeonSymbol.DEEP_WATER, DungeonSymbol.WALL))) {
 				/*
-				 * Yes it's a water island. Try to connect it with shallow
-				 * water; coz such islands can be fun.
+				 * Yes it's a water island. Try to connect it with shallow water; coz such
+				 * islands can be fun.
 				 */
 				// FIXME CH Why doesn't this work perfectly on seed 35 ?
 				final Zone z = component.get(0);
@@ -1004,17 +1000,16 @@ public class DungeonGenerator {
 	/** Turns a zone into walls, hereby removing it */
 	protected final void wallify(GenerationData gdata, Zone z) {
 		final Dungeon dungeon = gdata.dungeon;
-		assert DungeonBuilder.hasZone(dungeon, z);
+		final DungeonBuilder builder = dungeon.getBuilder();
+		assert Dungeons.hasZone(dungeon, z);
 		removeZone(gdata, z);
-		DungeonBuilder.setSymbolsExcept(dungeon, z.iterator(), DungeonSymbol.GRASS,
-				EnumSet.of(DungeonSymbol.HIGH_GRASS));
+		builder.setSymbolsExcept(z.iterator(), DungeonSymbol.GRASS, EnumSet.of(DungeonSymbol.HIGH_GRASS));
 		draw(dungeon);
 	}
 
 	/**
-	 * This method behaves differently as to whether {@link #startWithWater} is
-	 * set. If not set, it'll build pools that are connected to existing
-	 * walkable areas.
+	 * This method behaves differently as to whether {@link #startWithWater} is set.
+	 * If not set, it'll build pools that are connected to existing walkable areas.
 	 * 
 	 * @param gdata
 	 */
@@ -1023,6 +1018,7 @@ public class DungeonGenerator {
 			/* Nothing to do */
 			return;
 		final Dungeon dungeon = gdata.dungeon;
+		final DungeonBuilder builder = dungeon.getBuilder();
 		Set<Coord> candidates = gdata.getWaterFillStartCandidates();
 		if (candidates.isEmpty())
 			candidates = new LinkedHashSet<Coord>();
@@ -1059,11 +1055,11 @@ public class DungeonGenerator {
 				continue;
 			final int sz = spill.size();
 			for (Coord spilt : spill) {
-				assert DungeonBuilder.findZoneContaining(dungeon, spilt.x,
+				assert Dungeons.findZoneContaining(dungeon, spilt.x,
 						spilt.y) == null : ("Cells spilt on should not belong to a zone. You should fix 'impassable'. Cell spilt on: "
 								+ spilt + " belonging to zone: "
-								+ DungeonBuilder.findZoneContaining(dungeon, spilt.x, spilt.y));
-				DungeonBuilder.setSymbol(dungeon, spilt, DungeonSymbol.DEEP_WATER);
+								+ Dungeons.findZoneContaining(dungeon, spilt.x, spilt.y));
+				builder.setSymbol(spilt, DungeonSymbol.DEEP_WATER);
 				filled++;
 			}
 			addZone(gdata, new ListZone(new ArrayList<Coord>(spill)), null, ZoneType.DEEP_WATER);
@@ -1076,8 +1072,8 @@ public class DungeonGenerator {
 
 	protected int getMaxRoomSideSize(boolean widthOrHeight, boolean spiceItUp) {
 		/*
-		 * +1, because #maxRoomWidth and #maxRoomHeight are inclusive, where
-		 * RNG#between isn't.
+		 * +1, because #maxRoomWidth and #maxRoomHeight are inclusive, where RNG#between
+		 * isn't.
 		 */
 		final int result = widthOrHeight ? rng.between(minRoomWidth, maxRoomWidth + 1)
 				: rng.between(minRoomHeight, maxRoomHeight + 1);
@@ -1105,8 +1101,8 @@ public class DungeonGenerator {
 			return false;
 		}
 		final Dungeon dungeon = gdata.dungeon;
-		assert DungeonBuilder.hasZone(dungeon, z1);
-		assert DungeonBuilder.hasZone(dungeon, z2);
+		assert Dungeons.hasZone(dungeon, z1);
+		assert Dungeons.hasZone(dungeon, z2);
 		final Direction fromz1toz2 = toGoFromZoneToZone(z1.getCenter(), z2.getCenter());
 		assert fromz1toz2 != Direction.NONE;
 		getConnectionCandidates(gdata, z1, fromz1toz2, buf1);
@@ -1138,22 +1134,23 @@ public class DungeonGenerator {
 	/**
 	 * @param gdata
 	 * @param rgh
-	 *            Providers for choosing the top left coordinate of rooms built
-	 *            and custom stuff to do before registering a zone built.
+	 *            Providers for choosing the top left coordinate of rooms built and
+	 *            custom stuff to do before registering a zone built.
 	 * @param overwritten
 	 *            The symbols that the rooms can overwrite.
 	 * @return Whether a room could be generated.
 	 */
 	private boolean generateRoom(GenerationData gdata, RoomGeneratorHelper rgh, EnumSet<DungeonSymbol> overwritten) {
 		final Dungeon dungeon = gdata.dungeon;
+		final DungeonBuilder builder = dungeon.getBuilder();
 		int frustration = 0;
 		/*
-		 * This bound is quite important. Increasing it makes dungeon generation
-		 * slower, but creates more packed dungeons (more small rooms).
+		 * This bound is quite important. Increasing it makes dungeon generation slower,
+		 * but creates more packed dungeons (more small rooms).
 		 */
 		/*
-		 * Try a bit harder when #startWithWater is set, as these dungeons
-		 * typically waster some space.
+		 * Try a bit harder when #startWithWater is set, as these dungeons typically
+		 * waster some space.
 		 */
 		outer: while (frustration < 8 + (startWithWater ? 4 : 0)) {
 			frustration++;
@@ -1182,27 +1179,27 @@ public class DungeonGenerator {
 				final Coord brCandidate = Coord.get(tlCandidate.x + mw, tlCandidate.y + mh);
 				final Coord blCandidate = Coord.get(tlCandidate.x, brCandidate.y);
 				/*
-				 * .extend() to avoid generating adjacent rooms. This is a smart
-				 * trick (as opposed to extending the rooms already created).
+				 * .extend() to avoid generating adjacent rooms. This is a smart trick (as
+				 * opposed to extending the rooms already created).
 				 */
-				if (!DungeonBuilder.isOnly(dungeon,
-						Rectangle.Utils.cells(new Rectangle.Impl(blCandidate, mw, mh).extend()), overwritten, true))
+				if (!Dungeons.isOnly(dungeon, Rectangle.Utils.cells(new Rectangle.Impl(blCandidate, mw, mh).extend()),
+						overwritten, true))
 					continue;
 				assert dungeon.isValid(brCandidate);
 				assert !Dungeons.isOnEdge(dungeon, brCandidate);
 				final Zone zone = generateRoomAt(blCandidate, mw, mh);
 				/*
-				 * 'zone' must be used now, since the generator's usage has been
-				 * recorded in 'generateRoomAt'.
+				 * 'zone' must be used now, since the generator's usage has been recorded in
+				 * 'generateRoomAt'.
 				 */
 				if (zone != null) {
-					assert !DungeonBuilder.anyOnEdge(dungeon, zone.iterator());
+					assert !Dungeons.anyOnEdge(dungeon, zone.iterator());
 					// infoLog("Generated room: " + zone);
 					rgh.prepareRegistration(zone);
 					/* Record the zone */
 					addZone(gdata, zone, new Rectangle.Impl(blCandidate, mw, mh), ZoneType.ROOM);
 					/* Punch it */
-					DungeonBuilder.setSymbols(dungeon, zone.iterator(), DungeonSymbol.FLOOR);
+					builder.setSymbols(zone.iterator(), DungeonSymbol.FLOOR);
 					draw(dungeon);
 					return true;
 				}
@@ -1235,7 +1232,7 @@ public class DungeonGenerator {
 			if (lifetime.shouldBeRemoved()) {
 				/* Remove generator */
 				roomGenerators.remove(rg);
-				rgLifetimes.remove(lifetime);
+				rgLifetimes.remove(rg);
 				lifetime.removeCallback();
 			}
 		}
@@ -1247,15 +1244,15 @@ public class DungeonGenerator {
 	 * @param x
 	 * @param y
 	 * @param southNorthOrEastWest
-	 * @return Whether {@code (x,y)} is a valid door candidate, i.e. it has a
-	 *         valid walkable cell (according to
+	 * @return Whether {@code (x,y)} is a valid door candidate, i.e. it has a valid
+	 *         walkable cell (according to
 	 *         {@link #isDoorNeighborCandidate(DungeonSymbol)}) to its left and
-	 *         right (if {@code southNorthOrEastWest} is set, otherwise north
-	 *         and south are checked).
+	 *         right (if {@code southNorthOrEastWest} is set, otherwise north and
+	 *         south are checked).
 	 * 
 	 *         <p>
-	 *         If it returns {@code true}, {@link #ZONE_PAIR_BUF} is filled with
-	 *         the zones that could be connected by the door.
+	 *         If it returns {@code true}, {@link #ZONE_PAIR_BUF} is filled with the
+	 *         zones that could be connected by the door.
 	 *         </p>
 	 */
 	private boolean isDoorCandidate(GenerationData gdata, int x, int y, boolean southNorthOrEastWest) {
@@ -1291,13 +1288,13 @@ public class DungeonGenerator {
 			assert false;
 			throw new IllegalStateException("Cannot find zone containing " + x1 + "," + y1);
 		}
-		assert DungeonBuilder.hasRoomOrCorridor(dungeon, z1);
+		assert Dungeons.hasRoomOrCorridor(dungeon, z1);
 		final Zone z2 = gdata.findZoneContaining(x2, y2);
 		if (z2 == null) {
 			assert false;
 			throw new IllegalStateException("Cannot find zone containing " + x1 + "," + y1);
 		}
-		assert DungeonBuilder.hasRoomOrCorridor(dungeon, z2);
+		assert Dungeons.hasRoomOrCorridor(dungeon, z2);
 		ZONE_PAIR_BUF[0] = z1;
 		ZONE_PAIR_BUF[1] = z2;
 		return true;
@@ -1313,14 +1310,15 @@ public class DungeonGenerator {
 	 */
 	private Zone addZone(GenerationData gdata, Zone z, /* @Nullable */ Rectangle boundingBox, ZoneType ztype) {
 		final Dungeon dungeon = gdata.dungeon;
+		final DungeonBuilder builder = dungeon.getBuilder();
 		final Zone recorded = needCaching(z, ztype) ? new CachingZone(z) : z;
 		switch (ztype) {
 		case CORRIDOR:
 		case ROOM:
-			DungeonBuilder.addZone(dungeon, recorded, boundingBox, ztype == ZoneType.ROOM);
+			builder.addZone(recorded, boundingBox, ztype == ZoneType.ROOM);
 			break;
 		case DEEP_WATER:
-			DungeonBuilder.addWaterPool(dungeon, (ListZone) z);
+			builder.addWaterPool((ListZone) z);
 			break;
 		}
 		if (logger != null && logger.isDebugEnabled())
@@ -1337,7 +1335,9 @@ public class DungeonGenerator {
 	}
 
 	private void removeZone(GenerationData gdata, Zone z) {
-		DungeonBuilder.removeZone(gdata.dungeon, z);
+		final Dungeon dungeon = gdata.dungeon;
+		final DungeonBuilder builder = dungeon.getBuilder();
+		builder.removeZone(z);
 		for (Coord c : z) {
 			gdata.cellToEncloser[c.x][c.y] = null;
 		}
@@ -1423,8 +1423,8 @@ public class DungeonGenerator {
 	}
 
 	/**
-	 * @return A variant of {@code c} (or {@code c} itself) clamped to be valid
-	 *         in {@code this}.
+	 * @return A variant of {@code c} (or {@code c} itself) clamped to be valid in
+	 *         {@code this}.
 	 */
 	protected final Coord clamp(Coord c) {
 		final int x = Ints.clamp(0, c.x, width - 1);
@@ -1438,9 +1438,9 @@ public class DungeonGenerator {
 	}
 
 	/**
-	 * You should avoid calling this method too much if {@code logger} is null
-	 * or if info isn't enabled, because building {@code log} can be costly if
-	 * it's not a constant.
+	 * You should avoid calling this method too much if {@code logger} is null or if
+	 * info isn't enabled, because building {@code log} can be costly if it's not a
+	 * constant.
 	 * 
 	 * @param log
 	 */
@@ -1517,8 +1517,8 @@ public class DungeonGenerator {
 		/** The underlying dungeon */
 		protected final Dungeon dungeon;
 		/**
-		 * true if water is generated before rooms. In this case, no need to
-		 * look for nearby walkable cells.
+		 * true if water is generated before rooms. In this case, no need to look for
+		 * nearby walkable cells.
 		 */
 		protected final boolean startWithWater;
 
@@ -1599,15 +1599,15 @@ public class DungeonGenerator {
 
 		protected final Dungeon dungeon;
 		/**
-		 * An array that keeps track of the zone to which a cell belongs. A cell
-		 * belongs to at most one zone, because all zones are exclusive. All
-		 * zones in this array belong to {@link #dungeon}.
+		 * An array that keeps track of the zone to which a cell belongs. A cell belongs
+		 * to at most one zone, because all zones are exclusive. All zones in this array
+		 * belong to {@link #dungeon}.
 		 */
 		protected final Zone[][] cellToEncloser;
 		/**
-		 * A map that keep tracks in the order in which {@link Dungeon#rooms}
-		 * and {@link Dungeon#corridors} have been generated, hereby providing
-		 * an ordering on rooms.
+		 * A map that keep tracks in the order in which {@link Dungeon#rooms} and
+		 * {@link Dungeon#corridors} have been generated, hereby providing an ordering
+		 * on rooms.
 		 */
 		protected final Map<Zone, Integer> zOrder = new HashMap<Zone, Integer>();
 
@@ -1650,7 +1650,7 @@ public class DungeonGenerator {
 		}
 
 		protected void recordRoomOrdering(Zone z) {
-			assert DungeonBuilder.hasZone(dungeon, z);
+			assert Dungeons.hasZone(dungeon, z);
 			final Integer prev = this.zOrder.put(z, nextRoomIndex);
 			nextRoomIndex++;
 			if (prev != null)
@@ -1658,9 +1658,9 @@ public class DungeonGenerator {
 		}
 
 		/**
-		 * Note that this method is designed to return {@code true} when
-		 * {@code from} or {@code to} is a wall accessible from a floor. That's
-		 * because this method is used to check stairs-accessibility.
+		 * Note that this method is designed to return {@code true} when {@code from} or
+		 * {@code to} is a wall accessible from a floor. That's because this method is
+		 * used to check stairs-accessibility.
 		 * 
 		 * @param from
 		 * @param to
@@ -1728,8 +1728,8 @@ public class DungeonGenerator {
 				final Iterator<Zone> it = result.iterator();
 				while (it.hasNext()) {
 					final Zone next = it.next();
-					assert DungeonBuilder.hasRoomOrCorridor(dungeon, next);
-					final boolean room = DungeonBuilder.isRoom(dungeon, next);
+					assert Dungeons.hasRoomOrCorridor(dungeon, next);
+					final boolean room = Dungeons.isRoom(dungeon, next);
 					if (room) {
 						if (!considerRooms)
 							it.remove();
@@ -1767,8 +1767,8 @@ public class DungeonGenerator {
 		@SuppressWarnings("unused")
 		protected Zone findZoneAdjacentToStairCandidate(Coord candidate) {
 			/*
-			 * This works because stair candidates should be cardinally adjacent
-			 * to at most one zone.
+			 * This works because stair candidates should be cardinally adjacent to at most
+			 * one zone.
 			 */
 			Zone result = null;
 			for (Direction dir : Direction.CARDINALS) {
@@ -1786,7 +1786,7 @@ public class DungeonGenerator {
 		protected Zone findZoneContaining(int x, int y) {
 			if (cellToEncloser != null)
 				return cellToEncloser[x][y];
-			return DungeonBuilder.findZoneContaining(dungeon, x, y);
+			return Dungeons.findZoneContaining(dungeon, x, y);
 		}
 
 		protected void addWaterFillStartCandidate(Coord c) {
@@ -1831,7 +1831,7 @@ public class DungeonGenerator {
 
 		private Set<Zone> zonesConnectedTo(List<Coord> starts) {
 			prepareBuffer();
-			final Set<Zone> result = new LinkedHashSet<Zone>(DungeonBuilder.getNumberOfZones(dungeon) / 2);
+			final Set<Zone> result = new LinkedHashSet<Zone>(Dungeons.getNumberOfZones(dungeon) / 2);
 			/* Cells in 'todo' are cells reachable from 'from' */
 			final Queue<Coord> todo = new LinkedList<Coord>();
 			final int nbs = starts.size();

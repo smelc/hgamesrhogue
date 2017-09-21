@@ -17,20 +17,15 @@ import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**
- * The type returned by {@link DungeonGenerator}. The API of this class is
- * intentionally only to retrieve the dungeon's structure. Mutation to dungeons
- * are done via {@link #getBuilder()}, i.e. they should go through
- * {@link DungeonBuilder}.
- * 
- * <p>
- * The API of this file is kept intentionally small. See {@link Dungeons} for
- * more query methods.
- * </p>
+ * The type returned by {@link DungeonGenerator}. The API of this class is kept
+ * intentionally small. Mutation to dungeons are done via {@link #getBuilder()
+ * DungeonBuilder}, and complex queries are done via {@link Dungeons}.
  * 
  * @author smelC
  * 
  * @see DungeonGenerator
  * @see Dungeons
+ * @see DungeonBuilder
  */
 public class Dungeon {
 
@@ -40,17 +35,16 @@ public class Dungeon {
 	protected final int height;
 
 	/** The mutation API */
-	public final DungeonBuilder builder;
+	protected final DungeonBuilder builder;
 
 	final List<Zone> rooms;
 	/**
-	 * Map whose keys are {@link #rooms} and whose values wrap the keys. It can
-	 * be used for example to quickly rule out zones when searching which zone
-	 * contains a cell (see
-	 * {@link DungeonBuilder#findZoneContaining(Dungeon, int, int)}). It can be
-	 * incomplete both for {@link #rooms} and for {@link #corridors}, as rooms
-	 * whose bounding box is the room itself aren't recorded in there (search
-	 * tag (NO_BBOX) to see which implementations of {@link Zone} satisfy that).
+	 * Map whose keys are {@link #rooms} and whose values wrap the keys. It can be
+	 * used for example to quickly rule out zones when searching which zone contains
+	 * a cell (see {@link Dungeons#findZoneContaining(Dungeon, int, int)}). It can
+	 * be incomplete both for {@link #rooms} and for {@link #corridors}, as rooms
+	 * whose bounding box is the room itself aren't recorded in there (search tag
+	 * (NO_BBOX) to see which implementations of {@link Zone} satisfy that).
 	 * Furthermore it can be straight incomplete for {@link #corridors}, because
 	 * corridors do not have a {@link Rectangle} bounding box (see tag
 	 * (NO_CORRIDOR_BBOX) for that).
@@ -66,8 +60,8 @@ public class Dungeon {
 	/* @Nullable */ List<Zone> waterIslands;
 
 	/**
-	 * The zones to which a zone is directly connected. Keys and values belong
-	 * both to {@link #rooms} and {@link #corridors}.
+	 * The zones to which a zone is directly connected. Keys and values belong both
+	 * to {@link #rooms} and {@link #corridors}.
 	 */
 	final Map<Zone, List<Zone>> connections;
 
@@ -92,6 +86,13 @@ public class Dungeon {
 		this.width = map.length;
 		this.height = width == 0 ? 0 : map[0].length;
 		this.connections = new HashMap<Zone, List<Zone>>();
+	}
+
+	/**
+	 * @return The mutation API.
+	 */
+	public DungeonBuilder getBuilder() {
+		return builder;
 	}
 
 	/**
@@ -127,8 +128,8 @@ public class Dungeon {
 	}
 
 	/**
-	 * @return The rooms. This is a reference to an internal structure, you
-	 *         should likely not modify it.
+	 * @return The rooms. This is a reference to an internal structure, you should
+	 *         likely not modify it.
 	 */
 	public List<Zone> getRooms() {
 		return rooms;
@@ -144,21 +145,21 @@ public class Dungeon {
 
 	/**
 	 * @return The member of {@link #getRooms()} that aren't connected to the
-	 *         stairs. Useful for hidden rooms that require carving to be
-	 *         reached (brogue's underworms) This is a reference to an internal
-	 *         structure, you should likely not modify it.
+	 *         stairs. Useful for hidden rooms that require carving to be reached
+	 *         (brogue's underworms) This is a reference to an internal structure,
+	 *         you should likely not modify it.
 	 */
 	public List<Zone> getDisconnectedRooms() {
-		return disconnectedRooms == null ? Collections.<Zone> emptyList() : disconnectedRooms;
+		return disconnectedRooms == null ? Collections.<Zone>emptyList() : disconnectedRooms;
 	}
 
 	/**
-	 * @return The member of {@link #getRooms()} that are water-islands
-	 *         (surround by deep water) This is a reference to an internal
-	 *         structure, you should likely not modify it.
+	 * @return The member of {@link #getRooms()} that are water-islands (surround by
+	 *         deep water) This is a reference to an internal structure, you should
+	 *         likely not modify it.
 	 */
 	public List<Zone> getWaterIslands() {
-		return waterIslands == null ? Collections.<Zone> emptyList() : waterIslands;
+		return waterIslands == null ? Collections.<Zone>emptyList() : waterIslands;
 	}
 
 	/**
@@ -166,9 +167,9 @@ public class Dungeon {
 	 * @return The neighbors of {@code z}. It's either a room or a corridor.
 	 */
 	public List<Zone> getNeighbors(Zone z) {
-		assert DungeonBuilder.hasZone(this, z);
+		assert Dungeons.hasZone(this, z);
 		final List<Zone> result = connections.get(z);
-		return result == null ? Collections.<Zone> emptyList() : result;
+		return result == null ? Collections.<Zone>emptyList() : result;
 	}
 
 	/**
@@ -188,15 +189,6 @@ public class Dungeon {
 		if (x < 0 || y < 0)
 			return false;
 		return x < width && y < height;
-	}
-
-	/**
-	 * @param x
-	 * @param y
-	 * @return The zone containing {@code (x,y)} or {@code null} if none.
-	 */
-	public /* @Nullable */ Zone findZoneContaining(int x, int y) {
-		return DungeonBuilder.findZoneContaining(this, x, y);
 	}
 
 	/** @return The number of cells in this dungeon */
@@ -220,7 +212,7 @@ public class Dungeon {
 	public boolean invariant() {
 		/* Every zone that is a key in the 'boundingboxes' map is registered */
 		for (Zone key : boundingBoxes.keySet()) {
-			if (!DungeonBuilder.hasZone(this, key)) {
+			if (!Dungeons.hasZone(this, key)) {
 				assert false;
 				return false;
 			}
@@ -238,7 +230,7 @@ public class Dungeon {
 		/* Connections are correct */
 		for (Map.Entry<Zone, ? extends Collection<? extends Zone>> entry : connections.entrySet()) {
 			final Zone z = entry.getKey();
-			if (!DungeonBuilder.hasRoomOrCorridor(this, z)) {
+			if (!Dungeons.hasRoomOrCorridor(this, z)) {
 				assert false;
 				return false;
 			}
@@ -248,7 +240,7 @@ public class Dungeon {
 				return false;
 			}
 			for (Zone dest : connectedTo) {
-				if (!DungeonBuilder.hasRoomOrCorridor(this, dest)) {
+				if (!Dungeons.hasRoomOrCorridor(this, dest)) {
 					assert false;
 					return false;
 				}
@@ -266,7 +258,7 @@ public class Dungeon {
 				case DOOR:
 				case FLOOR:
 				case SHALLOW_WATER: {
-					final Zone zone = findZoneContaining(x, y);
+					final Zone zone = Dungeons.findZoneContaining(this, x, y);
 					if (zone == null) {
 						System.err.println(sym + " cell (" + x + "," + y + ") doesn't belong to a zone.");
 						return false;
@@ -278,7 +270,7 @@ public class Dungeon {
 				case STAIR_DOWN:
 				case STAIR_UP:
 				case WALL:
-					final Zone zone = findZoneContaining(x, y);
+					final Zone zone = Dungeons.findZoneContaining(this, x, y);
 					if (zone != null) {
 						System.err.println(
 								sym + " cell (" + x + "," + y + ") shouldn't belong to a zone (found " + zone + ").");
