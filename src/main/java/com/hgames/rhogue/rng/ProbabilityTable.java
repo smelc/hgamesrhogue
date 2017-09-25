@@ -42,8 +42,8 @@ public class ProbabilityTable<T> {
 	 * @param t
 	 *            The object to be added.
 	 * @param probability
-	 *            The probability to use for {@code t}. Replaces any previous
-	 *            value if {@code t} was added already.
+	 *            The probability to use for {@code t}. Replaces any previous value
+	 *            if {@code t} was added already.
 	 */
 	public void add(T t, int probability) {
 		assert invariant();
@@ -95,6 +95,13 @@ public class ProbabilityTable<T> {
 
 		assert false;
 		return null;
+	}
+
+	/**
+	 * @return true if this table {@link #get(RNG)} method cannot return something.
+	 */
+	public boolean isEmpty() {
+		return table.isEmpty() || total == 0;
 	}
 
 	protected boolean invariant() {

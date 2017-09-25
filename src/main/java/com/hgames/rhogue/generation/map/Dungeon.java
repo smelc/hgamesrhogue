@@ -1,5 +1,6 @@
 package com.hgames.rhogue.generation.map;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,13 +21,20 @@ import squidpony.squidmath.Coord;
  * intentionally small. Mutation to dungeons are done via {@link #getBuilder()
  * DungeonBuilder}, and complex queries are done via {@link Dungeons}.
  * 
+ * <p>
+ * Instances of this class are supposed to be built by {@link DungeonGenerator}.
+ * If you need to interface with dungeons build in another manner, you can still
+ * use this API by using {@link DungeonAdapter} which will build an almost
+ * structure-less instance of {@link Dungeon}.
+ * </p>
+ * 
  * @author smelC
  * 
  * @see DungeonGenerator
  * @see Dungeons
  * @see DungeonBuilder
  */
-public class Dungeon {
+public class Dungeon implements Serializable {
 
 	final DungeonSymbol[][] map;
 
@@ -67,8 +75,15 @@ public class Dungeon {
 	Coord upwardStair;
 	Coord downwardStair;
 
+	/** Grass */
+	/* @Nullable */ List<ListZone> grassPools;
+	/** High-grass, grass through which you cannot see */
+	/* @Nullable */ List<ListZone> highGrassPools;
+
 	/** Deep water */
 	/* @Nullable */ List<ListZone> waterPools;
+
+	private static final long serialVersionUID = 993644642092518044L;
 
 	/**
 	 * A fresh instance backed up by {@code map}.
@@ -150,6 +165,30 @@ public class Dungeon {
 	 */
 	public List<Zone> getDisconnectedRooms() {
 		return disconnectedRooms == null ? Collections.<Zone>emptyList() : disconnectedRooms;
+	}
+
+	/** @return Pools of deep water. */
+	public List<? extends Zone> getDeepWaterPools() {
+		if (waterPools == null)
+			return Collections.emptyList();
+		else
+			return waterPools;
+	}
+
+	/** @return Pools of grass. */
+	public List<? extends Zone> getGrassPools() {
+		if (grassPools == null)
+			return Collections.emptyList();
+		else
+			return grassPools;
+	}
+
+	/** @return Pools of high grass. */
+	public List<? extends Zone> getHighGrassPools() {
+		if (highGrassPools == null)
+			return Collections.emptyList();
+		else
+			return highGrassPools;
 	}
 
 	/**

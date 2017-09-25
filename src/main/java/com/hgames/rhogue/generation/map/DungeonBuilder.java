@@ -1,5 +1,6 @@
 package com.hgames.rhogue.generation.map;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -19,9 +20,11 @@ import squidpony.squidmath.Coord;
  * 
  * @author smelC
  */
-public class DungeonBuilder {
+public class DungeonBuilder implements Serializable {
 
 	protected final Dungeon dungeon;
+
+	private static final long serialVersionUID = 4883162543239756902L;
 
 	DungeonBuilder(Dungeon dungeon) {
 		this.dungeon = dungeon;
@@ -48,10 +51,39 @@ public class DungeonBuilder {
 	 * @param z
 	 */
 	public void addDisconnectedRoom(Zone z) {
+		assert !z.isEmpty();
 		assert dungeon.getRooms().contains(z);
 		if (dungeon.disconnectedRooms == null)
 			dungeon.disconnectedRooms = new ArrayList<Zone>();
 		dungeon.disconnectedRooms.add(z);
+	}
+
+	/**
+	 * @param pool
+	 *            The pool to add.
+	 */
+	public void addGrassPool(ListZone pool) {
+		assert !Dungeons.hasZone(dungeon, pool);
+		assert !pool.isEmpty();
+		if (dungeon.grassPools == null)
+			dungeon.grassPools = new ArrayList<ListZone>();
+		else
+			assert !dungeon.grassPools.contains(pool);
+		dungeon.grassPools.add(pool);
+	}
+
+	/**
+	 * @param pool
+	 *            The pool to add.
+	 */
+	public void addHighGrassPool(ListZone pool) {
+		assert !Dungeons.hasZone(dungeon, pool);
+		assert !pool.isEmpty();
+		if (dungeon.highGrassPools == null)
+			dungeon.highGrassPools = new ArrayList<ListZone>();
+		else
+			assert !dungeon.highGrassPools.contains(pool);
+		dungeon.highGrassPools.add(pool);
 	}
 
 	/**
@@ -70,6 +102,7 @@ public class DungeonBuilder {
 	 */
 	public void addWaterPool(ListZone pool) {
 		assert !Dungeons.hasZone(dungeon, pool);
+		assert !pool.isEmpty();
 		if (dungeon.waterPools == null)
 			dungeon.waterPools = new ArrayList<ListZone>();
 		else
@@ -148,6 +181,21 @@ public class DungeonBuilder {
 	}
 
 	/**
+	 * Sets {@code sym} everywhere in {@code dungeon}.
+	 * 
+	 * @param sym
+	 */
+	public void setAllSymbols(DungeonSymbol sym) {
+		final int width = dungeon.getWidth();
+		final int height = dungeon.getHeight();
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				dungeon.map[x][y] = sym;
+			}
+		}
+	}
+
+	/**
 	 * Prefer this method over direct mutations, it eases debugging.
 	 * 
 	 * @param x
@@ -212,21 +260,6 @@ public class DungeonBuilder {
 			final Coord c = it.next();
 			if (!except.contains(dungeon.getSymbol(c)))
 				dungeon.map[c.x][c.y] = sym;
-		}
-	}
-
-	/**
-	 * Sets {@code sym} everywhere in {@code dungeon}.
-	 * 
-	 * @param sym
-	 */
-	public void setAllSymbols(DungeonSymbol sym) {
-		final int width = dungeon.getWidth();
-		final int height = dungeon.getHeight();
-		for (int x = 0; x < width; x++) {
-			for (int y = 0; y < height; y++) {
-				dungeon.map[x][y] = sym;
-			}
 		}
 	}
 

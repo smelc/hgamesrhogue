@@ -92,6 +92,8 @@ import squidpony.squidmath.RNG;
  * </p>
  * 
  * @author smelC
+ * @see Dungeon
+ * @see DungeonGenerators
  */
 public class DungeonGenerator {
 
@@ -355,6 +357,15 @@ public class DungeonGenerator {
 
 	/** @return A fresh dungeon or null if it could not be generated. */
 	public Dungeon generate() {
+		if (roomGenerators.isEmpty()) {
+			final String msg = "You need to install at least one room generator (using method installRoomGenerator). Cannot generate dungeons.";
+			if (logger != null && logger.isErrEnabled())
+				infoLog(msg);
+			else
+				/* We usually don't do that, but it's friendly for newcomers */
+				System.out.println(msg);
+			return null;
+		}
 		/*
 		 * /!\ Don't forget to disable assertions when checking performances. Assertions
 		 * are by far the longest thing! /!\.
@@ -381,8 +392,11 @@ public class DungeonGenerator {
 		/* Must be called before 'generateWater' */
 		gdata.startStage(Stage.STAIRS);
 		final boolean good = generateStairs(gdata);
-		if (!good)
+		if (!good) {
+			if (logger != null && logger.isDebugEnabled())
+				logger.infoLog(Tags.GENERATION, dungeon.dirtyPrint());
 			return null;
+		}
 		gdata.startStage(Stage.ENSURE_DENSITY);
 		ensureDensity(gdata);
 		gdata.startStage(Stage.WATER);
@@ -1101,8 +1115,8 @@ public class DungeonGenerator {
 			return false;
 		}
 		final Dungeon dungeon = gdata.dungeon;
-		assert Dungeons.hasZone(dungeon, z1);
-		assert Dungeons.hasZone(dungeon, z2);
+		assert Dungeons.hasRoomOrCorridor(dungeon, z1);
+		assert Dungeons.hasRoomOrCorridor(dungeon, z2);
 		final Direction fromz1toz2 = toGoFromZoneToZone(z1.getCenter(), z2.getCenter());
 		assert fromz1toz2 != Direction.NONE;
 		getConnectionCandidates(gdata, z1, fromz1toz2, buf1);

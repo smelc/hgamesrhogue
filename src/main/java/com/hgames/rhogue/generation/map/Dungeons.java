@@ -15,6 +15,7 @@ import com.hgames.rhogue.zone.Zones;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.Rectangle;
+import squidpony.squidgrid.zone.ListZone;
 import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
@@ -163,7 +164,8 @@ public class Dungeons {
 				final Coord d = c.translate(dir);
 				final Zone zo = dungeon.findZoneContaining(d);
 				if (zo != null && zo != z) {
-					acc.add(c);
+					if (acc != null)
+						acc.add(c);
 					continue nextCoord;
 				}
 			}
@@ -229,7 +231,7 @@ public class Dungeons {
 	 * @param dungeon
 	 * @return The sum of the sizes of deep water zones.
 	 */
-	public static int getSizeOfWater(Dungeon dungeon) {
+	public static int getSizeOfDeepWater(Dungeon dungeon) {
 		return dungeon.waterPools == null ? 0 : Zones.size(dungeon.waterPools);
 	}
 
@@ -247,6 +249,17 @@ public class Dungeons {
 				break;
 		}
 		return result;
+	}
+
+	/**
+	 * @param dungeon
+	 * @param z
+	 * @param lowOrHighGrass
+	 * @return Whether {@code z} is a grass pool of {@code dungeon}.
+	 */
+	public static boolean hasGrassPool(Dungeon dungeon, Zone z, boolean lowOrHighGrass) {
+		final List<ListZone> target = lowOrHighGrass ? dungeon.grassPools : dungeon.highGrassPools;
+		return target != null && target.contains(z);
 	}
 
 	/**
@@ -278,10 +291,11 @@ public class Dungeons {
 	/**
 	 * @param dungeon
 	 * @param z
-	 * @return If {@code z} is a room or corridor in {@code dungeon}.
+	 * @return If {@code z} is a room, corridor, or deep water in {@code dungeon}.
 	 */
 	public static boolean hasZone(Dungeon dungeon, Zone z) {
-		return hasRoomOrCorridor(dungeon, z) || hasWaterPool(dungeon, z);
+		return hasRoomOrCorridor(dungeon, z) || hasGrassPool(dungeon, z, true) || hasGrassPool(dungeon, z, false)
+				|| hasWaterPool(dungeon, z);
 	}
 
 	/**
