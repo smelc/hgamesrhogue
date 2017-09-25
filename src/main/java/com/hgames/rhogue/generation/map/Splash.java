@@ -70,13 +70,13 @@ public class Splash<T extends Enum<T>> {
 		if (!insideLevel(width, height, start.x, start.y) || !passable(level[start.x][start.y]))
 			return Collections.emptyList();
 
-		final List<Coord> result = new ArrayList<>(volume);
+		final List<Coord> result = new ArrayList<Coord>(volume);
 
 		Direction[] dirs = new Direction[Direction.OUTWARDS.length];
 
-		final LinkedList<Coord> toTry = new LinkedList<>();
+		final LinkedList<Coord> toTry = new LinkedList<Coord>();
 		toTry.add(start);
-		final Set<Coord> trieds = new HashSet<>();
+		final Set<Coord> trieds = new HashSet<Coord>();
 
 		while (!toTry.isEmpty()) {
 			assert result.size() < volume;

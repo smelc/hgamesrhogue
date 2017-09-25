@@ -8,8 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.hgames.lib.Exceptions;
-import com.hgames.rhogue.generation.map.draw.Generic2DArrayDrawer;
-import com.hgames.rhogue.generation.map.draw.IDungeonSymbolDrawer;
+import com.hgames.rhogue.generation.map.draw.DungeonSymbolArrayDrawer;
 
 import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidgrid.zone.ListZone;
@@ -191,6 +190,15 @@ public class Dungeon {
 		return x < width && y < height;
 	}
 
+	/**
+	 * @param c
+	 * @return The zone containing {@code z} or null if none.
+	 */
+	// FIXME CH put GenerationData's cache in there ?
+	public /* @Nullable */ Zone findZoneContaining(Coord c) {
+		return Dungeons.findZoneContaining(this, c.x, c.y);
+	}
+
 	/** @return The number of cells in this dungeon */
 	public int size() {
 		return width * height;
@@ -318,13 +326,6 @@ public class Dungeon {
 	 * @return {@code this} pretty printed.
 	 */
 	public String dirtyPrint() {
-		final IDungeonSymbolDrawer sdrawer = new DungeonSymbolDrawer();
-		final Generic2DArrayDrawer<DungeonSymbol> drawer = new Generic2DArrayDrawer<DungeonSymbol>() {
-			@Override
-			protected char draw(DungeonSymbol t) {
-				return sdrawer.draw(t);
-			}
-		};
-		return drawer.draw(map);
+		return new DungeonSymbolArrayDrawer().draw(map);
 	}
 }

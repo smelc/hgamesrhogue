@@ -1,6 +1,7 @@
 package com.hgames.rhogue.generation.map;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -142,6 +143,35 @@ public class Dungeons {
 	}
 
 	/**
+	 * Puts in {@code acc} coordinates of {@code z}'s internal border that are
+	 * adjacent to other zones, i.e {@code z}'s doorways.
+	 * 
+	 * @param dungeon
+	 * @param z
+	 * @param acc
+	 * @param considerDiagonals
+	 * @return acc if non-null otherwise a fresh list.
+	 */
+	public static List<Coord> getDoorways(Dungeon dungeon, Zone z, List<Coord> acc, boolean considerDiagonals) {
+		final List<Coord> result = acc == null ? new ArrayList<Coord>() : acc;
+		final List<Coord> iborder = z.getInternalBorder();
+		final int isz = iborder.size();
+		final Direction[] dirs = considerDiagonals ? Direction.OUTWARDS : Direction.CARDINALS;
+		nextCoord: for (int i = 0; i < isz; i++) {
+			final Coord c = iborder.get(i);
+			for (Direction dir : dirs) {
+				final Coord d = c.translate(dir);
+				final Zone zo = dungeon.findZoneContaining(d);
+				if (zo != null && zo != z) {
+					acc.add(c);
+					continue nextCoord;
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * @param dungeon
 	 * @param x
 	 * @param y
@@ -160,6 +190,29 @@ public class Dungeons {
 			if (sym != null)
 				result.add(sym);
 			/* else out of bound */
+		}
+		return result;
+	}
+
+	/**
+	 * @param dungeon
+	 * @param x
+	 * @param y
+	 * @param considerDiagonals
+	 *            Whether to consider diagonal neighbors.
+	 * @param acc
+	 * @return {@code acc} if non-null, otherwise a fresh list; where neighboring
+	 *         zones of {@code (x, y)} have been added.
+	 */
+	public static Collection<Zone> getNeighborz(Dungeon dungeon, int x, int y, boolean considerDiagonals,
+			Collection<Zone> acc) {
+		final Collection<Zone> result = acc == null ? new ArrayList<Zone>() : acc;
+		final Direction[] dirs = considerDiagonals ? Direction.OUTWARDS : Direction.CARDINALS;
+		for (Direction dir : dirs) {
+			final Coord neighbor = Coord.get(x + dir.deltaX, y + dir.deltaY);
+			final Zone z = dungeon.findZoneContaining(neighbor);
+			if (z != null)
+				result.add(z);
 		}
 		return result;
 	}
