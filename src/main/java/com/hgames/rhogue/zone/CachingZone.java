@@ -37,10 +37,13 @@ public class CachingZone implements Zone {
 
 	/**
 	 * @param delegate
-	 *            The zone delegated to. It should not be muted while
-	 *            {@code this} is used otherwise discrepancies will occur.
+	 *            The zone delegated to. It should not be muted while {@code this}
+	 *            is used otherwise discrepancies will occur.
 	 */
 	public CachingZone(Zone delegate) {
+		if (delegate == null)
+			throw new NullPointerException(
+					getClass().getSimpleName() + ": Delegate " + Zone.class.getSimpleName() + " cannot be null");
 		this.delegate = delegate;
 	}
 

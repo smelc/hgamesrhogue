@@ -19,11 +19,11 @@ public interface ICorridorBuilder {
 	 * @param end
 	 *            The bridge's endstep (won't be included in the result).
 	 * @param startEndBuf
-	 *            Where to set the corridor's only cell that is cardinally
-	 *            adjacent to {@code start} and the corridor's only cell that is
-	 *            cardinally adjacent to {@code end}.
-	 * @return A zone connecting {@code start} and {@code end}. It doesn't
-	 *         contain neither {@code start} nor {@code end}.
+	 *            Where to set the corridor's only cell that is cardinally adjacent
+	 *            to {@code start} and the corridor's only cell that is cardinally
+	 *            adjacent to {@code end}, or null. Must be of length >= 2.
+	 * @return A zone connecting {@code start} and {@code end}. It doesn't contain
+	 *         neither {@code start} nor {@code end}.
 	 */
 	public Zone build(RNG rng, Coord start, Coord end, /* @Nullable */ Coord[] startEndBuf);
 

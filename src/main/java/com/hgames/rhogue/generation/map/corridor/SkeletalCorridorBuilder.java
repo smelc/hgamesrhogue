@@ -45,7 +45,7 @@ public abstract class SkeletalCorridorBuilder implements ICorridorBuilder {
 	 * @param end
 	 * @param startEndBuf
 	 *            The buffer to fill with the neighbors of {@code start} and
-	 *            {@code end}. Or null.
+	 *            {@code end}. Must be of length >= 2. Or null.
 	 * @return {@code z} if it goes through {@link #isAllowedNeighbor(Coord)}
 	 *         checks.
 	 */

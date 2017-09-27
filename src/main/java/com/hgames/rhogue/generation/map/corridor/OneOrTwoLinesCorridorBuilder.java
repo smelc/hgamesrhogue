@@ -38,11 +38,11 @@ public class OneOrTwoLinesCorridorBuilder extends SkeletalCorridorBuilder {
 
 	/**
 	 * @param start
-	 *            The starting point (won't make it to the result, but a cell in
-	 *            the result will be cardinally adjacent to it).
+	 *            The starting point (won't make it to the result, but a cell in the
+	 *            result will be cardinally adjacent to it).
 	 * @param end
-	 *            The ending point (won't make it to the result, but a cell in
-	 *            the result will be cardinally adjacent to it).
+	 *            The ending point (won't make it to the result, but a cell in the
+	 *            result will be cardinally adjacent to it).
 	 * @return The corridor built or null if impossible.
 	 */
 	@Override
@@ -59,17 +59,17 @@ public class OneOrTwoLinesCorridorBuilder extends SkeletalCorridorBuilder {
 			assert dungeon.isValid(turn2);
 			final Coord pivot = turnBadness(turn1) < turnBadness(turn2) ? turn1 : turn2;
 			/**
-			 * The conditionals about {@link #adjacency(Coord, Coord)} account
-			 * for this pattern:
+			 * The conditionals about {@link #adjacency(Coord, Coord)} account for this
+			 * pattern:
 			 * 
 			 * <pre>
 			 * E    1
 			 * 2    S
 			 * </pre>
 			 * 
-			 * where {@code 1} denotes {@code turn1} and {@code 2} denotes
-			 * {@code turn2}. In this case the pivot is adjacent to the start or
-			 * the end and one of the line is useless.
+			 * where {@code 1} denotes {@code turn1} and {@code 2} denotes {@code turn2}. In
+			 * this case the pivot is adjacent to the start or the end and one of the line
+			 * is useless.
 			 * 
 			 * This is required for the assertion about intersectsWith to hold.
 			 */
@@ -77,31 +77,64 @@ public class OneOrTwoLinesCorridorBuilder extends SkeletalCorridorBuilder {
 				firstPart = null;
 			else {
 				firstPart = buildLine(start, false, pivot, true);
-				if (firstPart == null)
-					/* Cannot do */
+				assert firstPart != null;
+				if (!isCarvingAllowed(firstPart, start, end))
 					return null;
 			}
 			if (Boolean.TRUE.equals(adjacency(pivot, end)))
 				secondPart = null;
 			else {
 				secondPart = buildLine(pivot, false, end, false);
-				if (secondPart == null)
-					/* Cannot do */
+				assert secondPart != null;
+				if (!isCarvingAllowed(secondPart, start, end))
 					return null;
 			}
 			assert !(firstPart == null && secondPart == null);
 			assert firstPart == null || secondPart == null || !firstPart.intersectsWith(secondPart);
+			assert firstPart == null || isCarvingAllowed(firstPart, start, end);
+			assert secondPart == null || isCarvingAllowed(secondPart, start, end);
 		} else {
 			firstPart = buildLine(start, false, end, false);
+			if (!isCarvingAllowed(firstPart, start, end))
+				return null;
 			secondPart = null;
 		}
 
-		return firstPart == null ? (secondPart == null ? null : firstPart)
+		final Zone result = firstPart == null ? (secondPart == null ? null : firstPart)
 				: secondPart == null ? firstPart : new ZoneUnion(firstPart, secondPart);
+		assert isCarvingAllowed(result, start, end);
+		return result;
 	}
 
-	/** @return The line built, or null if impossible */
-	private /* @Nullable */ Zone buildLine(Coord start, boolean includeStart, Coord end, boolean includeEnd) {
+	/**
+	 * @param z
+	 *            A piece of a corridor.
+	 * @param start
+	 *            The starting point (won't make it to the result, but a cell in the
+	 *            result will be cardinally adjacent to it).
+	 * @param end
+	 *            The ending point (won't make it to the result, but a cell in the
+	 *            result will be cardinally adjacent to it).
+	 * @return Whether {@code z} is valid according to
+	 *         {@link #isCarvingAllowed(Coord)}.
+	 */
+	private boolean isCarvingAllowed(Zone z, Coord start, Coord end) {
+		for (Coord c : z) {
+			if (c.equals(start)) {
+				assert false;
+				return false;
+			}
+			if (c.equals(end)) {
+				assert false;
+				return false;
+			}
+			if (!isCarvingAllowed(c))
+				return false;
+		}
+		return true;
+	}
+
+	private Zone buildLine(Coord start, boolean includeStart, Coord end, boolean includeEnd) {
 		/* is 'x' fixed ? */
 		final boolean vertical = start.x == end.x;
 		assert vertical || start.y == end.y;
@@ -119,8 +152,7 @@ public class OneOrTwoLinesCorridorBuilder extends SkeletalCorridorBuilder {
 				bottomLeft == start ? includeEnd : includeStart);
 	}
 
-	private /* @Nullable */ Zone buildLine0(Coord start, boolean includeStart, Coord end,
-			boolean includeEnd) {
+	private Zone buildLine0(Coord start, boolean includeStart, Coord end, boolean includeEnd) {
 		final boolean vertical = start.x == end.x;
 		assert vertical || start.y == end.y;
 		// Check that 'start' is at the bottom left of 'end'
@@ -135,7 +167,7 @@ public class OneOrTwoLinesCorridorBuilder extends SkeletalCorridorBuilder {
 		}
 	}
 
-	private /* @Nullable */ Zone buildLine(Coord start, Coord end) {
+	private Zone buildLine(Coord start, Coord end) {
 		final Zone result;
 		if (start.equals(end))
 			result = new SingleCellZone(start);
@@ -151,10 +183,8 @@ public class OneOrTwoLinesCorridorBuilder extends SkeletalCorridorBuilder {
 		}
 		assert result.contains(start);
 		assert result.contains(end);
-		for (Coord inCorridor : result) {
-			if (!isCarvingAllowed(inCorridor))
-				return null;
-		}
+		// Not checking isCarvingAllowed here, since 'start' or 'end
+		// should maybe not be checked
 		return result;
 	}
 

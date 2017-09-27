@@ -388,7 +388,8 @@ public class DungeonGenerator {
 		generatePassagesInAlmostAdjacentRooms(gdata);
 		draw(gdata.dungeon);
 		gdata.startStage(Stage.CORRIDORS);
-		generateCorridors(gdata, dungeon.rooms, dungeon.rooms, new ICorridorControl.Impl(dungeon, true, false, false));
+		generateCorridors(gdata, dungeon.rooms, dungeon.rooms,
+				new ICorridorControl.Impl(dungeon, true, false, false, false));
 		/* Must be called before 'generateWater' */
 		gdata.startStage(Stage.STAIRS);
 		final boolean good = generateStairs(gdata);
@@ -597,6 +598,9 @@ public class DungeonGenerator {
 		 */
 		public int getLengthLimit();
 
+		/** @return true to try a little harder */
+		public boolean force();
+
 		/** @return The corridor builder to use. */
 		public ICorridorBuilder getBuilder();
 
@@ -608,18 +612,21 @@ public class DungeonGenerator {
 			private final boolean perfect;
 			private final ICorridorBuilder builder;
 			private final int limit;
+			private final boolean force;
 
-			protected Impl(Dungeon dungeon, boolean perfect, boolean bresenhamFirst, boolean useSnd, int limit) {
+			protected Impl(Dungeon dungeon, boolean perfect, boolean bresenhamFirst, boolean useSnd, int limit,
+					boolean force) {
 				this.perfect = perfect;
 				this.builder = useSnd ? CorridorBuilders.createCombination(dungeon, perfect, bresenhamFirst)
 						: CorridorBuilders.create(dungeon, perfect, bresenhamFirst);
 				if (limit < 0)
 					throw new IllegalStateException("Limit of length of corridors must be >= 0. Received: " + limit);
 				this.limit = limit;
+				this.force = force;
 			}
 
-			protected Impl(Dungeon dungeon, boolean perfect, boolean bresenham, boolean useSnd) {
-				this(dungeon, perfect, bresenham, useSnd, (dungeon.width + dungeon.height) / 6);
+			protected Impl(Dungeon dungeon, boolean perfect, boolean bresenham, boolean useSnd, boolean force) {
+				this(dungeon, perfect, bresenham, useSnd, (dungeon.width + dungeon.height) / 6, force);
 			}
 
 			@Override
@@ -637,6 +644,10 @@ public class DungeonGenerator {
 				return limit;
 			}
 
+			@Override
+			public boolean force() {
+				return force;
+			}
 		}
 
 	}
@@ -673,12 +684,6 @@ public class DungeonGenerator {
 				final double dist = zc.distance(oc);
 				if (lenLimit < dist) {
 					/* Too far away */
-					// if (lenLimit == Integer.MAX_VALUE) {
-					// System.out.println(lenLimit);
-					// System.out.println(dist);
-					// DungeonBuilder.setSymbol(dungeon, other.getCenter(),
-					// DungeonSymbol.HIGH_GRASS);
-					// }
 					continue;
 				}
 				otherZones.add(Pair.of(dist, other));
@@ -691,11 +696,10 @@ public class DungeonGenerator {
 		if (!someChance)
 			return 0;
 		final boolean perfect = control.getPerfect();
-		final ICorridorBuilder cbuilder = control.getBuilder();
-		final Coord[] startEndBuffer = new Coord[2];
 		boolean needWaterPoolsCleanup = false;
 		final Set<Coord> buf = new HashSet<Coord>();
 		int result = 0;
+		final Coord[] startEndBuffer = new Coord[2];
 		final List<Coord> buf1 = new ArrayList<Coord>();
 		final List<Coord> buf2 = new ArrayList<Coord>();
 		for (Zone z : zoneToOtherZones.keySet()) {
@@ -710,35 +714,10 @@ public class DungeonGenerator {
 				// XXX CH Check it wouldn't exceed dest's connectivity ?
 				if (Dungeons.areConnected(dungeon, z, dest, 6))
 					continue;
-				final boolean found = getZonesConnectionEndpoints(gdata, z, dest, buf1, buf2);
-				if (!found)
-					continue;
-				assert !buf1.isEmpty() && !buf2.isEmpty();
-				ZPCELL.clear();
-				final int b1sz = buf1.size();
-				final int b2sz = buf2.size();
-				for (int k = 0; k < b1sz; k++) {
-					final Coord zEndpoint = buf1.get(k);
-					for (int l = 0; l < b2sz; l++) {
-						final Coord destEndpoint = buf2.get(l);
-						final Zone built = cbuilder.build(rng, zEndpoint, destEndpoint, startEndBuffer);
-						if (built == null)
-							continue;
-						assert !built.contains(zEndpoint);
-						assert !built.contains(destEndpoint);
-						/* Favor turnless corridors */
-						final int prio = ((built instanceof Rectangle || built.size() == 1) ? 1 : 2) * built.size();
-						ZPCELL.union(built, prio);
-					}
-				}
-				final Zone built = ZPCELL.get();
+				final Zone built = generateCorridor(gdata, z, dest, buf1, buf2, control, startEndBuffer);
 				if (built == null)
 					continue;
-				if (lenLimit < Integer.MAX_VALUE && lenLimit < built.size())
-					/* Too long */
-					continue;
-				// (NO_CORRIDOR_BBOX). This doesn't trigger if 'built'
-				// is a Rectangle, but it may if it a ZoneUnion.
+				// (NO_CORRIDOR_BBOX) (if built is a ZoneUnion)
 				if (perfect) {
 					assert EnumSet.of(DungeonSymbol.WALL).containsAll(Dungeons.getSymbols(dungeon, built));
 				} else {
@@ -774,6 +753,62 @@ public class DungeonGenerator {
 		if (needWaterPoolsCleanup)
 			cleanWaterPools(gdata, null);
 		return result;
+	}
+
+	private /* @Nullable */ Zone generateCorridor(GenerationData gdata, Zone src, Zone dest, List<Coord> buf1,
+			List<Coord> buf2, ICorridorControl control, Coord[] startEndBuffer) {
+		/* This is a bit tartelette aux concombres */
+		boolean found = getZonesConnectionEndpoints(gdata, src, dest, buf1, buf2, false);
+		boolean alternativeAvailable = control.force();
+		if (!found && alternativeAvailable) {
+			/* Try an alternative */
+			found = getZonesConnectionEndpoints(gdata, src, dest, buf1, buf2, true);
+			alternativeAvailable = false;
+		}
+		if (!found)
+			return null;
+		assert !buf1.isEmpty() && !buf2.isEmpty();
+		Zone result = generateCorridor0(control, buf1, buf2, startEndBuffer);
+		if (result == null && alternativeAvailable) {
+			/* Alternative endpoints weren't try before. Try them now. */
+			found = getZonesConnectionEndpoints(gdata, src, dest, buf1, buf2, true);
+			alternativeAvailable = false;
+			if (found) {
+				assert !buf1.isEmpty() && !buf2.isEmpty();
+				result = generateCorridor0(control, buf1, buf2, startEndBuffer);
+			}
+		}
+		return result;
+	}
+
+	private /* @Nullable */ Zone generateCorridor0(ICorridorControl control, List<Coord> connections1,
+			List<Coord> connections2, Coord[] startEndBuffer) {
+		assert !connections1.isEmpty() && !connections2.isEmpty();
+		ZPCELL.clear();
+		final ICorridorBuilder builder = control.getBuilder();
+		final int limit = control.getLengthLimit();
+		final int b1sz = connections1.size();
+		final int b2sz = connections2.size();
+		for (int k = 0; k < b1sz; k++) {
+			final Coord zEndpoint = connections1.get(k);
+			for (int l = 0; l < b2sz; l++) {
+				final Coord destEndpoint = connections2.get(l);
+				final Zone built = builder.build(rng, zEndpoint, destEndpoint, startEndBuffer);
+				if (built == null) {
+					// builder.setSymbol(zEndpoint, DungeonSymbol.HIGH_GRASS);
+					// builder.setSymbol(destEndpoint, DungeonSymbol.HIGH_GRASS);
+					continue;
+				}
+				if (limit < Integer.MAX_VALUE && limit < built.size())
+					continue;
+				assert !built.contains(zEndpoint);
+				assert !built.contains(destEndpoint);
+				/* Favor turnless corridors */
+				final int prio = ((built instanceof Rectangle || built.size() == 1) ? 1 : 2) * built.size();
+				ZPCELL.union(built, prio);
+			}
+		}
+		return ZPCELL.get();
 	}
 
 	/** @return Whether the stairs could be placed */
@@ -843,7 +878,7 @@ public class DungeonGenerator {
 				+ " stair, trying to fix connectivity issue (around " + objective + ") if any (" + sources.size()
 				+ " sources and " + dests.size() + " destinations).");
 		int built = generateCorridors(gdata, sources, dests,
-				new ICorridorControl.Impl(dungeon, false, true, false, Integer.MAX_VALUE));
+				new ICorridorControl.Impl(dungeon, false, true, false, Integer.MAX_VALUE, true));
 		if (built == 0) {
 			infoLog("Could not fix connectivity issue. Failing.");
 			return null;
@@ -961,10 +996,9 @@ public class DungeonGenerator {
 				 * Yes it's a water island. Try to connect it with shallow water; coz such
 				 * islands can be fun.
 				 */
-				// FIXME CH Why doesn't this work perfectly on seed 35 ?
 				final Zone z = component.get(0);
 				final int built = generateCorridors(gdata, component, connectedRooms, new ICorridorControl.Impl(dungeon,
-						false, true, true, Math.max(z.getWidth(), z.getHeight()) * 2));
+						false, true, true, Math.max(z.getWidth(), z.getHeight()) * 2, false));
 				// FIXME CH Generate doors on these corridors ?
 				if (0 < built) {
 					if (logger != null && logger.isInfoEnabled())
@@ -992,7 +1026,7 @@ public class DungeonGenerator {
 		/* To ensure 'generateCorridors' precondition that it gets only rooms */
 		component.removeAll(dungeon.corridors);
 		final int nbc = generateCorridors(gdata, component, connectedRooms,
-				new ICorridorControl.Impl(dungeon, false, true, true, nbCellsInComponent / 2));
+				new ICorridorControl.Impl(dungeon, false, true, true, nbCellsInComponent / 2, true));
 		final boolean connected = 0 < nbc;
 		if (connected) {
 			connectedRooms.addAll(component);
@@ -1017,7 +1051,7 @@ public class DungeonGenerator {
 		final DungeonBuilder builder = dungeon.getBuilder();
 		assert Dungeons.hasZone(dungeon, z);
 		removeZone(gdata, z);
-		builder.setSymbolsExcept(z.iterator(), DungeonSymbol.GRASS, EnumSet.of(DungeonSymbol.HIGH_GRASS));
+		builder.setSymbols(z.iterator(), DungeonSymbol.WALL);
 		draw(dungeon);
 	}
 
@@ -1106,10 +1140,12 @@ public class DungeonGenerator {
 	}
 
 	/**
+	 * @param alternative
+	 *            Whether to try alternatives.
 	 * @return Whether something was found.
 	 */
 	private boolean getZonesConnectionEndpoints(GenerationData gdata, Zone z1, Zone z2, List<Coord> buf1,
-			List<Coord> buf2) {
+			List<Coord> buf2, boolean alternative) {
 		if (z1 == z2) {
 			assert false;
 			return false;
@@ -1117,7 +1153,7 @@ public class DungeonGenerator {
 		final Dungeon dungeon = gdata.dungeon;
 		assert Dungeons.hasRoomOrCorridor(dungeon, z1);
 		assert Dungeons.hasRoomOrCorridor(dungeon, z2);
-		final Direction fromz1toz2 = toGoFromZoneToZone(z1.getCenter(), z2.getCenter());
+		final Direction fromz1toz2 = toGoFromZoneToZone(z1.getCenter(), z2.getCenter(), alternative);
 		assert fromz1toz2 != Direction.NONE;
 		getConnectionCandidates(gdata, z1, fromz1toz2, buf1);
 		if (buf1.isEmpty())
@@ -1128,12 +1164,15 @@ public class DungeonGenerator {
 		return true;
 	}
 
-	private static Direction toGoFromZoneToZone(Coord c1, Coord c2) {
-		// To return cardinals only: (look bad)
-		// final int x = c2.x - c1.x;
-		// final int y = c2.y - c1.y;
-		// return Direction.getCardinalDirection(x, y);
-		return Direction.toGoTo(c1, c2);
+	private static Direction toGoFromZoneToZone(Coord c1, Coord c2, boolean cardinalsOnly) {
+		if (cardinalsOnly) {
+			// To return cardinals only: (look bad. It's hard to explain but try it,
+			// there will be too many straight corridors).
+			final int x = c1.x - c2.x;
+			final int y = c1.y - c2.y;
+			return Direction.getCardinalDirection(x, y);
+		} else
+			return Direction.toGoTo(c1, c2);
 	}
 
 	/**
@@ -1323,6 +1362,7 @@ public class DungeonGenerator {
 	 * @param ztype
 	 */
 	private Zone addZone(GenerationData gdata, Zone z, /* @Nullable */ Rectangle boundingBox, ZoneType ztype) {
+		assert z != null;
 		final Dungeon dungeon = gdata.dungeon;
 		final DungeonBuilder builder = dungeon.getBuilder();
 		final Zone recorded = needCaching(z, ztype) ? new CachingZone(z) : z;
