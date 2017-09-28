@@ -21,7 +21,7 @@ import squidpony.squidmath.RNG;
  * 
  * @author smelC
  */
-public class GrassGenerator implements GeneratorComponent {
+public class GrassComponent implements GeneratorComponent {
 
 	@Override
 	public boolean generate(DungeonGenerator gen, GenerationData gdata) {
@@ -90,9 +90,13 @@ public class GrassGenerator implements GeneratorComponent {
 					/* Success. Make the variant move. */
 					patches++;
 					cells += buf.size();
-					builder.setSymbols(buf.iterator(), DungeonSymbol.GRASS);
 					/* Not using SetZone, as we would need to copy 'buf' anyway */
 					builder.addGrassPool(new ListZone(new ArrayList<Coord>(buf)));
+					/*
+					 * Should be done after 'addGrassPool' as it checks that symbols turned into
+					 * grass are valid
+					 */
+					builder.setSymbols(buf.iterator(), DungeonSymbol.GRASS);
 					buf.clear();
 					gen.draw(dungeon);
 					continue nextPool;

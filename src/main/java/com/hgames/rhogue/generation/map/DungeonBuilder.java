@@ -66,7 +66,8 @@ public class DungeonBuilder implements Serializable {
 		assert !Dungeons.hasZone(dungeon, pool);
 		assert !pool.isEmpty();
 		assert EnumSet.of(DungeonSymbol.FLOOR).containsAll(Dungeons.getSymbols(dungeon, pool)) : "Pool of grass " + pool
-				+ " contains an invalid symbol (only allowed symbol: " + DungeonSymbol.FLOOR + ")";
+				+ " contains an invalid symbol: " + Dungeons.getSymbols(dungeon, pool) + ". Only allowed symbol is "
+				+ DungeonSymbol.FLOOR + ")";
 		if (dungeon.grassPools == null)
 			dungeon.grassPools = new ArrayList<Zone>();
 		else

@@ -252,7 +252,7 @@ public class DungeonGenerator {
 					"Percentage of grass must be negative or in [0, 100]. Received: " + percent);
 		if (0 <= percent)
 			this.grassPercentage = percent;
-		if (0 <= grassPatches)
+		if (0 <= nbPools)
 			this.grassPatches = nbPools;
 		return this;
 	}
@@ -421,7 +421,7 @@ public class DungeonGenerator {
 		if (!startWithWater)
 			doStage(Stage.WATER, new WaterComponent(), gdata);
 
-		if (!doStage(Stage.GRASS, new GrassGenerator(), gdata))
+		if (!doStage(Stage.GRASS, new GrassComponent(), gdata))
 			return null;
 
 		gdata.startStage(null); // Record end of last stage
