@@ -102,7 +102,7 @@ public class OneOrTwoLinesCorridorBuilder extends SkeletalCorridorBuilder {
 
 		final Zone result = firstPart == null ? (secondPart == null ? null : firstPart)
 				: secondPart == null ? firstPart : new ZoneUnion(firstPart, secondPart);
-		assert isCarvingAllowed(result, start, end);
+		assert result == null || isCarvingAllowed(result, start, end);
 		return result;
 	}
 

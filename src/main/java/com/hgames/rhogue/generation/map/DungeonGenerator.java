@@ -35,7 +35,8 @@ import com.hgames.rhogue.generation.map.corridor.CorridorBuilders;
 import com.hgames.rhogue.generation.map.corridor.ICorridorBuilder;
 import com.hgames.rhogue.generation.map.draw.ConsoleDungeonDrawer;
 import com.hgames.rhogue.generation.map.draw.IDungeonDrawer;
-import com.hgames.rhogue.generation.map.flood.DungeonFloodFill;
+import com.hgames.rhogue.generation.map.flood.DungeonGrassFloodFill;
+import com.hgames.rhogue.generation.map.flood.DungeonWaterStartFloodFill;
 import com.hgames.rhogue.generation.map.flood.FloodFill;
 import com.hgames.rhogue.generation.map.flood.IFloodObjective;
 import com.hgames.rhogue.generation.map.lifetime.Lifetime;
@@ -120,6 +121,14 @@ public class DungeonGenerator {
 
 	/** An int in [0, 100], which is used when a door can be punched */
 	protected int doorProbability = 50;
+
+	/**
+	 * The percentage of walkable cells that will be turned into grass
+	 * (approximately). In [0, 100].
+	 */
+	protected int grassPercentage = 15;
+	/** The number of patches of grasses to generate (approximately) */
+	protected int grassPatches = 5;
 
 	/**
 	 * Whether rooms whose width and height of size 1 are allowed. They look like
@@ -240,6 +249,28 @@ public class DungeonGenerator {
 		if (!Ints.inInterval(0, proba, 100))
 			throw new IllegalStateException("Excepted a value in [0, 100]. Received: " + proba);
 		this.doorProbability = proba;
+		return this;
+	}
+
+	/**
+	 * @param percent
+	 *            The percentage of walkable cells to turn into grass. If negative,
+	 *            unchanged; otherwise must be in [0, 100].
+	 * @param nbPools
+	 *            The number of pools of grasses to generate or something negative
+	 *            not to change anything.
+	 * @return {@code this}
+	 * @throws IllegalStateException
+	 *             If {@code 100 < percent}
+	 */
+	public DungeonGenerator setGrassObjectives(int percent, int nbPools) {
+		if (100 < percent)
+			throw new IllegalStateException(
+					"Percentage of grass must be negative or in [0, 100]. Received: " + percent);
+		if (0 <= percent)
+			this.grassPercentage = percent;
+		if (0 <= grassPatches)
+			this.grassPatches = nbPools;
 		return this;
 	}
 
@@ -403,7 +434,9 @@ public class DungeonGenerator {
 		gdata.startStage(Stage.WATER);
 		if (!startWithWater)
 			generateWater(gdata);
-		gdata.startStage(null);
+		gdata.startStage(Stage.GRASS);
+		generateGrass(gdata);
+		gdata.startStage(null); // Record end of last stage
 		gdata.logTimings(logger);
 		return dungeon;
 	}
@@ -1084,7 +1117,7 @@ public class DungeonGenerator {
 		}
 		/* The number of cells filled */
 		int filled = 0;
-		final FloodFill fill = new DungeonFloodFill(gdata.dungeon.map, width, height);
+		final FloodFill fill = new DungeonWaterStartFloodFill(gdata.dungeon.map, width, height);
 		final FloodFillObjective objective = new FloodFillObjective(dungeon, startWithWater);
 		final int msz = dungeon.size();
 		final int totalObjective = (msz / 100) * waterPercentage;
@@ -1115,6 +1148,81 @@ public class DungeonGenerator {
 				infoLog("Created water pool of size " + sz); // + ": " + spill);
 			draw(dungeon);
 			poolsDone++;
+		}
+	}
+
+	protected void generateGrass(GenerationData gdata) {
+		if (grassPercentage <= 0 || grassPatches <= 0)
+			/* Nothing to do */
+			return;
+		final Dungeon dungeon = gdata.dungeon;
+		final DungeonBuilder builder = dungeon.getBuilder();
+		final int cObjective = (Dungeons.getSizeOfRoomsAndCorridors(dungeon) * grassPercentage) / 100;
+		if (cObjective == 0)
+			return;
+		if (logger != null && logger.isInfoEnabled())
+			infoLog("Size objective of grass: " + cObjective + " cells");
+		/* The number of cells turned into grass */
+		int cells = 0;
+		/* The number of grass patches done */
+		int patches = 0;
+		final int patchObjective = (cObjective / grassPatches)
+				+ ((rng.nextBoolean() ? 1 : -1) * (rng.between(1, grassPatches / 5)));
+		if (patchObjective <= 0)
+			return;
+		if (logger != null && logger.isInfoEnabled())
+			infoLog("Size objective of each grass patch: " + patchObjective + " cells");
+		final List<Zone> rooms = dungeon.getRooms();
+		int frustration = 0;
+		final FloodFill fill = new DungeonGrassFloodFill(dungeon.map);
+		final LinkedHashSet<Coord> buf = new LinkedHashSet<Coord>(patchObjective);
+		nextPool: while (patches < grassPatches && cells < cObjective && frustration < 8) {
+			final Zone src = rng.getRandomElement(rooms);
+			if (src.size() == 1) {
+				/* It could be some kind of corridor */
+				frustration++;
+				continue;
+			}
+			int innerF = 0; /* Inner loop frustration */
+			final List<Coord> all = src.getAll();
+			final IFloodObjective objective = new IFloodObjective() {
+				int dones = 0;
+				/*
+				 * A slightly moving objective every roll, to avoid all patches of grass to be
+				 * of the same size.
+				 */
+				final int szo = patchObjective + ((rng.nextBoolean() ? 1 : -1) * patchObjective / 3);
+
+				@Override
+				public void record(Coord c) {
+					dones++;
+				}
+
+				@Override
+				public boolean isMet() {
+					return szo <= dones;
+				}
+			};
+			while (innerF < 4) {
+				final Coord start = rng.getRandomElement(all);
+				assert dungeon.isValid(start);
+				assert buf.isEmpty();
+				fill.flood(rng, start.x, start.y, objective, false, buf);
+				if (buf.isEmpty()) {
+					/* Failure */
+					innerF++;
+				} else {
+					/* Success. Make the variant move. */
+					patches++;
+					cells += buf.size();
+					builder.setSymbols(buf.iterator(), DungeonSymbol.GRASS);
+					/* Not using SetZone, as we would need to copy 'buf' anyway */
+					builder.addGrassPool(new ListZone(new ArrayList<Coord>(buf)));
+					buf.clear();
+					draw(dungeon);
+					continue nextPool;
+				}
+			}
 		}
 	}
 
@@ -1981,6 +2089,6 @@ public class DungeonGenerator {
 	 */
 	private static enum Stage {
 		/* In the order in which they are executed */
-		INIT, WATER_START, ROOMS, PASSAGES_IN_ALMOST_ADJACENT_ROOMS, CORRIDORS, STAIRS, ENSURE_DENSITY, WATER
+		INIT, WATER_START, ROOMS, PASSAGES_IN_ALMOST_ADJACENT_ROOMS, CORRIDORS, STAIRS, ENSURE_DENSITY, WATER, GRASS
 	}
 }

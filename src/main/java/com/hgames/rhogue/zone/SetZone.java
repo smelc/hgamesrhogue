@@ -54,6 +54,17 @@ public class SetZone extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
+	public boolean contains(Zone other) {
+		if (other instanceof SetZone) {
+			final SetZone other_ = (SetZone) other;
+			/* Avoid allocating the List backing getAll() in 'other' */
+			return set.containsAll(other_.set);
+		} else
+			/* Avoid allocating the List backing getAll() in 'this' */
+			return set.containsAll(other.getAll());
+	}
+
+	@Override
 	public List<Coord> getAll() {
 		return new ArrayList<Coord>(set);
 	}

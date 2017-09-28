@@ -15,7 +15,6 @@ import com.hgames.rhogue.zone.Zones;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.Rectangle;
-import squidpony.squidgrid.zone.ListZone;
 import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
@@ -229,6 +228,14 @@ public class Dungeons {
 
 	/**
 	 * @param dungeon
+	 * @return The sum of the sizes of rooms and corridors.
+	 */
+	public static int getSizeOfRoomsAndCorridors(Dungeon dungeon) {
+		return Zones.size(dungeon.corridors) + Zones.size(dungeon.rooms);
+	}
+
+	/**
+	 * @param dungeon
 	 * @return The sum of the sizes of deep water zones.
 	 */
 	public static int getSizeOfDeepWater(Dungeon dungeon) {
@@ -258,7 +265,7 @@ public class Dungeons {
 	 * @return Whether {@code z} is a grass pool of {@code dungeon}.
 	 */
 	public static boolean hasGrassPool(Dungeon dungeon, Zone z, boolean lowOrHighGrass) {
-		final List<ListZone> target = lowOrHighGrass ? dungeon.grassPools : dungeon.highGrassPools;
+		final List<Zone> target = lowOrHighGrass ? dungeon.grassPools : dungeon.highGrassPools;
 		return target != null && target.contains(z);
 	}
 

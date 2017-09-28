@@ -8,11 +8,12 @@ import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
 
 /**
- * An instance of {@link FloodFill} tuned for {@link DungeonSymbol}.
+ * An instance of {@link FloodFill} tuned to generate water first in
+ * {@link DungeonSymbol}.
  * 
  * @author smelC
  */
-public class DungeonFloodFill extends FloodFill {
+public class DungeonWaterStartFloodFill extends FloodFill {
 
 	protected final DungeonSymbol[][] map;
 
@@ -23,7 +24,7 @@ public class DungeonFloodFill extends FloodFill {
 	 * @param width
 	 * @param height
 	 */
-	public DungeonFloodFill(DungeonSymbol[][] map, int width, int height) {
+	public DungeonWaterStartFloodFill(DungeonSymbol[][] map, int width, int height) {
 		super(width, height);
 		this.map = map;
 	}

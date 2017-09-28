@@ -20,7 +20,7 @@ import squidpony.squidmath.RNG;
 
 /**
  * An abstract flood fill algorithm. It is not tied to {@link DungeonSymbol}.
- * See {@link DungeonFloodFill} for that.
+ * See {@link DungeonWaterStartFloodFill} for that.
  * 
  * @author smelC
  */
@@ -125,9 +125,13 @@ public abstract class FloodFill {
 			eatBorders(rng, result);
 		removeLonelies(result);
 		// // keepBiggestComponent(result);
-		if (result.size() < 9)
+		if (result.size() < getMinFloodSize())
 			/* Not a valid fill */
 			result.clear();
+	}
+
+	protected int getMinFloodSize() {
+		return 9;
 	}
 
 	protected void eatBorders(RNG rng, final Collection<? extends Coord> result) {

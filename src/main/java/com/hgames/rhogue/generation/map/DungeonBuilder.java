@@ -62,11 +62,13 @@ public class DungeonBuilder implements Serializable {
 	 * @param pool
 	 *            The pool to add.
 	 */
-	public void addGrassPool(ListZone pool) {
+	public void addGrassPool(Zone pool) {
 		assert !Dungeons.hasZone(dungeon, pool);
 		assert !pool.isEmpty();
+		assert EnumSet.of(DungeonSymbol.FLOOR).containsAll(Dungeons.getSymbols(dungeon, pool)) : "Pool of grass " + pool
+				+ " contains an invalid symbol (only allowed symbol: " + DungeonSymbol.FLOOR + ")";
 		if (dungeon.grassPools == null)
-			dungeon.grassPools = new ArrayList<ListZone>();
+			dungeon.grassPools = new ArrayList<Zone>();
 		else
 			assert !dungeon.grassPools.contains(pool);
 		dungeon.grassPools.add(pool);
@@ -80,7 +82,7 @@ public class DungeonBuilder implements Serializable {
 		assert !Dungeons.hasZone(dungeon, pool);
 		assert !pool.isEmpty();
 		if (dungeon.highGrassPools == null)
-			dungeon.highGrassPools = new ArrayList<ListZone>();
+			dungeon.highGrassPools = new ArrayList<Zone>();
 		else
 			assert !dungeon.highGrassPools.contains(pool);
 		dungeon.highGrassPools.add(pool);
