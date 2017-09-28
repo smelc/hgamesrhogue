@@ -28,8 +28,6 @@ import com.hgames.rhogue.generation.map.corridor.CorridorBuilders;
 import com.hgames.rhogue.generation.map.corridor.ICorridorBuilder;
 import com.hgames.rhogue.generation.map.draw.ConsoleDungeonDrawer;
 import com.hgames.rhogue.generation.map.draw.IDungeonDrawer;
-import com.hgames.rhogue.generation.map.flood.DungeonWaterStartFloodFill;
-import com.hgames.rhogue.generation.map.flood.FloodFill;
 import com.hgames.rhogue.generation.map.flood.IFloodObjective;
 import com.hgames.rhogue.generation.map.lifetime.Lifetime;
 import com.hgames.rhogue.rng.ProbabilityTable;
@@ -394,15 +392,13 @@ public class DungeonGenerator {
 			// Nothing to do
 			return dungeon;
 		final GenerationData gdata = new GenerationData(dungeon, watch);
-		gdata.startStage(Stage.WATER_START);
+
 		if (startWithWater)
-			generateWater(gdata);
+			doStage(Stage.WATER_START, new WaterComponent(), gdata);
 
-		if (!doStage(Stage.ROOMS, new RoomComponent(), gdata))
-			return null;
+		doStage(Stage.ROOMS, new RoomComponent(), gdata);
 
-		if (!doStage(Stage.PASSAGES_IN_ALMOST_ADJACENT_ROOMS, new PassagesComponent(), gdata))
-			return null;
+		doStage(Stage.PASSAGES_IN_ALMOST_ADJACENT_ROOMS, new PassagesComponent(), gdata);
 		// Done once here instead of at every passage
 		draw(gdata.dungeon);
 
@@ -422,9 +418,8 @@ public class DungeonGenerator {
 		gdata.startStage(Stage.ENSURE_DENSITY);
 		ensureDensity(gdata);
 
-		gdata.startStage(Stage.WATER);
 		if (!startWithWater)
-			generateWater(gdata);
+			doStage(Stage.WATER, new WaterComponent(), gdata);
 
 		if (!doStage(Stage.GRASS, new GrassGenerator(), gdata))
 			return null;
@@ -702,69 +697,6 @@ public class DungeonGenerator {
 		removeZone(gdata, z);
 		builder.setSymbols(z.iterator(), DungeonSymbol.WALL);
 		draw(dungeon);
-	}
-
-	/**
-	 * This method behaves differently as to whether {@link #startWithWater} is set.
-	 * If not set, it'll build pools that are connected to existing walkable areas.
-	 * 
-	 * @param gdata
-	 */
-	protected void generateWater(GenerationData gdata) {
-		if (waterPercentage == 0 || waterPools == 0)
-			/* Nothing to do */
-			return;
-		final Dungeon dungeon = gdata.dungeon;
-		final DungeonBuilder builder = dungeon.getBuilder();
-		Set<Coord> candidates = gdata.getWaterFillStartCandidates();
-		if (candidates.isEmpty())
-			candidates = new LinkedHashSet<Coord>();
-		gdata.removeWaterFillStartCandidates();
-		if (candidates.isEmpty()) {
-			if (startWithWater) {
-				for (int i = 0; i < waterPools; i++) {
-					/* So that's it's not too much on the edge */
-					final int x = rng.between(width / 4, width - (width / 4));
-					final int y = rng.between(height / 4, height - (height / 4));
-					candidates.add(Coord.get(x, y));
-				}
-			} else
-				throw new IllegalStateException("Implement me");
-		}
-		/* The number of cells filled */
-		int filled = 0;
-		final FloodFill fill = new DungeonWaterStartFloodFill(gdata.dungeon.map, width, height);
-		final FloodFillObjective objective = new FloodFillObjective(dungeon, startWithWater);
-		final int msz = dungeon.size();
-		final int totalObjective = (msz / 100) * waterPercentage;
-		final int poolObjective = totalObjective / waterPools;
-		int poolsDone = 0;
-		final Iterator<Coord> it = candidates.iterator();
-		final LinkedHashSet<Coord> spill = new LinkedHashSet<Coord>();
-		while (it.hasNext() && poolsDone < waterPools && filled < totalObjective) {
-			/* Prepare iteration */
-			objective.prepare(poolObjective);
-			spill.clear();
-			/* Go */
-			final Coord candidate = it.next();
-			fill.flood(rng, candidate.x, candidate.y, objective, startWithWater, spill);
-			if (spill.isEmpty())
-				continue;
-			final int sz = spill.size();
-			for (Coord spilt : spill) {
-				assert Dungeons.findZoneContaining(dungeon, spilt.x,
-						spilt.y) == null : ("Cells spilt on should not belong to a zone. You should fix 'impassable'. Cell spilt on: "
-								+ spilt + " belonging to zone: "
-								+ Dungeons.findZoneContaining(dungeon, spilt.x, spilt.y));
-				builder.setSymbol(spilt, DungeonSymbol.DEEP_WATER);
-				filled++;
-			}
-			addZone(gdata, new ListZone(new ArrayList<Coord>(spill)), null, ZoneType.DEEP_WATER);
-			if (logger != null && logger.isInfoEnabled())
-				infoLog("Created water pool of size " + sz); // + ": " + spill);
-			draw(dungeon);
-			poolsDone++;
-		}
 	}
 
 	protected int getMaxRoomSideSize(boolean widthOrHeight, boolean spiceItUp) {
@@ -1047,7 +979,8 @@ public class DungeonGenerator {
 				return;
 			Stage current = null;
 			for (Stage s : Stage.values()) {
-				if (timings.get(s) == -1l) {
+				final Long duration = timings.get(s);
+				if (duration != null && duration == -1l) {
 					current = s;
 					break;
 				}
@@ -1225,7 +1158,10 @@ public class DungeonGenerator {
 			long total = 0;
 			final String tag = Tags.GENERATION;
 			for (Stage stage : Stage.values()) {
-				final long duration = timings.get(stage);
+				final Long duration = timings.get(stage);
+				if (duration == null)
+					/* Stage wasn't done. It's okay. */
+					continue;
 				if (duration < 0)
 					logger.warnLog(tag, "Duration of stage " + stage + " is unexpectedly " + duration);
 				total += timings.get(stage);
@@ -1237,8 +1173,11 @@ public class DungeonGenerator {
 					"Generated " + width + "x" + height + " dungeon (" + mapSize + " cells) in " + total + "ms.");
 			if (1000 < mapSize)
 				logger.infoLog(tag, "That's approximately " + (int) ((1000f / mapSize) * total) + "ms per 1K cells.");
-			for (Stage stage : Stage.values())
-				logger.infoLog(tag, "Stage " + stage + " took " + timings.get(stage) + "ms");
+			for (Stage stage : Stage.values()) {
+				final Long duration = timings.get(stage);
+				if (duration != null)
+					logger.infoLog(tag, "Stage " + stage + " took " + duration + "ms");
+			}
 		}
 
 		private Set<Zone> zonesConnectedTo(List<Coord> starts) {
