@@ -137,8 +137,18 @@ public class RoomComponent implements GeneratorComponent {
 		outer: while (frustration < 8 + (gen.startWithWater ? 4 : 0)) {
 			frustration++;
 			/* +1 to account for the surrounding wall */
-			final int maxWidth = gen.getMaxRoomSideSize(true, rng.nextInt(10) == 0) + 1;
-			final int maxHeight = gen.getMaxRoomSideSize(false, rng.nextInt(10) == 0) + 1;
+			int maxWidth = getMaxRoomSideSize(gen, true, rng.nextInt(10) == 0) + 1;
+			int maxHeight = getMaxRoomSideSize(gen, false, rng.nextInt(10) == 0) + 1;
+			final int max = Math.max(maxWidth, maxHeight);
+			final int min = Math.min(maxWidth, maxHeight);
+			if (min < max / 2) {
+				/* Correct that, because such very long or wide rooms look weird */
+				if (maxHeight < maxWidth)
+					maxHeight = maxWidth / 2;
+				else
+					maxWidth = maxHeight / 2;
+			}
+
 			/* Top-left coordinate */
 			final Iterator<Coord> tlPlacer = rgh.getCoords();
 			while (true) {
@@ -169,13 +179,13 @@ public class RoomComponent implements GeneratorComponent {
 					continue;
 				assert dungeon.isValid(brCandidate);
 				assert !Dungeons.isOnEdge(dungeon, brCandidate);
-				final Zone zone = generateRoomAt(gen, blCandidate, mw, mh);
+				final Zone zone = generateRoomAt(gen, gdata, blCandidate, mw, mh);
 				/*
 				 * 'zone' must be used now, since the generator's usage has been recorded in
 				 * 'generateRoomAt'.
 				 */
 				if (zone != null) {
-					assert !Dungeons.anyOnEdge(dungeon, zone.iterator());
+					assert !Dungeons.anyOnEdge(dungeon, zone.iterator()) : "Zone is on the dungeon's edge: " + zone;
 					// infoLog("Generated room: " + zone);
 					rgh.prepareRegistration(zone);
 					/* Record the zone */
@@ -192,7 +202,8 @@ public class RoomComponent implements GeneratorComponent {
 		return false;
 	}
 
-	private /* @Nullable */ Zone generateRoomAt(DungeonGenerator gen, Coord bottomLeft, int maxWidth, int maxHeight) {
+	private /* @Nullable */ Zone generateRoomAt(DungeonGenerator gen, GenerationData gdata, Coord bottomLeft,
+			int maxWidth, int maxHeight) {
 		assert 1 <= maxWidth;
 		assert 1 <= maxHeight;
 		final RNG rng = gen.rng;
@@ -205,6 +216,8 @@ public class RoomComponent implements GeneratorComponent {
 		if (zeroZeroZone == null)
 			return null;
 		final Zone zone = zeroZeroZone.translate(bottomLeft);
+		assert zone.size() == zeroZeroZone.size();
+		assert !Dungeons.anyOnEdge(gdata.dungeon, zone.iterator()) : "Room is on the dungeon's edge: " + zone;
 		{
 			/* Remember that generator is getting used */
 			final Lifetime lifetime = gen.rgLifetimes.get(rg);
@@ -220,6 +233,17 @@ public class RoomComponent implements GeneratorComponent {
 			}
 		}
 		return zone;
+	}
+
+	protected int getMaxRoomSideSize(DungeonGenerator gen, boolean widthOrHeight, boolean spiceItUp) {
+		final RNG rng = gen.rng;
+		/*
+		 * +1, because #maxRoomWidth and #maxRoomHeight are inclusive, where RNG#between
+		 * isn't.
+		 */
+		final int result = widthOrHeight ? rng.between(gen.minRoomWidth, gen.maxRoomWidth + 1)
+				: rng.between(gen.minRoomHeight, gen.maxRoomHeight + 1);
+		return result * (spiceItUp ? 2 : 1);
 	}
 
 }

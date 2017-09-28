@@ -171,8 +171,10 @@ public class DungeonGenerator {
 		this.height = height;
 		this.roomGenerators = ProbabilityTable.create();
 		this.rgLifetimes = new HashMap<IRoomGenerator, Lifetime>();
-		this.maxRoomWidth = width / 5;
-		this.maxRoomHeight = height / 5;
+		// FIXME CH Add a preference to control these sizes, putting 4 or 5
+		// here makes a difference.
+		this.maxRoomWidth = width / 4;
+		this.maxRoomHeight = height / 4;
 	}
 
 	/**
@@ -527,6 +529,9 @@ public class DungeonGenerator {
 	 */
 	protected void cleanWaterPools(final GenerationData gdata, /* @Nullable */ Collection<? extends Zone> needCleanUp) {
 		final Dungeon dungeon = gdata.dungeon;
+		if (dungeon.waterPools == null || dungeon.waterPools.isEmpty())
+			/* Nothing to do */
+			return;
 		final DungeonBuilder builder = dungeon.getBuilder();
 		final Iterator<ListZone> it = dungeon.waterPools.iterator();
 		while (it.hasNext()) {
@@ -697,16 +702,6 @@ public class DungeonGenerator {
 		removeZone(gdata, z);
 		builder.setSymbols(z.iterator(), DungeonSymbol.WALL);
 		draw(dungeon);
-	}
-
-	protected int getMaxRoomSideSize(boolean widthOrHeight, boolean spiceItUp) {
-		/*
-		 * +1, because #maxRoomWidth and #maxRoomHeight are inclusive, where RNG#between
-		 * isn't.
-		 */
-		final int result = widthOrHeight ? rng.between(minRoomWidth, maxRoomWidth + 1)
-				: rng.between(minRoomHeight, maxRoomHeight + 1);
-		return result * (spiceItUp ? 2 : 1);
 	}
 
 	protected void draw(Dungeon dungeon) {

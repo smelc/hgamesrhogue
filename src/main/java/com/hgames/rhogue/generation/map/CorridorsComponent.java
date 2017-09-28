@@ -261,6 +261,7 @@ public class CorridorsComponent implements GeneratorComponent {
 			final Rectangle bbox = zIsARectangle ? (Rectangle) z : gdata.dungeon.boundingBoxes.get(z);
 			assert bbox != null;
 			final Coord corner = Rectangle.Utils.getCorner(bbox, dir);
+			assert bbox.contains(corner);
 			DP_CELL.clear();
 			final List<Coord> all = z.getAll();
 			final int sz = all.size();

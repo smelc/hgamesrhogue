@@ -94,7 +94,7 @@ public class GrassComponent implements GeneratorComponent {
 					builder.addGrassPool(new ListZone(new ArrayList<Coord>(buf)));
 					/*
 					 * Should be done after 'addGrassPool' as it checks that symbols turned into
-					 * grass are valid
+					 * grass are valid.
 					 */
 					builder.setSymbols(buf.iterator(), DungeonSymbol.GRASS);
 					buf.clear();
@@ -102,6 +102,9 @@ public class GrassComponent implements GeneratorComponent {
 					continue nextPool;
 				}
 			}
+			assert innerF <= 4;
+			if (4 == innerF)
+				frustration++;
 		}
 
 		return true;

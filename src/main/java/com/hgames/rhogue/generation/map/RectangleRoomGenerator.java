@@ -1,7 +1,6 @@
 package com.hgames.rhogue.generation.map;
 
 import squidpony.squidgrid.mapping.Rectangle;
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;
 
@@ -23,7 +22,7 @@ public class RectangleRoomGenerator extends SkeletalRoomGenerator {
 	}
 
 	@Override
-	public Zone generate(int maxWidth, int maxHeight) {
+	public Rectangle generate(int maxWidth, int maxHeight) {
 		assert 0 < maxWidth;
 		assert 0 < maxHeight;
 		/* Avoid generating corridors (width or height == 1) if possible */
