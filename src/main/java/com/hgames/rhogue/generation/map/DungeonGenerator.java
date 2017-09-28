@@ -24,7 +24,6 @@ import com.hgames.lib.Stopwatch;
 import com.hgames.lib.collection.list.Lists;
 import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.Tags;
-import com.hgames.rhogue.generation.map.connection.IConnectionFinder;
 import com.hgames.rhogue.generation.map.corridor.CorridorBuilders;
 import com.hgames.rhogue.generation.map.corridor.ICorridorBuilder;
 import com.hgames.rhogue.generation.map.draw.ConsoleDungeonDrawer;
@@ -33,8 +32,6 @@ import com.hgames.rhogue.generation.map.flood.DungeonWaterStartFloodFill;
 import com.hgames.rhogue.generation.map.flood.FloodFill;
 import com.hgames.rhogue.generation.map.flood.IFloodObjective;
 import com.hgames.rhogue.generation.map.lifetime.Lifetime;
-import com.hgames.rhogue.generation.map.stair.IStairGenerator;
-import com.hgames.rhogue.generation.map.stair.StairGenerator;
 import com.hgames.rhogue.rng.ProbabilityTable;
 import com.hgames.rhogue.zone.CachingZone;
 import com.hgames.rhogue.zone.SingleCellZone;
@@ -406,19 +403,22 @@ public class DungeonGenerator {
 
 		if (!doStage(Stage.PASSAGES_IN_ALMOST_ADJACENT_ROOMS, new PassagesComponent(), gdata))
 			return null;
-
+		// Done once here instead of at every passage
 		draw(gdata.dungeon);
+
 		gdata.startStage(Stage.CORRIDORS);
 		generateCorridors(gdata, dungeon.rooms, dungeon.rooms,
 				new ICorridorControl.Impl(dungeon, true, false, false, false));
-		/* Must be called before 'generateWater' */
+
 		gdata.startStage(Stage.STAIRS);
-		final boolean good = generateStairs(gdata);
+		/* Must be called before 'generateWater' */
+		final boolean good = doStage(Stage.STAIRS, new StairsComponent(), gdata);
 		if (!good) {
 			if (logger != null && logger.isDebugEnabled())
 				logger.infoLog(Tags.GENERATION, dungeon.dirtyPrint());
 			return null;
 		}
+
 		gdata.startStage(Stage.ENSURE_DENSITY);
 		ensureDensity(gdata);
 
@@ -554,101 +554,6 @@ public class DungeonGenerator {
 			if (next.isEmpty())
 				it.remove();
 		}
-	}
-
-	/** @return Whether the stairs could be placed */
-	private boolean generateStairs(GenerationData gdata) {
-		final Dungeon dungeon = gdata.dungeon;
-		final Coord up = generateStair(gdata, true, null, false);
-		if (up == null) {
-			warnLog("Cannot place upward stair");
-			return false;
-		} else if (logger != null && logger.isInfoEnabled())
-			infoLog("Placed upward stair at " + up);
-		assert dungeon.getSymbol(dungeon.upwardStair) == DungeonSymbol.STAIR_UP;
-		draw(dungeon);
-		final Coord down = generateStair(gdata, false, null, false);
-		if (down == null) {
-			warnLog("Cannot place downward stair");
-			return false;
-		} else if (logger != null && logger.isInfoEnabled())
-			infoLog("Placed downward stair at " + down);
-		assert dungeon.getSymbol(dungeon.downwardStair) == DungeonSymbol.STAIR_DOWN;
-		draw(dungeon);
-		return true;
-	}
-
-	/**
-	 * @param objective
-	 *            Where to place the stair, or null to let this method choose.
-	 * @param lastHope
-	 *            true if failing will doom generation for sure.
-	 * @return Where it got generated, if it did (otherwise null)
-	 */
-	protected /* @Nullable */ Coord generateStair(GenerationData gdata, boolean upOrDown,
-			/* @Nullable */ Coord objective, boolean lastHope) {
-		final Dungeon dungeon = gdata.dungeon;
-		final IStairGenerator generator = getStairGenerator(gdata, objective, upOrDown);
-		final Iterator<Coord> candidates = generator.candidates();
-		if (candidates == null || !candidates.hasNext()) {
-			infoLog("No candidate for stair " + (upOrDown ? "up" : "down"));
-			return null;
-		}
-
-		/* 'lastHope' => 'trieds' won't be used */
-		final List<Coord> trieds = lastHope ? null : new ArrayList<Coord>(32);
-		final /* @Nullable */ Coord other = dungeon.getStair(!upOrDown);
-		while (candidates.hasNext()) {
-			final Coord candidate = candidates.next();
-			if (other == null || (!other.equals(candidate) && gdata.pathExists(other, candidate, false, false))) {
-				if (punchStair(gdata, candidate, upOrDown))
-					return candidate;
-			}
-			if (trieds != null)
-				trieds.add(candidate);
-		}
-		if (lastHope)
-			return null;
-		if (other == null)
-			return null;
-		/*
-		 * It may be a connectivity problem, if the stair objective is only close to
-		 * rooms that aren't connected to the other stair. Let's try to fix that.
-		 */
-		final List<Zone> dests = new ArrayList<Zone>(
-				gdata.zonesConnectedTo(true, false, Collections.singletonList(other)));
-		assert !dests.isEmpty();
-		final Collection<Zone> sources = gdata.zonesConnectedTo(true, false, trieds);
-		infoLog("Could not generate " + (upOrDown ? "upward" : "downward")
-				+ " stair, trying to fix connectivity issue (around " + objective + ") if any (" + sources.size()
-				+ " sources and " + dests.size() + " destinations).");
-		final boolean built = generateCorridors(gdata, sources, dests,
-				new ICorridorControl.Impl(dungeon, false, true, false, Integer.MAX_VALUE, true));
-		if (!built) {
-			infoLog("Could not fix connectivity issue. Failing.");
-			return null;
-		} else
-			infoLog("Fixed connectivity issue by creating corridor(s)");
-		return generateStair(gdata, upOrDown, objective, true);
-	}
-
-	protected IStairGenerator getStairGenerator(GenerationData gdata, /* @Nullable */ Coord objective,
-			boolean upOrDown) {
-		final Dungeon dungeon = gdata.dungeon;
-		final IConnectionFinder connections = new IConnectionFinder() {
-			@Override
-			public boolean areConnected(Zone z0, Zone z1, int intermediates) {
-				return Dungeons.areConnected(dungeon, z0, z1, intermediates);
-			}
-		};
-		return new StairGenerator(logger, rng, dungeon, objective, upOrDown, gdata, connections);
-	}
-
-	/** @return Whether punching was done */
-	protected boolean punchStair(GenerationData gdata, Coord c, boolean upOrDown) {
-		final Dungeon dungeon = gdata.dungeon;
-		dungeon.getBuilder().setStair(c.x, c.y, upOrDown);
-		return true;
 	}
 
 	/**
