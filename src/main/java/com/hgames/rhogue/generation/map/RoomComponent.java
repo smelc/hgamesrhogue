@@ -23,7 +23,7 @@ import squidpony.squidmath.RNG;
  * 
  * @author smelC
  */
-public class RoomGenerator implements DungeonGeneratorComponent {
+public class RoomComponent implements GeneratorComponent {
 
 	@Override
 	public boolean generate(final DungeonGenerator gen, final GenerationData gdata) {

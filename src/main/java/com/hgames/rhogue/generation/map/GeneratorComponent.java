@@ -7,13 +7,13 @@ import com.hgames.rhogue.generation.map.DungeonGenerator.GenerationData;
  * 
  * @author smelC
  */
-public interface DungeonGeneratorComponent {
+public interface GeneratorComponent {
 
 	/**
 	 * @param gen
 	 *            The running generator, that is calling {@code this}.
 	 * @param gdata
-	 * @return Whether the dungeon is valid and generation should continue.
+	 * @return An implementation-dependent flag.
 	 */
 	public boolean generate(DungeonGenerator gen, GenerationData gdata);
 

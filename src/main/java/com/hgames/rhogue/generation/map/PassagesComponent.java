@@ -22,7 +22,7 @@ import squidpony.squidmath.Coord;
  * 
  * @author smelC
  */
-public class PassagesGenerator implements DungeonGeneratorComponent {
+public class PassagesComponent implements GeneratorComponent {
 
 	private static final Zone[] ZONE_PAIR_BUF = new Zone[2];
 

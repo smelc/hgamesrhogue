@@ -21,7 +21,7 @@ import squidpony.squidmath.RNG;
  * 
  * @author smelC
  */
-public class GrassGenerator implements DungeonGeneratorComponent {
+public class GrassGenerator implements GeneratorComponent {
 
 	@Override
 	public boolean generate(DungeonGenerator gen, GenerationData gdata) {
