@@ -65,9 +65,9 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 	}
 
 	@Override
-	public Zone generate(int maxWidth, int maxHeight) {
+	public Zone generate(Dungeon dungeon, Coord translation, int maxWidth, int maxHeight) {
 		final RectangleRoomGenerator delegate = new RectangleRoomGenerator(rng);
-		final Rectangle rectangle = delegate.generate(maxWidth, maxHeight);
+		final Rectangle rectangle = delegate.generate(null, null, maxWidth, maxHeight);
 		if (rectangle == null) {
 			/* Should not happen */
 			assert false;
@@ -98,6 +98,11 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 				assert todos.isEmpty();
 			change |= carve(all, start, maxCarvingPerCorner);
 			assert todos.isEmpty();
+		}
+		for (Coord c : rectangle) {
+			if (!all.contains(c))
+				/* It got carved */
+				dungeon.getBuilder().setSymbol(c.add(translation), DungeonSymbol.CHASM);
 		}
 		assert !change || all.size() < rectangle.getAll().size();
 		return change ? new ListZone(new ArrayList<Coord>(all)) : rectangle;

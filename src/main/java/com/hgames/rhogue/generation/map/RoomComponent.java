@@ -212,7 +212,7 @@ public class RoomComponent implements GeneratorComponent {
 			return null;
 		// infoLog("Trying " + maxWidth + "x" + maxHeight + " room at " +
 		// bottomLeft);
-		final Zone zeroZeroZone = rg.generate(maxWidth, maxHeight);
+		final Zone zeroZeroZone = rg.generate(gdata.dungeon, bottomLeft, maxWidth, maxHeight);
 		if (zeroZeroZone == null)
 			return null;
 		final Zone zone = zeroZeroZone.translate(bottomLeft);
@@ -238,12 +238,15 @@ public class RoomComponent implements GeneratorComponent {
 	// FIXME CH Add a parameter to control variance
 	protected int getMaxRoomSideSize(DungeonGenerator gen, boolean widthOrHeight, boolean spiceItUp) {
 		final RNG rng = gen.rng;
+		int min = widthOrHeight ? gen.minRoomWidth : gen.minRoomHeight;
+		if (min == 1 && !gen.allowWidthOrHeightOneRooms)
+			min++;
 		/*
 		 * +1, because #maxRoomWidth and #maxRoomHeight are inclusive, where RNG#between
 		 * isn't.
 		 */
-		final int result = widthOrHeight ? rng.between(gen.minRoomWidth, gen.maxRoomWidth + 1)
-				: rng.between(gen.minRoomHeight, gen.maxRoomHeight + 1);
+		final int max = (widthOrHeight ? gen.maxRoomWidth : gen.maxRoomHeight) + 1;
+		final int result = rng.between(min, max);
 		return result * (spiceItUp ? 2 : 1);
 	}
 

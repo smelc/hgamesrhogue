@@ -22,7 +22,7 @@ public class RectangleRoomGenerator extends SkeletalRoomGenerator {
 	}
 
 	@Override
-	public Rectangle generate(int maxWidth, int maxHeight) {
+	public Rectangle generate(Dungeon dungeon, Coord translation, int maxWidth, int maxHeight) {
 		assert 0 < maxWidth;
 		assert 0 < maxHeight;
 		/* Avoid generating corridors (width or height == 1) if possible */
