@@ -36,7 +36,7 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 
 	static {
 		for (int i = 0; i < 4; i++)
-			DIRS_BUF[i] = Direction.DIAGONALS[i];
+			DIRS_BUF[i] = Direction.CARDINALS[i];
 	}
 
 	/**
@@ -99,6 +99,7 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 			change |= carve(all, start, maxCarvingPerCorner);
 			assert todos.isEmpty();
 		}
+		assert !change || all.size() < rectangle.getAll().size();
 		return change ? new ListZone(new ArrayList<Coord>(all)) : rectangle;
 	}
 

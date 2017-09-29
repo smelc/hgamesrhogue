@@ -235,6 +235,7 @@ public class RoomComponent implements GeneratorComponent {
 		return zone;
 	}
 
+	// FIXME CH Add a parameter to control variance
 	protected int getMaxRoomSideSize(DungeonGenerator gen, boolean widthOrHeight, boolean spiceItUp) {
 		final RNG rng = gen.rng;
 		/*
