@@ -124,7 +124,8 @@ public class DungeonGenerator {
 	protected boolean allowWidthOrHeightOneRooms = false;
 
 	/** Whether to do water before rooms. This makes water more central. */
-	protected boolean startWithWater;
+	// XXX false is not yet implemented
+	protected boolean startWithWater = true;
 
 	/**
 	 * The percentage of the map that will be turned into deep water

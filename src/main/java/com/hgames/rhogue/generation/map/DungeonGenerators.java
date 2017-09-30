@@ -46,7 +46,6 @@ public class DungeonGenerators {
 	 */
 	public DungeonGenerator halfRectanglesHalfCaves() {
 		final DungeonGenerator result = new DungeonGenerator(rng, width, height);
-		result.setWaterObjective(true, 0, 0, 0);
 		result.installRoomGenerator(new RectangleRoomGenerator(rng), 3, Eternity.INSTANCE);
 		result.installRoomGenerator(new CaveRoomGenerator(rng, 75), 1, Eternity.INSTANCE);
 		result.installRoomGenerator(new CaveRoomGenerator(rng, 50), 1, Eternity.INSTANCE);
@@ -57,7 +56,6 @@ public class DungeonGenerators {
 	/** @return A generator that builds dungeons with only caves */
 	public DungeonGenerator cave() {
 		final DungeonGenerator result = new DungeonGenerator(rng, width, height);
-		result.setWaterObjective(true, 0, 0, 0);
 		result.installRoomGenerator(new CaveRoomGenerator(rng, 75), 1, Eternity.INSTANCE);
 		result.installRoomGenerator(new CaveRoomGenerator(rng, 50), 1, Eternity.INSTANCE);
 		result.installRoomGenerator(new CaveRoomGenerator(rng, 25), 1, Eternity.INSTANCE);

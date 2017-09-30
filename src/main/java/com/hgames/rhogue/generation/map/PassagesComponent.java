@@ -43,7 +43,9 @@ public class PassagesComponent implements GeneratorComponent {
 				assert z0 != null;
 				final Zone z1 = ZONE_PAIR_BUF[1];
 				assert z1 != null;
-				assert z0 != z1;
+				if (z0 == z1)
+					/* Can happen with weird zones (U shape) */
+					continue;
 				final Coord doorCandidate = Coord.get(x, y);
 				Multimaps.addToListMultimap(connectedsToCandidates, orderedPair(gdata, z0, z1), doorCandidate);
 				assert Dungeons.findZoneContaining(dungeon, x, y) == null : "Candidate for door: " + doorCandidate
@@ -76,7 +78,8 @@ public class PassagesComponent implements GeneratorComponent {
 			}
 			final Coord door = cell.get();
 			assert door != null;
-			final DungeonSymbol sym = gen.rng.next(101) <= gen.doorProbability ? DungeonSymbol.DOOR : DungeonSymbol.FLOOR;
+			final DungeonSymbol sym = gen.rng.next(101) <= gen.doorProbability ? DungeonSymbol.DOOR
+					: DungeonSymbol.FLOOR;
 			final Zone zdoor = new SingleCellZone(door);
 			gen.addZone(gdata, zdoor, null, ZoneType.CORRIDOR);
 			final DungeonBuilder builder = dungeon.getBuilder();

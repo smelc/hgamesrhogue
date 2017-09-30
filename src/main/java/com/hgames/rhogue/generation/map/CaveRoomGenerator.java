@@ -1,14 +1,14 @@
 package com.hgames.rhogue.generation.map;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Set;
 
-import com.hgames.lib.ByRef;
 import com.hgames.lib.Ints;
-import com.hgames.rhogue.grid.DoerInACircle;
 
+import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidgrid.zone.ListZone;
 import squidpony.squidgrid.zone.Zone;
@@ -28,7 +28,16 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 	 * The degree of caveness, 0 being the minimum (yielding a rectangle room), 100
 	 * being the maximum.
 	 */
-	protected int caveness;
+	protected int caveness = 50;
+
+	private /* @Nullable */ LinkedList<Coord> todos;
+
+	private static final Direction[] DIRS_BUF = new Direction[4];
+
+	static {
+		for (int i = 0; i < 4; i++)
+			DIRS_BUF[i] = Direction.CARDINALS[i];
+	}
 
 	/**
 	 * @param rng
@@ -56,9 +65,9 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 	}
 
 	@Override
-	public Zone generate(final Dungeon dungeon, final Coord translation, int maxWidth, int maxHeight) {
+	public Zone generate(Dungeon dungeon, Coord translation, int maxWidth, int maxHeight) {
 		final RectangleRoomGenerator delegate = new RectangleRoomGenerator(rng);
-		final Rectangle rectangle = delegate.generate(null, null, maxWidth, maxHeight);
+		final Rectangle rectangle = delegate.generate(dungeon, translation, maxWidth, maxHeight);
 		if (rectangle == null) {
 			/* Should not happen */
 			assert false;
@@ -67,56 +76,29 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 		if (caveness == 0)
 			return rectangle;
 		final int rsz = rectangle.size();
-		final int zmsz = getZoneMinSize();
-		if (rsz <= zmsz)
+		if (rsz <= getZoneMinSize())
 			/* Do not shrink it */
 			return rectangle;
 		final Set<Coord> all = new LinkedHashSet<Coord>(rectangle.getAll());
-		/* Should not be eaten */
-		final Coord center = rectangle.getCenter();
-		int eaters = (caveness / 10) + 1;
-		final List<Coord> internalBorder = rectangle.getInternalBorder();
-		final int boundInit = 8;
-		final ByRef<Integer> bound = ByRef.<Integer>make(boundInit);
-		final DoerInACircle doer = new DoerInACircle() {
-			@Override
-			protected boolean doOnACell(int x, int y) {
-				final Coord c = Coord.get(x, y);
-				if (!center.equals(c)) {
-					final boolean rmed = all.remove(c);
-					if (rmed) {
-						System.out.println("Carved a cell");
-						bound.set(bound.get() - 1);
-						dungeon.getBuilder().setSymbol(c.add(translation), DungeonSymbol.GRASS);
-					}
-				}
-				/* else do not eat the center */
-
-				/* Continue if not at min size */
-				return all.size() <= zmsz && 0 < bound.get();
-			}
-		};
-		final int minRadius = 1;
-		final int maxRadius = rectangle.size() / 10;
-		while (0 < eaters && zmsz < all.size()) {
-			eaters--;
-			final Coord start = rng.getRandomElement(internalBorder);
-			if (!all.contains(start))
-				/* Eaten already */
+		boolean change = false;
+		/* The maximum number of cells to carve at every corner */
+		final int maxCarvingPerCorner = (rsz / 8) + 1;
+		for (Direction dir : Direction.DIAGONALS) {
+			if (!roll())
 				continue;
-			final int radius = rng.between(minRadius, maxRadius);
-			System.out.println("Carving in circle of radius: " + radius);
-			doer.doInACircle(start.x, start.y, radius);
-			bound.set(boundInit);
+			// XXX CH Try all 8 ""corners"" ? <- YES DO IT
+			final Coord start = Rectangle.Utils.getCorner(rectangle, dir);
+			assert rectangle.contains(start);
+			if (!all.contains(start))
+				/* Corner got eaten already */
+				continue;
+			if (todos == null)
+				todos = new LinkedList<Coord>();
+			else
+				assert todos.isEmpty();
+			change |= carve(all, start, maxCarvingPerCorner);
+			assert todos.isEmpty();
 		}
-		for (Coord c : rectangle) {
-			if (!all.contains(c))
-				/* It got carved */
-				dungeon.getBuilder().setSymbol(c.add(translation), DungeonSymbol.CHASM);
-		}
-		assert all.size() <= rectangle.size();
-		final boolean change = all.size() < rectangle.size();
-		assert !change || all.size() < rectangle.getAll().size();
 		return change ? new ListZone(new ArrayList<Coord>(all)) : rectangle;
 	}
 
@@ -127,5 +109,36 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 
 	protected boolean roll() {
 		return rng.nextInt(101) <= caveness;
+	}
+
+	/**
+	 * @param zone
+	 *            The zone to carve.
+	 * @param start
+	 *            The carving starting point (a corner).
+	 * @return Whether something was carved.
+	 */
+	private boolean carve(Collection<Coord> zone, Coord start, int maxCarvingPerCorner) {
+		assert todos.isEmpty();
+		todos.add(start);
+		int carved = 0;
+		final int mzsz = getZoneMinSize();
+		while (!todos.isEmpty() && carved < maxCarvingPerCorner && mzsz <= zone.size()) {
+			final Coord next = todos.remove();
+			assert zone.contains(next);
+			zone.remove(next);
+			carved++;
+			if (!roll())
+				/* Stop here */
+				break;
+			rng.shuffle(DIRS_BUF);
+			for (Direction dir : DIRS_BUF) {
+				final Coord candidate = next.translate(dir);
+				if (zone.contains(candidate))
+					todos.add(candidate);
+			}
+		}
+		todos.clear();
+		return 0 < carved;
 	}
 }
