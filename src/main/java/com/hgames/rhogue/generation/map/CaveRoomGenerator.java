@@ -125,7 +125,8 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 		final int mzsz = getZoneMinSize();
 		while (!todos.isEmpty() && carved < maxCarvingPerCorner && mzsz <= zone.size()) {
 			final Coord next = todos.remove();
-			assert zone.contains(next);
+			if (!zone.contains(next))
+				continue;
 			zone.remove(next);
 			carved++;
 			if (!roll())

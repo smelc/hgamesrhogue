@@ -152,6 +152,9 @@ public class DungeonGenerator {
 	/** Where to put the downward stair (approximately) */
 	protected /* @Nullable */ Coord downStairObjective;
 
+	/** See {@link Complexity} */
+	protected Complexity complexity = Complexity.MEAN;
+
 	/**
 	 * A fresh generator.
 	 * 
@@ -172,10 +175,31 @@ public class DungeonGenerator {
 		this.height = height;
 		this.roomGenerators = ProbabilityTable.create();
 		this.rgLifetimes = new HashMap<IRoomGenerator, Lifetime>();
-		// FIXME CH Add a preference to control these sizes, putting 4 or 5
-		// here makes a difference.
-		this.maxRoomWidth = width / 4;
-		this.maxRoomHeight = height / 4;
+	}
+
+	/**
+	 * The complexity controls the maximum width/height of rooms. More complex
+	 * dungeons (many rooms, many corridors) use a smaller maximum size.
+	 * 
+	 * @author smelC
+	 */
+	public static enum Complexity {
+		/**
+		 * The complexity to have simple dungeons with a few big rooms. Fits for a
+		 * tutorial level
+		 */
+		RELAX,
+		/** Complexity between {@link #BABY} and {@link #NORMAL} */
+		EASY,
+		/** The usual complexity, that will classical dungeons */
+		MEAN,
+		/** Complexity between {@link #NORMAL} and {@link #MORE_COMPLEX} */
+		COMPLEX,
+		/**
+		 * Circonvoluted dungeons, with many small rooms and complex corridors'
+		 * connections
+		 */
+		CLIMAX;
 	}
 
 	/**
@@ -208,6 +232,16 @@ public class DungeonGenerator {
 	 */
 	public DungeonGenerator setAllowWidthOrHeightOneRooms(boolean value) {
 		this.allowWidthOrHeightOneRooms = value;
+		return this;
+	}
+
+	/**
+	 * @param complexity
+	 *            Set the complexity of this dungeon.
+	 * @return {@code this}
+	 */
+	public DungeonGenerator setComplexity(Complexity complexity) {
+		this.complexity = complexity;
 		return this;
 	}
 
@@ -383,6 +417,7 @@ public class DungeonGenerator {
 				System.out.println(msg);
 			return null;
 		}
+		computeMaxRoomSizes();
 		/*
 		 * /!\ Don't forget to disable assertions when checking performances. Assertions
 		 * are by far the longest thing! /!\.
@@ -430,6 +465,28 @@ public class DungeonGenerator {
 		gdata.startStage(null); // Record end of last stage
 		gdata.logTimings(logger);
 		return dungeon;
+	}
+
+	protected void computeMaxRoomSizes() {
+		int div = 5;
+		switch (complexity) {
+		case RELAX:
+			div -= 3;
+			break;
+		case EASY:
+			div -= 2;
+			break;
+		case MEAN:
+			break;
+		case COMPLEX:
+			div += 2;
+			break;
+		case CLIMAX:
+			div += 3;
+			break;
+		}
+		this.maxRoomWidth = Math.max(2, width / div);
+		this.maxRoomHeight = Math.max(2, height / div);
 	}
 
 	private boolean doStage(Stage stage, GeneratorComponent component, GenerationData gdata) {
