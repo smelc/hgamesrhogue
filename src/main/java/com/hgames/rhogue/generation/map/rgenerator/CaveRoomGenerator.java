@@ -2,11 +2,11 @@ package com.hgames.rhogue.generation.map.rgenerator;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
 import com.hgames.lib.Ints;
+import com.hgames.lib.collection.set.Sets;
 import com.hgames.rhogue.generation.map.Dungeon;
 
 import squidpony.squidgrid.Direction;
@@ -80,7 +80,7 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 		if (rsz <= getZoneMinSize())
 			/* Do not shrink it */
 			return rectangle;
-		final Set<Coord> all = new LinkedHashSet<Coord>(rectangle.getAll());
+		final Set<Coord> all = Sets.newLinkedHashSet(rectangle.iterator(), rsz);
 		boolean change = false;
 		/* The maximum number of cells to carve at every corner */
 		final int maxCarvingPerCorner = (rsz / 8) + 1;

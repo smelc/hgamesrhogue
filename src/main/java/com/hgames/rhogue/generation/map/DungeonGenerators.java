@@ -5,6 +5,7 @@ import com.hgames.rhogue.generation.map.lifetime.OneShot;
 import com.hgames.rhogue.generation.map.rgenerator.CaveRoomGenerator;
 import com.hgames.rhogue.generation.map.rgenerator.CircularRoomGenerator;
 import com.hgames.rhogue.generation.map.rgenerator.RectangleRoomGenerator;
+import com.hgames.rhogue.generation.map.rgenerator.ShallowRectangleRoomGenerator;
 
 import squidpony.squidmath.RNG;
 
@@ -73,6 +74,7 @@ public class DungeonGenerators {
 		final DungeonGenerator result = halfRectanglesHalfCaves();
 		result.setWaterObjective(true, 20, 1, 10);
 		result.installRoomGenerator(new CircularRoomGenerator(rng), 100, new OneShot());
+		result.installRoomGenerator(new ShallowRectangleRoomGenerator(), 100, new OneShot());
 		return result;
 	}
 

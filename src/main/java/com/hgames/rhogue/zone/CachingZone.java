@@ -32,6 +32,7 @@ public class CachingZone implements Zone {
 	protected transient /* @Nullable */ List<Coord> internalBorder;
 	protected transient /* @Nullable */ Collection<Coord> externalBorder;
 	protected transient /* @Nullable */ Zone extension;
+	protected transient /* @Nullable */ Zone shrunk;
 
 	private static final long serialVersionUID = 605447640108799431L;
 
@@ -192,6 +193,13 @@ public class CachingZone implements Zone {
 		if (extension == null)
 			extension = delegate.extend();
 		return extension;
+	}
+
+	@Override
+	public Zone shrink() {
+		if (shrunk == null)
+			shrunk = delegate.shrink();
+		return shrunk;
 	}
 
 	@Override

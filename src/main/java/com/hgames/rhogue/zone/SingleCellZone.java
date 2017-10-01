@@ -89,6 +89,11 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
+	public Zone shrink() {
+		return EmptyZone.INSTANCE;
+	}
+
+	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "[" + getCenter() + "]";
 	}

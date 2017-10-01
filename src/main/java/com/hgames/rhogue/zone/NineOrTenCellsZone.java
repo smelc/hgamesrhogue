@@ -104,6 +104,11 @@ public class NineOrTenCellsZone extends Zone.Skeleton {
 	}
 
 	@Override
+	public Zone shrink() {
+		return includesCenter ? new SingleCellZone(center) : EmptyZone.INSTANCE;
+	}
+
+	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "@" + center;
 	}
