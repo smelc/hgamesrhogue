@@ -1,4 +1,6 @@
-package com.hgames.rhogue.generation.map;
+package com.hgames.rhogue.generation.map.rgenerator;
+
+import com.hgames.rhogue.generation.map.Dungeon;
 
 import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidmath.Coord;

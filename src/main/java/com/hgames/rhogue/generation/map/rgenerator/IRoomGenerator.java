@@ -1,6 +1,9 @@
-package com.hgames.rhogue.generation.map;
+package com.hgames.rhogue.generation.map.rgenerator;
 
 import java.util.HashSet;
+
+import com.hgames.rhogue.generation.map.Dungeon;
+import com.hgames.rhogue.generation.map.DungeonGenerator;
 
 import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;

@@ -1,7 +1,6 @@
 package com.hgames.rhogue.generation.map.rgenerator;
 
 import com.hgames.rhogue.generation.map.Dungeon;
-import com.hgames.rhogue.generation.map.SkeletalRoomGenerator;
 import com.hgames.rhogue.zone.CircularZone;
 
 import squidpony.squidgrid.zone.Zone;

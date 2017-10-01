@@ -1,4 +1,4 @@
-package com.hgames.rhogue.generation.map;
+package com.hgames.rhogue.generation.map.rgenerator;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.Set;
 
 import com.hgames.lib.Ints;
+import com.hgames.rhogue.generation.map.Dungeon;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.Rectangle;

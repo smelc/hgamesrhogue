@@ -9,6 +9,7 @@ import java.util.Set;
 import com.hgames.rhogue.generation.map.DungeonGenerator.GenerationData;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ZoneType;
 import com.hgames.rhogue.generation.map.lifetime.Lifetime;
+import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 import com.hgames.rhogue.grid.GridIterators;
 
 import squidpony.squidgrid.Direction;

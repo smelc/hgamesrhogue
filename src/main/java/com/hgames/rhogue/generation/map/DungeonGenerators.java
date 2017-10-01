@@ -2,7 +2,9 @@ package com.hgames.rhogue.generation.map;
 
 import com.hgames.rhogue.generation.map.lifetime.Eternity;
 import com.hgames.rhogue.generation.map.lifetime.OneShot;
+import com.hgames.rhogue.generation.map.rgenerator.CaveRoomGenerator;
 import com.hgames.rhogue.generation.map.rgenerator.CircularRoomGenerator;
+import com.hgames.rhogue.generation.map.rgenerator.RectangleRoomGenerator;
 
 import squidpony.squidmath.RNG;
 

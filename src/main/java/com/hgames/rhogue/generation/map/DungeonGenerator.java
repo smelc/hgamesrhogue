@@ -30,6 +30,7 @@ import com.hgames.rhogue.generation.map.draw.ConsoleDungeonDrawer;
 import com.hgames.rhogue.generation.map.draw.IDungeonDrawer;
 import com.hgames.rhogue.generation.map.flood.IFloodObjective;
 import com.hgames.rhogue.generation.map.lifetime.Lifetime;
+import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 import com.hgames.rhogue.rng.ProbabilityTable;
 import com.hgames.rhogue.zone.CachingZone;
 import com.hgames.rhogue.zone.SingleCellZone;

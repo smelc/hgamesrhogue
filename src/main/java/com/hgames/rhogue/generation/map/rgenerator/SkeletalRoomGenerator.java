@@ -1,4 +1,4 @@
-package com.hgames.rhogue.generation.map;
+package com.hgames.rhogue.generation.map.rgenerator;
 
 /**
  * @author smelC

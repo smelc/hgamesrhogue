@@ -1,7 +1,7 @@
 package com.hgames.rhogue.generation.map.lifetime;
 
 import com.hgames.rhogue.generation.map.DungeonGenerator;
-import com.hgames.rhogue.generation.map.IRoomGenerator;
+import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 
 /**
  * Controls the duration of {@link IRoomGenerator}s during

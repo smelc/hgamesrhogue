@@ -1,6 +1,6 @@
 package com.hgames.rhogue.generation.map.lifetime;
 
-import com.hgames.rhogue.generation.map.IRoomGenerator;
+import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 
 /**
  * An implementation of {@link Lifetime} that will unplug the associated
