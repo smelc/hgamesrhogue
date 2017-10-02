@@ -154,7 +154,7 @@ public class DungeonGenerator {
 	protected /* @Nullable */ Coord downStairObjective;
 
 	/** See {@link Complexity} */
-	protected Complexity complexity = Complexity.MEAN;
+	protected Complexity complexity = Complexity.NORMAL;
 
 	/**
 	 * A fresh generator.
@@ -189,18 +189,18 @@ public class DungeonGenerator {
 		 * The complexity to have simple dungeons with a few big rooms. Fits for a
 		 * tutorial level
 		 */
-		RELAX,
+		BABY,
 		/** Complexity between {@link #BABY} and {@link #NORMAL} */
-		EASY,
+		KID,
 		/** The usual complexity, that will classical dungeons */
-		MEAN,
-		/** Complexity between {@link #NORMAL} and {@link #MORE_COMPLEX} */
+		NORMAL,
+		/** Complexity between {@link #NORMAL} and {@link #WIZARD} */
 		COMPLEX,
 		/**
 		 * Circonvoluted dungeons, with many small rooms and complex corridors'
 		 * connections
 		 */
-		CLIMAX;
+		WIZARD;
 	}
 
 	/**
@@ -471,18 +471,18 @@ public class DungeonGenerator {
 	protected void computeMaxRoomSizes() {
 		int div = 5;
 		switch (complexity) {
-		case RELAX:
+		case BABY:
 			div -= 3;
 			break;
-		case EASY:
+		case KID:
 			div -= 2;
 			break;
-		case MEAN:
+		case NORMAL:
 			break;
 		case COMPLEX:
 			div += 2;
 			break;
-		case CLIMAX:
+		case WIZARD:
 			div += 3;
 			break;
 		}
@@ -1160,25 +1160,6 @@ public class DungeonGenerator {
 			if (considerCorridors)
 				result.addAll(dungeon.corridors);
 			result.removeAll(zonesConnectedTo(starts));
-			return result;
-		}
-
-		@SuppressWarnings("unused")
-		protected Zone findZoneAdjacentToStairCandidate(Coord candidate) {
-			/*
-			 * This works because stair candidates should be cardinally adjacent to at most
-			 * one zone.
-			 */
-			Zone result = null;
-			for (Direction dir : Direction.CARDINALS) {
-				final Coord neighbor = candidate.translate(dir);
-				final Zone z = findZoneContaining(neighbor.x, neighbor.y);
-				if (z != null) {
-					if (result != null)
-						assert false;
-					result = z;
-				}
-			}
 			return result;
 		}
 
