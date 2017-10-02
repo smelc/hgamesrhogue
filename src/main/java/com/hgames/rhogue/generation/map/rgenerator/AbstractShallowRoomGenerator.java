@@ -17,6 +17,8 @@ import squidpony.squidmath.Coord;
  */
 public abstract class AbstractShallowRoomGenerator extends SkeletalRoomGenerator {
 
+	protected boolean keepCenter = true;
+
 	@Override
 	public /* @Nullable */ Zone generate(Dungeon dungeon, Coord translation, int maxWidth, int maxHeight) {
 		final Zone zone = getZoneToCarve(dungeon, translation, maxWidth, maxHeight);
@@ -25,13 +27,23 @@ public abstract class AbstractShallowRoomGenerator extends SkeletalRoomGenerator
 		final List<Coord> all = Lists.newArrayList(zone.iterator(), zone.size());
 		final Zone toRemove = zone.shrink();
 		final Coord center = zone.getCenter();
+		boolean change = false;
 		for (Coord c : toRemove) {
-			if (!center.equals(c))
-				/* It is bad practice to remove the center */
-				all.remove(c);
+			if (!keepCenter || !center.equals(c)) {
+				final boolean rmed = all.remove(c);
+				if (rmed)
+					System.out.println("Removed " + c.add(translation));
+				change = true;
+			}
 		}
-		final Zone result = new ListZone(all);
-		return result;
+		if (change) {
+			final Zone result = new ListZone(all);
+			return result;
+		} else {
+			/* This is likely not intended */
+			assert false;
+			return zone;
+		}
 	}
 
 	protected abstract Zone getZoneToCarve(Dungeon dungeon, Coord translation, int maxWidth, int maxHeight);

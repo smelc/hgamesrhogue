@@ -127,7 +127,8 @@ public class DungeonBuilder implements Serializable {
 				+ ". It overlaps with an existing zone: "
 				+ Dungeons.findIntersectingZones(dungeon, z, true, true, true));
 		/* Check that bounding box (if any) is correct */
-		assert boundingBox == null || boundingBox.contains(z);
+		assert boundingBox == null || boundingBox.contains(z) : "Zone " + z + " isn't in its bounding box: "
+				+ boundingBox;
 		// System.out.println("Adding zone: " + z);
 		if (roomOrCorridor)
 			dungeon.rooms.add(z);

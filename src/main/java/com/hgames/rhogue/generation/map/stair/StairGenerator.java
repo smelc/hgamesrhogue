@@ -70,6 +70,9 @@ public class StairGenerator extends AbstractStairGenerator {
 			for (int i = 0; i < nbr; i++) {
 				final Zone room = rooms.get(i);
 				final Coord rcenter = room.getCenter();
+				if (!room.contains(rcenter))
+					/* A shallow room */
+					continue;
 				if (!reachesAtLeast(room, reachObjective))
 					/* This zone isn't connected enough */
 					continue;
@@ -161,7 +164,7 @@ public class StairGenerator extends AbstractStairGenerator {
 		Zone result = containerFinder.get(c);
 		if (result == null) {
 			/* Fallback (bad) */
-			assert false;
+			assert false : "Zone containing " + c + " cannot be found";
 			result = Dungeons.findZoneContaining(dungeon, c.x, c.y);
 		}
 		return result;
