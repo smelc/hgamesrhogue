@@ -261,6 +261,15 @@ public class Dungeons {
 	/**
 	 * @param dungeon
 	 * @param z
+	 * @return Whether {@code z} is a chasm in {@code z}.
+	 */
+	public static boolean hasChasm(Dungeon dungeon, Zone z) {
+		return dungeon.chasms != null && dungeon.chasms.contains(z);
+	}
+
+	/**
+	 * @param dungeon
+	 * @param z
 	 * @param lowOrHighGrass
 	 * @return Whether {@code z} is a grass pool of {@code dungeon}.
 	 */

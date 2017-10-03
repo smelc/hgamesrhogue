@@ -75,6 +75,9 @@ public class Dungeon implements Serializable {
 	Coord upwardStair;
 	Coord downwardStair;
 
+	/** Chasms */
+	/* @Nullable */ List<Zone> chasms;
+
 	/** Grass */
 	/* @Nullable */ List<Zone> grassPools;
 	/** High-grass, grass through which you cannot see */

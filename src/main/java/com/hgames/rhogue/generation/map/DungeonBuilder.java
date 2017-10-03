@@ -19,6 +19,7 @@ import squidpony.squidmath.Coord;
  * that way.
  * 
  * @author smelC
+ * @see Dungeons The API for querying dungeons
  */
 public class DungeonBuilder implements Serializable {
 
@@ -46,6 +47,18 @@ public class DungeonBuilder implements Serializable {
 		Multimaps.addToListMultimapIfAbsent(dungeon.connections, z1, z2);
 		Multimaps.addToListMultimapIfAbsent(dungeon.connections, z2, z1);
 	}
+
+	/**
+	 * @param z
+	 */
+	public void addChasm(Zone z) {
+		assert !z.isEmpty();
+		assert dungeon.getRooms().contains(z);
+		if (dungeon.disconnectedRooms == null)
+			dungeon.disconnectedRooms = new ArrayList<Zone>();
+		dungeon.disconnectedRooms.add(z);
+	}
+
 
 	/**
 	 * @param z

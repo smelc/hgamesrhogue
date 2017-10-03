@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.hgames.lib.collection.pair.MutablePair;
 import com.hgames.rhogue.generation.map.DungeonGenerator.GenerationData;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ZoneType;
 import com.hgames.rhogue.generation.map.lifetime.Lifetime;
@@ -25,6 +26,8 @@ import squidpony.squidmath.RNG;
  * @author smelC
  */
 public class RoomComponent implements GeneratorComponent {
+
+	private static final MutablePair<IRoomGenerator, Zone> RGZ = MutablePair.createEmpty();
 
 	@Override
 	public boolean generate(final DungeonGenerator gen, final GenerationData gdata) {
@@ -180,22 +183,24 @@ public class RoomComponent implements GeneratorComponent {
 					continue;
 				assert dungeon.isValid(brCandidate);
 				assert !Dungeons.isOnEdge(dungeon, brCandidate);
-				final Zone zone = generateRoomAt(gen, gdata, blCandidate, mw, mh);
+				final boolean done = generateRoomAt(gen, gdata, blCandidate, mw, mh);
+				if (!done)
+					continue;
+				assert RGZ.getFst() != null && RGZ.getSnd() != null;
 				/*
 				 * 'zone' must be used now, since the generator's usage has been recorded in
 				 * 'generateRoomAt'.
 				 */
-				if (zone != null) {
-					assert !Dungeons.anyOnEdge(dungeon, zone.iterator()) : "Zone is on the dungeon's edge: " + zone;
-					// infoLog("Generated room: " + zone);
-					rgh.prepareRegistration(zone);
-					/* Record the zone */
-					gen.addZone(gdata, zone, new Rectangle.Impl(blCandidate, mw, mh), ZoneType.ROOM);
-					/* Punch it */
-					builder.setSymbols(zone.iterator(), DungeonSymbol.FLOOR);
-					gen.draw(dungeon);
-					return true;
-				}
+				final Zone zone = RGZ.getSnd();
+				assert !Dungeons.anyOnEdge(dungeon, zone.iterator()) : "Zone is on the dungeon's edge: " + zone;
+				// infoLog("Generated room: " + zone);
+				rgh.prepareRegistration(zone);
+				/* Record the zone */
+				gen.addZone(gdata, zone, new Rectangle.Impl(blCandidate, mw, mh), ZoneType.ROOM);
+				/* Punch it */
+				builder.setSymbols(zone.iterator(), DungeonSymbol.FLOOR);
+				gen.draw(dungeon);
+				return true;
 			}
 			/* Unreachable */
 			// assert false;
@@ -203,19 +208,20 @@ public class RoomComponent implements GeneratorComponent {
 		return false;
 	}
 
-	private /* @Nullable */ Zone generateRoomAt(DungeonGenerator gen, GenerationData gdata, Coord bottomLeft,
-			int maxWidth, int maxHeight) {
+	/** @return Whether a room was generated (recorded in {@link #RGZ}) */
+	private boolean generateRoomAt(DungeonGenerator gen, GenerationData gdata, Coord bottomLeft, int maxWidth,
+			int maxHeight) {
 		assert 1 <= maxWidth;
 		assert 1 <= maxHeight;
 		final RNG rng = gen.rng;
 		final IRoomGenerator rg = gen.roomGenerators.get(rng);
 		if (rg == null)
-			return null;
+			return false;
 		// infoLog("Trying " + maxWidth + "x" + maxHeight + " room at " +
 		// bottomLeft);
 		final Zone zeroZeroZone = rg.generate(gdata.dungeon, bottomLeft, maxWidth, maxHeight);
 		if (zeroZeroZone == null)
-			return null;
+			return false;
 		final Zone zone = zeroZeroZone.translate(bottomLeft);
 		assert zone.size() == zeroZeroZone.size();
 		assert !Dungeons.anyOnEdge(gdata.dungeon, zone.iterator()) : "Room is on the dungeon's edge: " + zone;
@@ -233,7 +239,10 @@ public class RoomComponent implements GeneratorComponent {
 				lifetime.removeCallback();
 			}
 		}
-		return zone;
+		RGZ.clear();
+		RGZ.setFst(rg);
+		RGZ.setSnd(zone);
+		return true;
 	}
 
 	// FIXME CH Add a parameter to control variance
