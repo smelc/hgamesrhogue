@@ -86,6 +86,24 @@ public class Zones {
 	}
 
 	/**
+	 * A smart constructor.
+	 * 
+	 * @param coords
+	 * @return A zone containing {@code coords}.
+	 */
+	public static Zone build(List<Coord> coords) {
+		final int sz = coords.size();
+		switch (sz) {
+		case 0:
+			return EmptyZone.INSTANCE;
+		case 1:
+			return new SingleCellZone(coords.get(0));
+		default:
+			return new ListZone(coords);
+		}
+	}
+
+	/**
 	 * @param zone
 	 * @param buffer
 	 *            Where to store the result, or {@code null} for this method to

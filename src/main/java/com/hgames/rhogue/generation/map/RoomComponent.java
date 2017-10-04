@@ -27,10 +27,26 @@ import squidpony.squidmath.RNG;
  */
 public class RoomComponent implements GeneratorComponent {
 
+	private final DungeonGenerator gen;
+	private final GenerationData gdata;
+
+	/**
+	 * Provider for choosing the top left coordinate of rooms built and custom stuff
+	 * to do before registering a zone built.
+	 */
+	private RoomGeneratorHelper rgh;
+
 	private static final MutablePair<IRoomGenerator, Zone> RGZ = MutablePair.createEmpty();
 
+	RoomComponent(DungeonGenerator gen, GenerationData gdata) {
+		this.gen = gen;
+		this.gdata = gdata;
+	}
+
 	@Override
-	public boolean generate(final DungeonGenerator gen, final GenerationData gdata) {
+	public boolean generate(final DungeonGenerator __, final GenerationData ____) {
+		assert gen == __;
+		assert gdata == ____;
 		final Dungeon dungeon = gdata.dungeon;
 		if (gen.startWithWater) {
 			/*
@@ -44,7 +60,7 @@ public class RoomComponent implements GeneratorComponent {
 			nextPool: for (int i = 0; i < nbPools; i++) {
 				final Zone waterPool = dungeon.waterPools.get(i);
 				final int nbr = Math.max(1, waterPool.size() / 16);
-				final RoomGeneratorHelper tlStarts = new RoomGeneratorHelper() {
+				rgh = new RoomGeneratorHelper() {
 					@Override
 					public Iterator<Coord> getCoords() {
 						final List<Coord> internalBorder = waterPool.getInternalBorder();
@@ -71,7 +87,7 @@ public class RoomComponent implements GeneratorComponent {
 					}
 				};
 				for (int j = 0; j < nbr; j++) {
-					final boolean done = generateRoom(gen, gdata, tlStarts, overwritten);
+					final boolean done = generateRoom(overwritten);
 					if (!done)
 						continue nextPool;
 				}
@@ -84,7 +100,7 @@ public class RoomComponent implements GeneratorComponent {
 			final EnumSet<DungeonSymbol> overwritten = EnumSet.of(DungeonSymbol.WALL);
 			final int width = gen.width;
 			final int height = gen.height;
-			final RoomGeneratorHelper tlStarts = new RoomGeneratorHelper() {
+			rgh = new RoomGeneratorHelper() {
 				@Override
 				public Iterator<Coord> getCoords() {
 					return new GridIterators.RectangleRandomStartAndDirection(width, height, gen.rng.nextInt(width),
@@ -97,13 +113,35 @@ public class RoomComponent implements GeneratorComponent {
 				}
 			};
 			while (true) {
-				final boolean done = generateRoom(gen, gdata, tlStarts, overwritten);
+				final boolean done = generateRoom(overwritten);
 				if (!done)
 					/* Cannot place any more room */
 					break;
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * @param zone
+	 *            The zone to add.
+	 * @param boundingBox
+	 *            {@code zone}'s bounding box, if required.
+	 * @param ztype
+	 * @param sym
+	 *            The symbol to put in {@code zone}.
+	 */
+	public void addZone(Zone zone, /* @Nullable */ Rectangle boundingBox, ZoneType ztype, DungeonSymbol sym) {
+		final Dungeon dungeon = gdata.dungeon;
+		assert !Dungeons.anyOnEdge(dungeon, zone.iterator()) : "Zone is on the dungeon's edge: " + zone;
+		// infoLog("Generated room: " + zone);
+		rgh.prepareRegistration(zone);
+		/* Record the zone */
+		gen.addZone(gdata, zone, boundingBox, ztype);
+		/* Punch it */
+		final DungeonBuilder builder = dungeon.getBuilder();
+		builder.setSymbols(zone.iterator(), sym);
+		gen.draw(dungeon);
 	}
 
 	/**
@@ -116,18 +154,12 @@ public class RoomComponent implements GeneratorComponent {
 	}
 
 	/**
-	 * @param gdata
-	 * @param rgh
-	 *            Providers for choosing the top left coordinate of rooms built and
-	 *            custom stuff to do before registering a zone built.
 	 * @param overwritten
 	 *            The symbols that the rooms can overwrite.
 	 * @return Whether a room could be generated.
 	 */
-	private boolean generateRoom(DungeonGenerator gen, GenerationData gdata, RoomGeneratorHelper rgh,
-			EnumSet<DungeonSymbol> overwritten) {
+	private boolean generateRoom(EnumSet<DungeonSymbol> overwritten) {
 		final Dungeon dungeon = gdata.dungeon;
-		final DungeonBuilder builder = dungeon.getBuilder();
 		int frustration = 0;
 		/*
 		 * This bound is quite important. Increasing it makes dungeon generation slower,
@@ -192,14 +224,7 @@ public class RoomComponent implements GeneratorComponent {
 				 * 'generateRoomAt'.
 				 */
 				final Zone zone = RGZ.getSnd();
-				assert !Dungeons.anyOnEdge(dungeon, zone.iterator()) : "Zone is on the dungeon's edge: " + zone;
-				// infoLog("Generated room: " + zone);
-				rgh.prepareRegistration(zone);
-				/* Record the zone */
-				gen.addZone(gdata, zone, new Rectangle.Impl(blCandidate, mw, mh), ZoneType.ROOM);
-				/* Punch it */
-				builder.setSymbols(zone.iterator(), DungeonSymbol.FLOOR);
-				gen.draw(dungeon);
+				addZone(zone, new Rectangle.Impl(blCandidate, mw, mh), ZoneType.ROOM, DungeonSymbol.FLOOR);
 				return true;
 			}
 			/* Unreachable */
@@ -219,7 +244,7 @@ public class RoomComponent implements GeneratorComponent {
 			return false;
 		// infoLog("Trying " + maxWidth + "x" + maxHeight + " room at " +
 		// bottomLeft);
-		final Zone zeroZeroZone = rg.generate(gdata.dungeon, bottomLeft, maxWidth, maxHeight);
+		final Zone zeroZeroZone = rg.generate(this, bottomLeft, maxWidth, maxHeight);
 		if (zeroZeroZone == null)
 			return false;
 		final Zone zone = zeroZeroZone.translate(bottomLeft);

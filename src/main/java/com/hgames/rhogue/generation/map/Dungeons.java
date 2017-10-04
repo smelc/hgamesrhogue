@@ -261,10 +261,19 @@ public class Dungeons {
 	/**
 	 * @param dungeon
 	 * @param z
-	 * @return Whether {@code z} is a chasm in {@code z}.
+	 * @return Whether {@code z} is a chasm in {@code dungeon}.
 	 */
 	public static boolean hasChasm(Dungeon dungeon, Zone z) {
 		return dungeon.chasms != null && dungeon.chasms.contains(z);
+	}
+
+	/**
+	 * @param dungeon
+	 * @param z
+	 * @return Whether {@code z} is a disconnected room in {@code dungeon}.
+	 */
+	public static boolean hasDisconnectedRoom(Dungeon dungeon, Zone z) {
+		return dungeon.disconnectedRooms != null && dungeon.disconnectedRooms.contains(z);
 	}
 
 	/**
@@ -310,8 +319,8 @@ public class Dungeons {
 	 * @return If {@code z} is a room, corridor, or deep water in {@code dungeon}.
 	 */
 	public static boolean hasZone(Dungeon dungeon, Zone z) {
-		return hasRoomOrCorridor(dungeon, z) || hasGrassPool(dungeon, z, true) || hasGrassPool(dungeon, z, false)
-				|| hasWaterPool(dungeon, z);
+		return hasChasm(dungeon, z) || hasDisconnectedRoom(dungeon, z) || hasRoomOrCorridor(dungeon, z)
+				|| hasGrassPool(dungeon, z, true) || hasGrassPool(dungeon, z, false) || hasWaterPool(dungeon, z);
 	}
 
 	/**

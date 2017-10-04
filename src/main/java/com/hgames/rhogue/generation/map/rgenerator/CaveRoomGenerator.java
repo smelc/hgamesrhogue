@@ -7,7 +7,7 @@ import java.util.Set;
 
 import com.hgames.lib.Ints;
 import com.hgames.lib.collection.set.Sets;
-import com.hgames.rhogue.generation.map.Dungeon;
+import com.hgames.rhogue.generation.map.RoomComponent;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.Rectangle;
@@ -66,9 +66,9 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 	}
 
 	@Override
-	public Zone generate(Dungeon dungeon, Coord translation, int maxWidth, int maxHeight) {
+	public Zone generate(RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
 		final RectangleRoomGenerator delegate = new RectangleRoomGenerator(rng);
-		final Rectangle rectangle = delegate.generate(dungeon, translation, maxWidth, maxHeight);
+		final Rectangle rectangle = delegate.generate(component, translation, maxWidth, maxHeight);
 		if (rectangle == null) {
 			/* Should not happen */
 			assert false;

@@ -44,6 +44,10 @@ public class Dungeon implements Serializable {
 	/** The mutation API */
 	protected final DungeonBuilder builder;
 
+	/** A cache from a coordinate, to its enclosing Zome; or null */
+	/* FIXME FILL ME */
+	protected transient Zone[][] coordToZone;
+
 	final List<Zone> rooms;
 	/**
 	 * Map whose keys are {@link #rooms} and whose values wrap the keys. It can be

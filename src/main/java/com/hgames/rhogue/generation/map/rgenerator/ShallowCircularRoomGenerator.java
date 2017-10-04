@@ -1,6 +1,6 @@
 package com.hgames.rhogue.generation.map.rgenerator;
 
-import com.hgames.rhogue.generation.map.Dungeon;
+import com.hgames.rhogue.generation.map.RoomComponent;
 
 import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
@@ -25,8 +25,8 @@ public class ShallowCircularRoomGenerator extends AbstractShallowRoomGenerator {
 	}
 
 	@Override
-	protected Zone getZoneToCarve(Dungeon dungeon, Coord translation, int maxWidth, int maxHeight) {
-		final Zone result = delegate.generate(dungeon, translation, maxWidth, maxHeight);
+	protected Zone getZoneToCarve(RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
+		final Zone result = delegate.generate(component, translation, maxWidth, maxHeight);
 		return result;
 	}
 

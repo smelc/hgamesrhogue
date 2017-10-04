@@ -53,19 +53,18 @@ public class DungeonBuilder implements Serializable {
 	 */
 	public void addChasm(Zone z) {
 		assert !z.isEmpty();
-		assert dungeon.getRooms().contains(z);
-		if (dungeon.disconnectedRooms == null)
-			dungeon.disconnectedRooms = new ArrayList<Zone>();
-		dungeon.disconnectedRooms.add(z);
+		assert !Dungeons.hasZone(dungeon, z);
+		if (dungeon.chasms == null)
+			dungeon.chasms = new ArrayList<Zone>();
+		dungeon.chasms.add(z);
 	}
-
 
 	/**
 	 * @param z
 	 */
 	public void addDisconnectedRoom(Zone z) {
 		assert !z.isEmpty();
-		assert dungeon.getRooms().contains(z);
+		assert !Dungeons.hasZone(dungeon, z);
 		if (dungeon.disconnectedRooms == null)
 			dungeon.disconnectedRooms = new ArrayList<Zone>();
 		dungeon.disconnectedRooms.add(z);

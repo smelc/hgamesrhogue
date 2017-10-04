@@ -76,7 +76,7 @@ public class DungeonGenerators {
 		final DungeonGenerator result = halfRectanglesHalfCaves();
 		result.setWaterObjective(true, 20, 1, 10);
 		result.installRoomGenerator(new CircularRoomGenerator(rng), 100, new OneShot());
-		final IRoomGenerator shallow = false ? new ShallowRectangleRoomGenerator()
+		final IRoomGenerator shallow = rng.nextBoolean() ? new ShallowRectangleRoomGenerator()
 				: new ShallowCircularRoomGenerator(rng);
 		result.installRoomGenerator(shallow, 100, new OneShot());
 		return result;

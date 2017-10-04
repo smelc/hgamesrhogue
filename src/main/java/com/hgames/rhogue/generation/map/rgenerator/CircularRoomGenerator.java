@@ -1,6 +1,6 @@
 package com.hgames.rhogue.generation.map.rgenerator;
 
-import com.hgames.rhogue.generation.map.Dungeon;
+import com.hgames.rhogue.generation.map.RoomComponent;
 import com.hgames.rhogue.zone.CircularZone;
 
 import squidpony.squidgrid.zone.Zone;
@@ -25,7 +25,7 @@ public class CircularRoomGenerator extends SkeletalRoomGenerator {
 	}
 
 	@Override
-	public Zone generate(Dungeon dungeon, Coord translation, int maxWidth, int maxHeight) {
+	public Zone generate(RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
 		final int radius = radius(maxWidth, maxHeight);
 		if (radius <= 1)
 			return null;

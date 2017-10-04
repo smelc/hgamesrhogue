@@ -1,7 +1,8 @@
 package com.hgames.rhogue.generation.map.rgenerator;
 
 import com.hgames.lib.Ints;
-import com.hgames.rhogue.generation.map.Dungeon;
+import com.hgames.rhogue.generation.map.RoomComponent;
+import com.hgames.rhogue.zone.SingleCellZone;
 
 import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidgrid.zone.Zone;
@@ -16,7 +17,7 @@ import squidpony.squidmath.Coord;
 public class ShallowRectangleRoomGenerator extends AbstractShallowRoomGenerator {
 
 	@Override
-	protected Zone getZoneToCarve(Dungeon dungeon, Coord translation, int maxWidth, int maxHeight) {
+	protected Zone getZoneToCarve(RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
 		if (maxWidth < 3 || maxHeight < 3)
 			/* Cannot do */
 			return null;
@@ -24,7 +25,12 @@ public class ShallowRectangleRoomGenerator extends AbstractShallowRoomGenerator 
 		final int height = maxHeight - (Ints.isEven(maxHeight) ? 1 : 0);
 		assert 3 <= width && Ints.isOdd(width);
 		assert 3 <= height && Ints.isOdd(height);
-		final Zone result = new Rectangle.Impl(Coord.get(0, 0), width, height);
+		final Zone result;
+		final Coord zerozero = Coord.get(0, 0);
+		if (width == 1 && height == 1)
+			result = new SingleCellZone(zerozero);
+		else
+			result = new Rectangle.Impl(zerozero, width, height);
 		return result;
 	}
 

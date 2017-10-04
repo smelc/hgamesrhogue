@@ -430,12 +430,12 @@ public class DungeonGenerator {
 		if (width == 0 || height == 0)
 			// Nothing to do
 			return dungeon;
-		final GenerationData gdata = new GenerationData(dungeon, watch);
+		final GenerationData gdata = new GenerationData(this, dungeon, watch);
 
 		if (startWithWater)
 			doStage(Stage.WATER_START, new WaterComponent(), gdata);
 
-		doStage(Stage.ROOMS, new RoomComponent(), gdata);
+		doStage(Stage.ROOMS, new RoomComponent(this, gdata), gdata);
 
 		doStage(Stage.PASSAGES_IN_ALMOST_ADJACENT_ROOMS, new PassagesComponent(), gdata);
 		// Done once here instead of at every passage
@@ -780,14 +780,20 @@ public class DungeonGenerator {
 	 *            An instance of {@link ListZone} if ztype is
 	 *            {@link ZoneType#DEEP_WATER}.
 	 * @param boundingBox
+	 *            {@code z}'s bounding box. Not required if a {@link ZoneType#CHASM}
+	 *            or {@link ZoneType#DEEP_WATER}.
 	 * @param ztype
+	 * @return The zone added (might be a cache over {@code z}).
 	 */
-	protected Zone addZone(GenerationData gdata, Zone z, /* @Nullable */ Rectangle boundingBox, ZoneType ztype) {
+	public Zone addZone(GenerationData gdata, Zone z, /* @Nullable */ Rectangle boundingBox, ZoneType ztype) {
 		assert z != null;
 		final Dungeon dungeon = gdata.dungeon;
 		final DungeonBuilder builder = dungeon.getBuilder();
 		final Zone recorded = needCaching(z, ztype) ? new CachingZone(z) : z;
 		switch (ztype) {
+		case CHASM:
+			builder.addChasm(recorded);
+			break;
 		case CORRIDOR:
 		case ROOM:
 			builder.addZone(recorded, boundingBox, ztype == ZoneType.ROOM);
@@ -993,9 +999,11 @@ public class DungeonGenerator {
 	 * 
 	 * @author smelC
 	 */
-	static class GenerationData implements ICellToZone {
+	public static class GenerationData implements ICellToZone {
 
+		protected final DungeonGenerator dgen;
 		protected final Dungeon dungeon;
+
 		/**
 		 * An array that keeps track of the zone to which a cell belongs. A cell belongs
 		 * to at most one zone, because all zones are exclusive. All zones in this array
@@ -1020,7 +1028,8 @@ public class DungeonGenerator {
 		private final /* @Nullable */ Stopwatch watch;
 		private final EnumMap<Stage, Long> timings;
 
-		protected GenerationData(Dungeon dungeon, /* @Nullable */ Stopwatch watch) {
+		protected GenerationData(DungeonGenerator dgen, Dungeon dungeon, /* @Nullable */ Stopwatch watch) {
+			this.dgen = dgen;
 			this.dungeon = dungeon;
 			this.cellToEncloser = new Zone[dungeon.width][dungeon.height];
 			this.timings = new EnumMap<Stage, Long>(Stage.class);
@@ -1284,17 +1293,24 @@ public class DungeonGenerator {
 		public /* @Nullable */ Zone get(Coord c) {
 			return cellToEncloser[c.x][c.y];
 		}
-
 	}
 
 	/**
 	 * @author smelC
 	 */
-	static enum ZoneType {
-		ROOM, CORRIDOR, DEEP_WATER;
+	public static enum ZoneType {
+		/** The type of rooms */
+		ROOM,
+		/** The type associated to chasms */
+		CHASM,
+		/** The type associated to corridors */
+		CORRIDOR,
+		/** The type associated to deep water */
+		DEEP_WATER;
 
 		boolean needsCaching() {
 			switch (this) {
+			case CHASM:
 			case CORRIDOR:
 			case ROOM:
 				return true;
