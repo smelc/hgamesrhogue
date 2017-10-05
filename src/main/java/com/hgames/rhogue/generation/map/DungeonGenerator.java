@@ -1,12 +1,9 @@
 package com.hgames.rhogue.generation.map;
 
-import static com.hgames.lib.Strings.plural;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -21,7 +18,6 @@ import com.hgames.lib.Arrays;
 import com.hgames.lib.Exceptions;
 import com.hgames.lib.Ints;
 import com.hgames.lib.Stopwatch;
-import com.hgames.lib.collection.list.Lists;
 import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.Tags;
 import com.hgames.rhogue.generation.map.corridor.CorridorBuilders;
@@ -34,7 +30,6 @@ import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 import com.hgames.rhogue.rng.ProbabilityTable;
 import com.hgames.rhogue.zone.CachingZone;
 import com.hgames.rhogue.zone.SingleCellZone;
-import com.hgames.rhogue.zone.Zones;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.Rectangle;
@@ -49,13 +44,24 @@ import squidpony.squidmath.RNG;
  * to objects describing rooms, corridors, zones, etc.
  * 
  * <p>
- * This class' API can be divided into two:
+ * This class' public API can be divided into two:
  * 
  * <ul>
  * <li>The "configure" part of the API which consists of all {@code set*}
  * methods.</li>
  * <li>The "generate" part of the API which is {@link #generate()}.</li>
  * </ul>
+ * </p>
+ * 
+ * <p>
+ * This class' protected API is designed to be called from
+ * {@link GeneratorComponent components}.
+ * </p>
+ * 
+ * <p>
+ * Overall the API of this file has been Intentionally kept as little as
+ * possible, trying to divide the generator into understandable and decoupled
+ * pieces. Please maintain this spirit.
  * </p>
  * 
  * <p>
@@ -179,31 +185,6 @@ public class DungeonGenerator {
 	}
 
 	/**
-	 * The complexity controls the maximum width/height of rooms. More complex
-	 * dungeons (many rooms, many corridors) use a smaller maximum size.
-	 * 
-	 * @author smelC
-	 */
-	public static enum Complexity {
-		/**
-		 * The complexity to have simple dungeons with a few big rooms. Fits for a
-		 * tutorial level
-		 */
-		BABY,
-		/** Complexity between {@link #BABY} and {@link #NORMAL} */
-		KID,
-		/** The usual complexity, that will classical dungeons */
-		NORMAL,
-		/** Complexity between {@link #NORMAL} and {@link #WIZARD} */
-		COMPLEX,
-		/**
-		 * Circonvoluted dungeons, with many small rooms and complex corridors'
-		 * connections
-		 */
-		WIZARD;
-	}
-
-	/**
 	 * @param drawer
 	 *            The drawer to use, or null to turn it OFF.
 	 * @return {@code this}
@@ -234,6 +215,31 @@ public class DungeonGenerator {
 	public DungeonGenerator setAllowWidthOrHeightOneRooms(boolean value) {
 		this.allowWidthOrHeightOneRooms = value;
 		return this;
+	}
+
+	/**
+	 * The complexity controls the maximum width/height of rooms. More complex
+	 * dungeons (many rooms, many corridors) use a smaller maximum size.
+	 * 
+	 * @author smelC
+	 */
+	public static enum Complexity {
+		/**
+		 * The complexity to have simple dungeons with a few big rooms. Fits for a
+		 * tutorial level
+		 */
+		BABY,
+		/** Complexity between {@link #BABY} and {@link #NORMAL} */
+		KID,
+		/** The usual complexity, that will classical dungeons */
+		NORMAL,
+		/** Complexity between {@link #NORMAL} and {@link #WIZARD} */
+		COMPLEX,
+		/**
+		 * Circonvoluted dungeons, with many small rooms and complex corridors'
+		 * connections
+		 */
+		WIZARD;
 	}
 
 	/**
@@ -412,7 +418,7 @@ public class DungeonGenerator {
 		if (roomGenerators.isEmpty()) {
 			final String msg = "You need to install at least one room generator (using method installRoomGenerator). Cannot generate dungeons.";
 			if (logger != null && logger.isErrEnabled())
-				infoLog(msg);
+				logger.infoLog(Tags.GENERATION, msg);
 			else
 				/* We usually don't do that, but it's friendly for newcomers */
 				System.out.println(msg);
@@ -454,8 +460,7 @@ public class DungeonGenerator {
 			return null;
 		}
 
-		gdata.startStage(Stage.ENSURE_DENSITY);
-		ensureDensity(gdata);
+		doStage(Stage.ENSURE_DENSITY, new DensityComponent(), gdata);
 
 		if (!startWithWater)
 			doStage(Stage.WATER, new WaterComponent(), gdata);
@@ -466,33 +471,6 @@ public class DungeonGenerator {
 		gdata.startStage(null); // Record end of last stage
 		gdata.logTimings(logger);
 		return dungeon;
-	}
-
-	protected void computeMaxRoomSizes() {
-		int div = 5;
-		switch (complexity) {
-		case BABY:
-			div -= 3;
-			break;
-		case KID:
-			div -= 2;
-			break;
-		case NORMAL:
-			break;
-		case COMPLEX:
-			div += 2;
-			break;
-		case WIZARD:
-			div += 3;
-			break;
-		}
-		this.maxRoomWidth = Math.max(2, width / div);
-		this.maxRoomHeight = Math.max(2, height / div);
-	}
-
-	private boolean doStage(Stage stage, GeneratorComponent component, GenerationData gdata) {
-		gdata.startStage(stage);
-		return component.generate(this, gdata);
 	}
 
 	/**
@@ -616,165 +594,6 @@ public class DungeonGenerator {
 	}
 
 	/**
-	 * Make sure that at least 1/5th of the map is accessible. For that, find
-	 * disconnected rooms. For every disconnected component whose size is >
-	 * {@link #getWallificationBound()} of the map, try very hard to connect it to
-	 * the stairs. At the end check if 1/6th of the map is accessible.
-	 * 
-	 * <p>
-	 * This method must be called before generating impassable terrain (deep water,
-	 * lava, etc.)
-	 * </p>
-	 * 
-	 * @return Whether the dungeon is valid.
-	 */
-	protected boolean ensureDensity(GenerationData gdata) {
-		final Dungeon dungeon = gdata.dungeon;
-		if (!Dungeons.hasStairs(dungeon))
-			throw new IllegalStateException("ensureDensity method requires stairs to be set");
-		final List<Zone> disconnectedZones = gdata.zonesDisconnectedFrom(true, true,
-				Lists.newArrayList(dungeon.upwardStair, dungeon.downwardStair));
-		final List<List<Zone>> disconnectedComponents = Dungeons.connectedComponents(dungeon, disconnectedZones);
-		final int nbdc = disconnectedComponents.size();
-		int reachable = Zones.size(dungeon.rooms);
-		reachable += Zones.size(dungeon.corridors);
-		final int msz = dungeon.size();
-		if (0 < nbdc) {
-			infoLog("Found " + nbdc + " disconnected component" + plural(nbdc));
-			final List<Zone> connectedRooms = new ArrayList<Zone>(dungeon.rooms);
-			for (int i = 0; i < nbdc; i++)
-				connectedRooms.removeAll(disconnectedComponents.get(i));
-			for (int i = 0; i < nbdc; i++) {
-				/* Contains both rooms and corridors */
-				final List<Zone> disconnectedComponent = disconnectedComponents.get(i);
-				final int sz = Zones.size(disconnectedComponent);
-				/*
-				 * /!\ This call mutes 'connectedRooms' and trashes 'disconnectedComponent' /!\
-				 */
-				final int extension = treatDisconnectedComponent(gdata, connectedRooms, disconnectedComponent);
-				assert 0 <= extension;
-				if (0 < extension) {
-					reachable += extension;
-					if (logger != null && logger.isInfoEnabled())
-						infoLog("Connected component (consisting of " + nbdc + " zone" + plural(sz) + ") of size "
-								+ extension);
-				}
-			}
-		}
-		return (msz / 6) < reachable;
-	}
-
-	/**
-	 * @param connectedRooms
-	 *            Rooms connected to the stair (which are possible corridors
-	 *            destinations). Can be extended by this call.
-	 * @param component
-	 *            The component. It should not be used anymore after this call.
-	 * @return The number of cells that got connected to the stairs.
-	 */
-	private int treatDisconnectedComponent(GenerationData gdata, List<Zone> connectedRooms, List<Zone> component) {
-		final Dungeon dungeon = gdata.dungeon;
-		final DungeonBuilder builder = dungeon.getBuilder();
-		final int sz = Zones.size(component);
-		final int csz = component.size();
-		if (csz == 1) {
-			/* Component is a single room */
-			final Zone z = component.get(0);
-			/* Can it be used to honor #disconnectedRoomsObjective ? */
-			if (dungeon.getDisconnectedRooms().size() < disconnectedRoomsObjective) {
-				infoLog("Used a size " + sz + " disconnected room to fulfill the disconnected rooms objective.");
-				builder.addDisconnectedRoom(z);
-				return 0;
-			}
-			/* Can it be used to honor #waterIslands ? */
-			if (dungeon.getWaterIslands().size() < waterIslands
-					&& Dungeons.isSurroundedBy(dungeon, z, EnumSet.of(DungeonSymbol.DEEP_WATER))) {
-				infoLog("Used a size " + sz + " disconnected room to fulfill the water islands objective.");
-				builder.addWaterIsland(z);
-				return 0;
-			}
-		}
-
-		final int bound = getWallificationBound();
-		if (csz == 1) {
-			/* Component is a single room */
-			/* Is it kindof a water island ? */
-			if (Dungeons.isSurroundedBy(dungeon, component.get(0),
-					EnumSet.of(DungeonSymbol.DEEP_WATER, DungeonSymbol.WALL))) {
-				/*
-				 * Yes it's a water island. Try to connect it with shallow water; coz such
-				 * islands can be fun.
-				 */
-				final Zone z = component.get(0);
-				final boolean built = generateCorridors(gdata, component, connectedRooms, new ICorridorControl.Impl(
-						dungeon, false, true, true, Math.max(z.getWidth(), z.getHeight()) * 2, false));
-				// FIXME CH Generate doors on these corridors ?
-				if (built) {
-					if (logger != null && logger.isInfoEnabled())
-						infoLog("Connected a water island of size " + csz);
-					return csz;
-				}
-			}
-		}
-
-		if (sz < bound && sz < getWallificationBound()) {
-			/* Component is small */
-			/* Replace it with walls (hereby removing it) */
-			for (int i = 0; i < csz; i++) {
-				final Zone z = component.get(i);
-				wallify(gdata, z);
-				if (logger != null && logger.isInfoEnabled())
-					infoLog("Wallified a zone of size " + z.size());
-				gdata.addWaterFillStartCandidate(z.getCenter());
-			}
-			infoLog("Total of wallification: " + sz + " (bound is " + bound + " cells)");
-			return 0;
-		}
-
-		final int nbCellsInComponent = Zones.size(component);
-		/* To ensure 'generateCorridors' precondition that it gets only rooms */
-		component.removeAll(dungeon.corridors);
-		final boolean connected = generateCorridors(gdata, component, connectedRooms,
-				new ICorridorControl.Impl(dungeon, false, true, true, nbCellsInComponent / 2, true));
-		if (connected) {
-			connectedRooms.addAll(component);
-			return nbCellsInComponent;
-		} else {
-			if (logger != null && logger.isInfoEnabled())
-				infoLog("Could not treat a disconnected component of size " + sz);
-			return 0;
-		}
-	}
-
-	/**
-	 * @return The size under which a disconnected component can be wallified
-	 */
-	protected int getWallificationBound() {
-		return (width * height) / 128;
-	}
-
-	/** Turns a zone into walls, hereby removing it */
-	protected final void wallify(GenerationData gdata, Zone z) {
-		final Dungeon dungeon = gdata.dungeon;
-		final DungeonBuilder builder = dungeon.getBuilder();
-		assert Dungeons.hasZone(dungeon, z);
-		removeZone(gdata, z);
-		builder.setSymbols(z.iterator(), DungeonSymbol.WALL);
-		draw(dungeon);
-	}
-
-	protected void draw(Dungeon dungeon) {
-		if (drawer != null) {
-			assert dungeon.invariant();
-			drawer.draw(dungeon.getMap());
-		}
-	}
-
-	protected void debugDraw(Dungeon dungeon) {
-		new ConsoleDungeonDrawer(new DungeonSymbolDrawer()).draw(dungeon.map);
-	}
-
-	/**
 	 * @param gdata
 	 * @param z
 	 *            An instance of {@link ListZone} if ztype is
@@ -785,7 +604,7 @@ public class DungeonGenerator {
 	 * @param ztype
 	 * @return The zone added (might be a cache over {@code z}).
 	 */
-	public Zone addZone(GenerationData gdata, Zone z, /* @Nullable */ Rectangle boundingBox, ZoneType ztype) {
+	protected Zone addZone(GenerationData gdata, Zone z, /* @Nullable */ Rectangle boundingBox, ZoneType ztype) {
 		assert z != null;
 		final Dungeon dungeon = gdata.dungeon;
 		final DungeonBuilder builder = dungeon.getBuilder();
@@ -803,7 +622,7 @@ public class DungeonGenerator {
 			break;
 		}
 		if (logger != null && logger.isDebugEnabled())
-			debugLog("Recording " + ztype + " zone: " + z);
+			logger.debugLog(Tags.GENERATION, "Recording " + ztype + " zone: " + z);
 		for (Coord c : recorded) {
 			final Zone prev = gdata.cellToEncloser[c.x][c.y];
 			if (prev != null)
@@ -815,13 +634,24 @@ public class DungeonGenerator {
 		return recorded;
 	}
 
-	private void removeZone(GenerationData gdata, Zone z) {
+	protected void removeZone(GenerationData gdata, Zone z) {
 		final Dungeon dungeon = gdata.dungeon;
 		final DungeonBuilder builder = dungeon.getBuilder();
 		builder.removeZone(z);
 		for (Coord c : z) {
 			gdata.cellToEncloser[c.x][c.y] = null;
 		}
+	}
+
+	protected void draw(Dungeon dungeon) {
+		if (drawer != null) {
+			assert dungeon.invariant();
+			drawer.draw(dungeon.getMap());
+		}
+	}
+
+	protected void debugDraw(Dungeon dungeon) {
+		new ConsoleDungeonDrawer(new DungeonSymbolDrawer()).draw(dungeon.map);
 	}
 
 	/**
@@ -873,31 +703,31 @@ public class DungeonGenerator {
 		return x == c.y && y == c.y ? c : Coord.get(x, y);
 	}
 
-	protected final void debugLog(String log) {
-		if (logger != null)
-			logger.debugLog(Tags.GENERATION, log);
+	private void computeMaxRoomSizes() {
+		int div = 5;
+		switch (complexity) {
+		case BABY:
+			div -= 3;
+			break;
+		case KID:
+			div -= 2;
+			break;
+		case NORMAL:
+			break;
+		case COMPLEX:
+			div += 2;
+			break;
+		case WIZARD:
+			div += 3;
+			break;
+		}
+		this.maxRoomWidth = Math.max(2, width / div);
+		this.maxRoomHeight = Math.max(2, height / div);
 	}
 
-	/**
-	 * You should avoid calling this method too much if {@code logger} is null or if
-	 * info isn't enabled, because building {@code log} can be costly if it's not a
-	 * constant.
-	 * 
-	 * @param log
-	 */
-	protected final void infoLog(String log) {
-		if (logger != null)
-			logger.infoLog(Tags.GENERATION, log);
-	}
-
-	protected final void warnLog(String log) {
-		if (logger != null)
-			logger.warnLog(Tags.GENERATION, log);
-	}
-
-	protected final void errLog(String log) {
-		if (logger != null)
-			logger.errLog(Tags.GENERATION, log);
+	private boolean doStage(Stage stage, GeneratorComponent component, GenerationData gdata) {
+		gdata.startStage(stage);
+		return component.generate(this, gdata);
 	}
 
 	private static boolean needCaching(Zone z, ZoneType ztype) {
@@ -999,8 +829,9 @@ public class DungeonGenerator {
 	 * 
 	 * @author smelC
 	 */
-	public static class GenerationData implements ICellToZone {
+	protected static class GenerationData implements ICellToZone {
 
+		@Deprecated
 		protected final DungeonGenerator dgen;
 		protected final Dungeon dungeon;
 
