@@ -650,7 +650,8 @@ public class DungeonGenerator {
 			roomToGenerator.put(recorded, rg);
 		}
 		if (logger != null && logger.isDebugEnabled())
-			logger.debugLog(Tags.GENERATION, "Recording " + ztype + " zone: " + z);
+			logger.debugLog(Tags.GENERATION,
+					"Recording " + ztype + " zone: " + z + (rg == null ? "" : " with generator: " + rg));
 		for (Coord c : recorded) {
 			final Zone prev = gdata.cellToEncloser[c.x][c.y];
 			if (prev != null)

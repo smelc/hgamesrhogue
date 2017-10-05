@@ -336,6 +336,20 @@ public class Dungeons {
 	/**
 	 * @param dungeon
 	 * @param z
+	 * @param sym
+	 * @return Whether {@code z} contains {@code sym}.
+	 */
+	public static boolean hasSymbol(Dungeon dungeon, Zone z, DungeonSymbol sym) {
+		for (Coord c : z) {
+			if (sym == dungeon.getSymbol(c))
+				return true;
+		}
+		return false;
+	}
+
+	/**
+	 * @param dungeon
+	 * @param z
 	 * @return Whether {@code z} is a deep water pool of {@code dungeon}.
 	 */
 	public static boolean hasWaterPool(Dungeon dungeon, Zone z) {

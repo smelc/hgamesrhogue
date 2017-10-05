@@ -40,7 +40,8 @@ public class PassagesComponent extends SkeletalComponent {
 		final IDungeonGeneratorListener listener = gen.listener;
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
-				if (!isDoorCandidate(gdata, x, y, true) && !isDoorCandidate(gdata, x, y, false))
+				final Coord doorCandidate = Coord.get(x, y);
+				if (!isDoorCandidate(gdata, dungeon, doorCandidate, ZONE_PAIR_BUF))
 					continue;
 				final Zone z0 = ZONE_PAIR_BUF[0];
 				assert z0 != null;
@@ -52,7 +53,6 @@ public class PassagesComponent extends SkeletalComponent {
 				if (!acceptsOneMoreConnection(gen, dungeon, z0) || !acceptsOneMoreConnection(gen, dungeon, z1))
 					/* Connection is disallowed */
 					continue;
-				final Coord doorCandidate = Coord.get(x, y);
 				Multimaps.addToListMultimap(connectedsToCandidates, orderedPair(gdata, z0, z1), doorCandidate);
 				assert Dungeons.findZoneContaining(dungeon, x, y) == null : "Candidate for door: " + doorCandidate
 						+ " should not be in a zone";
@@ -112,88 +112,6 @@ public class PassagesComponent extends SkeletalComponent {
 			final RNG rng = gen.rng;
 			return rng.next(101) <= gen.doorProbability;
 		}
-	}
-
-	/**
-	 * @param gdata
-	 * @param x
-	 * @param y
-	 * @param southNorthOrEastWest
-	 * @return Whether {@code (x,y)} is a valid door candidate, i.e. it has a valid
-	 *         walkable cell (according to
-	 *         {@link #isDoorNeighborCandidate(DungeonSymbol)}) to its left and
-	 *         right (if {@code southNorthOrEastWest} is set, otherwise north and
-	 *         south are checked).
-	 * 
-	 *         <p>
-	 *         If it returns {@code true}, {@link #ZONE_PAIR_BUF} is filled with the
-	 *         zones that could be connected by the door.
-	 *         </p>
-	 */
-	private boolean isDoorCandidate(GenerationData gdata, int x, int y, boolean southNorthOrEastWest) {
-		final Dungeon dungeon = gdata.dungeon;
-		final DungeonSymbol sym = dungeon.getSymbol(x, y);
-		if (sym == null)
-			return false;
-		switch (sym) {
-		case CHASM:
-		case DEEP_WATER:
-		case DOOR:
-		case FLOOR:
-		case GRASS:
-		case HIGH_GRASS:
-		case SHALLOW_WATER:
-		case STAIR_DOWN:
-		case STAIR_UP:
-			return false;
-		case WALL:
-			break;
-		}
-		/* As in CorridorsComponent */
-		final int x1 = x + (southNorthOrEastWest ? Direction.DOWN.deltaX : Direction.LEFT.deltaX);
-		final int y1 = y + (southNorthOrEastWest ? Direction.DOWN.deltaY : Direction.LEFT.deltaY);
-		if (!isDoorNeighborCandidate(dungeon.getSymbol(x1, y1)))
-			return false;
-		final int x2 = x + (southNorthOrEastWest ? Direction.UP.deltaX : Direction.RIGHT.deltaX);
-		final int y2 = y + (southNorthOrEastWest ? Direction.UP.deltaY : Direction.RIGHT.deltaY);
-		if (!isDoorNeighborCandidate(dungeon.getSymbol(x2, y2)))
-			return false;
-		// Using gdata's cellToEncloser cache isn't necessary for performances
-		final Zone z1 = gdata.findZoneContaining(x1, y1);
-		if (z1 == null) {
-			assert false;
-			throw new IllegalStateException("Cannot find zone containing " + x1 + "," + y1);
-		}
-		assert Dungeons.hasRoomOrCorridor(dungeon, z1);
-		final Zone z2 = gdata.findZoneContaining(x2, y2);
-		if (z2 == null) {
-			assert false;
-			throw new IllegalStateException("Cannot find zone containing " + x1 + "," + y1);
-		}
-		assert Dungeons.hasRoomOrCorridor(dungeon, z2);
-		ZONE_PAIR_BUF[0] = z1;
-		ZONE_PAIR_BUF[1] = z2;
-		return true;
-	}
-
-	static boolean isDoorNeighborCandidate(/* @Nullable */ DungeonSymbol sym) {
-		if (sym == null)
-			return false;
-		switch (sym) {
-		case CHASM:
-		case DEEP_WATER:
-		case DOOR:
-		case HIGH_GRASS:
-		case GRASS:
-		case SHALLOW_WATER:
-		case STAIR_DOWN:
-		case STAIR_UP:
-		case WALL:
-			return false;
-		case FLOOR:
-			return true;
-		}
-		throw Exceptions.newUnmatchedISE(sym);
 	}
 
 	private static Pair<Zone, Zone> orderedPair(GenerationData gdata, Zone z1, Zone z2) {

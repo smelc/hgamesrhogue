@@ -158,8 +158,8 @@ public class CorridorsComponent extends SkeletalComponent {
 					if (shallowWater) {
 						builder.setSymbol(c, DungeonSymbol.SHALLOW_WATER);
 					} else {
-						final boolean doZDoor = c.equals(zDoor) && shouldPutDoor(gen, dungeon, z, c);
-						final boolean doDestDoor = c.equals(destDoor) && shouldPutDoor(gen, dungeon, dest, c);
+						final boolean doZDoor = c.equals(zDoor) && shouldPutDoor(gen, gdata, z, c);
+						final boolean doDestDoor = c.equals(destDoor) && shouldPutDoor(gen, gdata, dest, c);
 						final boolean door = doZDoor || doDestDoor;
 						builder.setSymbol(c, door ? DungeonSymbol.DOOR : DungeonSymbol.FLOOR);
 						if (door && listener != null) {
@@ -311,31 +311,15 @@ public class CorridorsComponent extends SkeletalComponent {
 		return !buf.isEmpty();
 	}
 
-	private boolean shouldPutDoor(DungeonGenerator gen, Dungeon dungeon, Zone z, Coord c) {
-		if (Dungeons.hasNeighbor(dungeon, c, DungeonSymbol.DOOR, false))
-			return false;
+	private boolean shouldPutDoor(DungeonGenerator gen, GenerationData gdata, Zone z, Coord c) {
+		final Dungeon dungeon = gdata.dungeon;
 		assert dungeon.getRooms().contains(z);
 		if (!forceDoors(gen, dungeon, z)) {
 			final RNG rng = gen.rng;
 			if (gen.doorProbability < rng.nextInt(101))
 				return false;
 		}
-		return isValidDoorPosition(dungeon, c, true) || isValidDoorPosition(dungeon, c, false);
-	}
-
-	private static boolean isValidDoorPosition(Dungeon dungeon, Coord c, boolean southNorthOrEastWest) {
-		/* As in PassagesComponent */
-		final int x = c.x;
-		final int y = c.y;
-		final int x1 = x + (southNorthOrEastWest ? Direction.DOWN.deltaX : Direction.LEFT.deltaX);
-		final int y1 = y + (southNorthOrEastWest ? Direction.DOWN.deltaY : Direction.LEFT.deltaY);
-		if (!PassagesComponent.isDoorNeighborCandidate(dungeon.getSymbol(x1, y1)))
-			return false;
-		final int x2 = x + (southNorthOrEastWest ? Direction.UP.deltaX : Direction.RIGHT.deltaX);
-		final int y2 = y + (southNorthOrEastWest ? Direction.UP.deltaY : Direction.RIGHT.deltaY);
-		if (!PassagesComponent.isDoorNeighborCandidate(dungeon.getSymbol(x2, y2)))
-			return false;
-		return true;
+		return isDoorCandidate(gdata, dungeon, c, null);
 	}
 
 	private static Direction toGoFromZoneToZone(Coord c1, Coord c2, boolean cardinalsOnly) {

@@ -57,6 +57,21 @@ public class ProbabilityTable<T> {
 	}
 
 	/**
+	 * Adds {@code t} to this table if missing, or changes its probability if
+	 * already there.
+	 * 
+	 * @param t
+	 * @param probability
+	 */
+	public void put(T t, int probability) {
+		final int inThere = table.containsKey(t) ? table.get(t) : 0;
+		final int diff = probability - inThere;
+		total += diff;
+		table.put(t, probability);
+		assert invariant();
+	}
+
+	/**
 	 * Remove an element from this table.
 	 * 
 	 * @param t

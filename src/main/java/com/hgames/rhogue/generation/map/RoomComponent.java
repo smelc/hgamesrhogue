@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Set;
 
 import com.hgames.lib.collection.pair.MutablePair;
+import com.hgames.lib.log.ILogger;
+import com.hgames.rhogue.Tags;
 import com.hgames.rhogue.generation.map.DungeonGenerator.GenerationData;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ZoneType;
 import com.hgames.rhogue.generation.map.lifetime.Lifetime;
@@ -257,18 +259,23 @@ public class RoomComponent implements GeneratorComponent {
 		final Zone zone = zeroZeroZone.translate(bottomLeft);
 		assert zone.size() == zeroZeroZone.size();
 		assert !Dungeons.anyOnEdge(gdata.dungeon, zone.iterator()) : "Room is on the dungeon's edge: " + zone;
+		final ILogger logger = gen.logger;
 		{
 			/* Remember that generator is getting used */
 			final Lifetime lifetime = gen.rgLifetimes.get(rg);
-			if (lifetime == null)
-				throw new IllegalStateException(IRoomGenerator.class.getSimpleName() + " has no "
-						+ Lifetime.class.getSimpleName() + " instance attached");
-			lifetime.recordUsage();
-			if (lifetime.shouldBeRemoved()) {
-				/* Remove generator */
-				gen.roomGenerators.remove(rg);
-				gen.rgLifetimes.remove(rg);
-				lifetime.removeCallback();
+			if (lifetime == null) {
+				if (logger != null && logger.isErrEnabled())
+					logger.errLog(Tags.GENERATION,
+							IRoomGenerator.class.getSimpleName() + " has no " + Lifetime.class.getSimpleName()
+									+ " instance attached. This is a severe bug, let's hope for the best.");
+			} else {
+				lifetime.recordUsage();
+				if (lifetime.shouldBeRemoved()) {
+					/* Remove generator */
+					gen.roomGenerators.remove(rg);
+					gen.rgLifetimes.remove(rg);
+					lifetime.removeCallback();
+				}
 			}
 		}
 		RGZ.clear();
