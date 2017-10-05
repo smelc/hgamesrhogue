@@ -20,7 +20,6 @@ import com.hgames.lib.Ints;
 import com.hgames.lib.Stopwatch;
 import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.Tags;
-import com.hgames.rhogue.generation.map.connection.IConnectionControl;
 import com.hgames.rhogue.generation.map.corridor.CorridorBuilders;
 import com.hgames.rhogue.generation.map.corridor.ICorridorBuilder;
 import com.hgames.rhogue.generation.map.draw.ConsoleDungeonDrawer;
@@ -96,12 +95,7 @@ public class DungeonGenerator {
 	protected final RNG rng;
 	protected final int width;
 	protected final int height;
-	/**
-	 * An upper bound of the number of corridors to and from a room (ignores doors
-	 * punched because of rooms being adjacent).
-	 */
-	@Deprecated // Check if not overridden by IConnectionControl
-	protected int connectivity = 3;
+
 	protected /* @Nullable */ IDungeonDrawer drawer;
 	protected /* @Nullable */ ILogger logger;
 	protected /* @Nullable */ IDungeonGeneratorListener listener = new DungeonGeneratorListener();
@@ -112,7 +106,6 @@ public class DungeonGenerator {
 	protected final Map<Zone, IRoomGenerator> roomToGenerator;
 	/** The domain of this map is {@link #roomGenerators} */
 	protected final Map<IRoomGenerator, Lifetime> rgLifetimes;
-	protected /* @Nullable */ IConnectionControl connectionControl = DefaultConnectionControl.INSTANCE;
 
 	protected int minRoomWidth = 2;
 	protected int maxRoomWidth;
@@ -232,14 +225,6 @@ public class DungeonGenerator {
 	}
 
 	/**
-	 * @param cc
-	 *            Sets the connection control to use, or null for none.
-	 */
-	public void setConnectionControl(/* @Nullable */ IConnectionControl cc) {
-		this.connectionControl = cc;
-	}
-
-	/**
 	 * The complexity controls the maximum width/height of rooms. More complex
 	 * dungeons (many rooms, many corridors) use a smaller maximum size.
 	 * 
@@ -270,17 +255,6 @@ public class DungeonGenerator {
 	 */
 	public void setComplexity(Complexity complexity) {
 		this.complexity = complexity;
-	}
-
-	/**
-	 * Sets the upper bound of the number of connections of a room.
-	 * 
-	 * @param c
-	 */
-	public void setConnectivity(int c) {
-		if (c <= 0)
-			throw new IllegalStateException("Connectivy must be greater than zero. Received: " + c);
-		this.connectivity = c;
 	}
 
 	/**

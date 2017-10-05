@@ -10,7 +10,6 @@ import com.hgames.lib.collection.Multimaps;
 import com.hgames.lib.collection.pair.Pair;
 import com.hgames.rhogue.generation.map.DungeonGenerator.GenerationData;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ZoneType;
-import com.hgames.rhogue.generation.map.connection.IConnectionControl;
 import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 import com.hgames.rhogue.zone.SingleCellZone;
 
@@ -25,7 +24,7 @@ import squidpony.squidmath.RNG;
  * 
  * @author smelC
  */
-public class PassagesComponent implements GeneratorComponent {
+public class PassagesComponent extends SkeletalComponent {
 
 	private static final Zone[] ZONE_PAIR_BUF = new Zone[2];
 
@@ -38,7 +37,6 @@ public class PassagesComponent implements GeneratorComponent {
 		/* The Lists do not contain doublons */
 		final Map<Pair<Zone, Zone>, List<Coord>> connectedsToCandidates = new HashMap<Pair<Zone, Zone>, List<Coord>>(
 				16);
-		final IConnectionControl control = gen.connectionControl;
 		final IDungeonGeneratorListener listener = gen.listener;
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
@@ -51,13 +49,9 @@ public class PassagesComponent implements GeneratorComponent {
 				if (z0 == z1)
 					/* Can happen with weird zones (U shape) */
 					continue;
-				if (control != null) {
-					final IRoomGenerator g0 = gen.getRoomGenerator(dungeon, z0);
-					final IRoomGenerator g1 = gen.getRoomGenerator(dungeon, z1);
-					if (!control.acceptsConnection(gen, dungeon, g0, z0, g1, z1))
-						/* Connection is disallowed */
-						continue;
-				}
+				if (!acceptsOneMoreConnection(gen, dungeon, z0) || !acceptsOneMoreConnection(gen, dungeon, z1))
+					/* Connection is disallowed */
+					continue;
 				final Coord doorCandidate = Coord.get(x, y);
 				Multimaps.addToListMultimap(connectedsToCandidates, orderedPair(gdata, z0, z1), doorCandidate);
 				assert Dungeons.findZoneContaining(dungeon, x, y) == null : "Candidate for door: " + doorCandidate
@@ -110,12 +104,9 @@ public class PassagesComponent implements GeneratorComponent {
 
 	/** @return Whether a door should be created or a wall should be carved */
 	private boolean doorOrFloor(DungeonGenerator gen, Dungeon dungeon, Zone z0, Zone z1) {
-		final IConnectionControl control = gen.connectionControl;
-		if (control != null && (control.forceDoor(gen, dungeon, gen.getRoomGenerator(dungeon, z0), z0)
-				|| control.forceDoor(gen, dungeon, gen.getRoomGenerator(dungeon, z1), z1))) {
-			System.out.println("Forcing door");
+		if (forceDoors(gen, dungeon, z0) || forceDoors(gen, dungeon, z1))
 			return true;
-		} else {
+		else {
 			final RNG rng = gen.rng;
 			return rng.next(101) <= gen.doorProbability;
 		}

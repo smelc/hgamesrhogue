@@ -17,9 +17,7 @@ import com.hgames.lib.collection.pair.Pair;
 import com.hgames.rhogue.generation.map.DungeonGenerator.GenerationData;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ICorridorControl;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ZoneType;
-import com.hgames.rhogue.generation.map.connection.IConnectionControl;
 import com.hgames.rhogue.generation.map.corridor.ICorridorBuilder;
-import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 import com.hgames.rhogue.zone.SingleCellZone;
 
 import squidpony.squidgrid.Direction;
@@ -33,7 +31,7 @@ import squidpony.squidmath.RNG;
  * 
  * @author smelC
  */
-public class CorridorsComponent implements GeneratorComponent {
+public class CorridorsComponent extends SkeletalComponent {
 
 	protected final Collection<Zone> rooms;
 	protected final List<Zone> dests;
@@ -74,11 +72,15 @@ public class CorridorsComponent implements GeneratorComponent {
 		boolean someChance = false;
 		for (Zone z : rooms) {
 			assert Dungeons.isRoom(dungeon, z);
+			if (!acceptsOneMoreConnection(gen, dungeon, z))
+				continue;
 			final Coord zc = z.getCenter();
 			assert !zoneToOtherZones.keySet().contains(z);
 			final List<Pair<Double, Zone>> otherZones = new ArrayList<Pair<Double, Zone>>(Math.max(0, nbr - 1));
 			for (int j = 0; j < nbd; j++) {
 				final Zone other = dests.get(j);
+				if (!acceptsOneMoreConnection(gen, dungeon, other))
+					continue;
 				assert Dungeons.isRoom(dungeon, other);
 				if (other == z)
 					continue;
@@ -97,7 +99,6 @@ public class CorridorsComponent implements GeneratorComponent {
 		}
 		if (!someChance)
 			return false;
-		final /* @Nullable */ IConnectionControl connectionsControl = gen.connectionControl;
 		final /* @Nullable */ IDungeonGeneratorListener listener = gen.listener;
 		final boolean perfect = control.getPerfect();
 		boolean needWaterPoolsCleanup = false;
@@ -113,17 +114,13 @@ public class CorridorsComponent implements GeneratorComponent {
 			final int nbcd = candidateDests.size();
 			Collections.sort(candidateDests, ORDERER);
 			int connections = dungeon.getNeighbors(z).size();
-			for (int j = 0; j < gen.connectivity && connections < gen.connectivity && j < nbcd; j++) {
+			final int maxConnections = gen.getRoomGenerator(dungeon, z).getMaxConnections();
+			for (int j = 0; j < nbcd && connections < maxConnections; j++) {
 				final Zone dest = candidateDests.get(j).getSnd();
+				if (!acceptsOneMoreConnection(gen, dungeon, dest))
+					continue;
 				if (Dungeons.areConnected(dungeon, z, dest, 6))
 					continue;
-				if (connectionsControl != null) {
-					final IRoomGenerator zg = gen.getRoomGenerator(dungeon, z);
-					final IRoomGenerator destg = gen.getRoomGenerator(dungeon, dest);
-					if (!connectionsControl.acceptsConnection(gen, dungeon, zg, z, destg, dest))
-						/* Connection is disallowed */
-						continue;
-				}
 				final boolean success = generateCorridor(gen, gdata, z, dest, buf1, buf2, control, startEndBuffer);
 				if (!success)
 					continue;
@@ -161,10 +158,8 @@ public class CorridorsComponent implements GeneratorComponent {
 					if (shallowWater) {
 						builder.setSymbol(c, DungeonSymbol.SHALLOW_WATER);
 					} else {
-						final boolean doZDoor = c.equals(zDoor)
-								&& shouldPutDoor(gen, dungeon, connectionsControl, z, c);
-						final boolean doDestDoor = c.equals(destDoor)
-								&& shouldPutDoor(gen, dungeon, connectionsControl, dest, c);
+						final boolean doZDoor = c.equals(zDoor) && shouldPutDoor(gen, dungeon, z, c);
+						final boolean doDestDoor = c.equals(destDoor) && shouldPutDoor(gen, dungeon, dest, c);
 						final boolean door = doZDoor || doDestDoor;
 						builder.setSymbol(c, door ? DungeonSymbol.DOOR : DungeonSymbol.FLOOR);
 						if (door && listener != null) {
@@ -316,15 +311,14 @@ public class CorridorsComponent implements GeneratorComponent {
 		return !buf.isEmpty();
 	}
 
-	private boolean shouldPutDoor(DungeonGenerator gen, Dungeon dungeon, /* @Nullable */ IConnectionControl control,
-			Zone z, Coord c) {
+	private boolean shouldPutDoor(DungeonGenerator gen, Dungeon dungeon, Zone z, Coord c) {
 		if (Dungeons.hasNeighbor(dungeon, c, DungeonSymbol.DOOR, false))
 			return false;
 		assert dungeon.getRooms().contains(z);
-		boolean roll = control != null && control.forceDoor(gen, dungeon, gen.getRoomGenerator(dungeon, z), z);
-		if (!roll) {
+		if (!forceDoors(gen, dungeon, z)) {
 			final RNG rng = gen.rng;
-			roll |= rng.nextInt(101) <= gen.doorProbability;
+			if (gen.doorProbability < rng.nextInt(101))
+				return false;
 		}
 		return isValidDoorPosition(dungeon, c, true) || isValidDoorPosition(dungeon, c, false);
 	}
