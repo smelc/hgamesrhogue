@@ -163,6 +163,7 @@ public class RoomComponent implements GeneratorComponent {
 	 */
 	private boolean generateRoom(EnumSet<DungeonSymbol> overwritten) {
 		final Dungeon dungeon = gdata.dungeon;
+		final IDungeonGeneratorListener listener = gen.listener;
 		int frustration = 0;
 		/*
 		 * This bound is quite important. Increasing it makes dungeon generation slower,
@@ -229,6 +230,8 @@ public class RoomComponent implements GeneratorComponent {
 				final IRoomGenerator rg = RGZ.getFst();
 				final Zone zone = RGZ.getSnd();
 				addZone(rg, zone, new Rectangle.Impl(blCandidate, mw, mh), ZoneType.ROOM, DungeonSymbol.FLOOR);
+				if (listener != null)
+					listener.placedRoom(dungeon, rg, zone);
 				return true;
 			}
 			/* Unreachable */

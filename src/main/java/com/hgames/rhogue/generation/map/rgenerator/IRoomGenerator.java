@@ -3,6 +3,7 @@ package com.hgames.rhogue.generation.map.rgenerator;
 import java.util.HashSet;
 
 import com.hgames.rhogue.generation.map.DungeonGenerator;
+import com.hgames.rhogue.generation.map.IDungeonGeneratorListener;
 import com.hgames.rhogue.generation.map.RoomComponent;
 
 import squidpony.squidgrid.zone.Zone;
@@ -11,6 +12,12 @@ import squidpony.squidmath.Coord;
 /**
  * A room generator, i.e. a function that knows out to generate a {@link Zone}
  * that fit within a rectangle.
+ * 
+ * <p>
+ * Note that, to debug {@link IRoomGenerator}s; you may use an instance of
+ * {@link IDungeonGeneratorListener} and do something in
+ * {@link IDungeonGeneratorListener#placedRoom(com.hgames.rhogue.generation.map.Dungeon, IRoomGenerator, Zone)}.
+ * </p>
  * 
  * @author smelC
  */

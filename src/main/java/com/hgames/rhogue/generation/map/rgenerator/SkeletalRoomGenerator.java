@@ -41,4 +41,14 @@ public abstract class SkeletalRoomGenerator implements IRoomGenerator {
 	public boolean getForceDoors() {
 		return forceDoors;
 	}
+
+	@Override
+	public String toString() {
+		final StringBuilder builder = new StringBuilder();
+		builder.append(getClass().getSimpleName());
+		builder.append(" perfect=" + requiresPerfect);
+		builder.append(" maxConn=" + maxConnections);
+		builder.append(" forceDoors=" + forceDoors);
+		return builder.toString();
+	}
 }

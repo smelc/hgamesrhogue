@@ -79,6 +79,7 @@ public class DungeonGenerators {
 			final IRoomGenerator treasureRoomGenerator = new RectangleRoomGenerator(rng);
 			/* To have a single door */
 			treasureRoomGenerator.setMaxConnections(1);
+			treasureRoomGenerator.setForceDoors(true);
 			result.installRoomGenerator(treasureRoomGenerator, 200, new OneShot());
 		}
 		result.installRoomGenerator(new CircularRoomGenerator(rng), 100, new OneShot());

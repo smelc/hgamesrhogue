@@ -68,6 +68,8 @@ public class PassagesComponent extends SkeletalComponent {
 			final Pair<Zone, Zone> connecteds = entry.getKey();
 			final Zone z0 = connecteds.getFst();
 			final Zone z1 = connecteds.getSnd();
+			if (!acceptsOneMoreConnection(gen, dungeon, z0) || !acceptsOneMoreConnection(gen, dungeon, z1))
+				continue;
 			assert !Dungeons.areConnected(dungeon, z0, z1, 1);
 			final Coord ideal;
 			{

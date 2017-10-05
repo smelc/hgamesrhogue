@@ -19,6 +19,13 @@ public class DungeonGeneratorListener implements IDungeonGeneratorListener {
 	protected Set<Coord> lockedDoors;
 
 	@Override
+	public void placedRoom(Dungeon dungeon, IRoomGenerator rg, Zone room) {
+		if (rg.getMaxConnections() == 1) {
+			dungeon.getBuilder().setSymbol(room.getCenter(), DungeonSymbol.HIGH_GRASS);
+		}
+	}
+
+	@Override
 	public void punchedDoor(Dungeon dungeon, IRoomGenerator g1, Zone z1, Coord door, IRoomGenerator g2, Zone z2) {
 		assert Dungeons.hasRoomOrCorridor(dungeon, z1) : z1 + " is not a room or corridor";
 		assert Dungeons.hasRoomOrCorridor(dungeon, z2) : z2 + " is not a room or corridor";
@@ -30,7 +37,9 @@ public class DungeonGeneratorListener implements IDungeonGeneratorListener {
 			return;
 		}
 		if ((g1 != null && 1 == g1.getMaxConnections()) || (g2 != null && 1 == g2.getMaxConnections())) {
-			System.out.println("Adding a locked door at " + door);
+			// System.out.println("Adding a locked door at " + door + " (between " + z1 + "
+			// [generator: " + g1 + "] and "
+			// + z2 + " [generator: " + g2 + "])");
 			addLockedDoor(door);
 		}
 	}

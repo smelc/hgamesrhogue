@@ -14,6 +14,16 @@ import squidpony.squidmath.Coord;
 public interface IDungeonGeneratorListener {
 
 	/**
+	 * Callback done when {@code room} has been placed.
+	 * 
+	 * @param dungeon
+	 * @param rg
+	 *            {@code room}'s generator.
+	 * @param room
+	 */
+	public void placedRoom(Dungeon dungeon, IRoomGenerator rg, Zone room);
+
+	/**
 	 * Callback done when a door is punched between {@code z1} and {@code z2} (one
 	 * of them being a room, or both of them).
 	 * 

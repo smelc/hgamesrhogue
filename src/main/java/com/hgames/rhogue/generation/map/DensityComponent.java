@@ -122,7 +122,6 @@ public class DensityComponent implements GeneratorComponent {
 				final Zone z = component.get(0);
 				final boolean built = gen.generateCorridors(gdata, component, connectedRooms, new ICorridorControl.Impl(
 						dungeon, false, true, true, Math.max(z.getWidth(), z.getHeight()) * 2, false));
-				// FIXME CH Generate doors on these corridors ?
 				if (built) {
 					if (logger != null && logger.isInfoEnabled())
 						logger.infoLog(Tags.GENERATION, "Connected a water island of size " + csz);
