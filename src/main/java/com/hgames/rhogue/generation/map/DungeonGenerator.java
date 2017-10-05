@@ -594,6 +594,33 @@ public class DungeonGenerator {
 	}
 
 	/**
+	 * @author smelC
+	 */
+	public static enum ZoneType {
+		/** The type of rooms */
+		ROOM,
+		/** The type associated to chasms */
+		CHASM,
+		/** The type associated to corridors */
+		CORRIDOR,
+		/** The type associated to deep water */
+		DEEP_WATER;
+
+		boolean needsCaching() {
+			switch (this) {
+			case CHASM:
+			case CORRIDOR:
+			case ROOM:
+				return true;
+			case DEEP_WATER:
+				/* No caching, since these zones are muted */
+				return false;
+			}
+			throw Exceptions.newUnmatchedISE(this);
+		}
+	}
+
+	/**
 	 * @param gdata
 	 * @param z
 	 *            An instance of {@link ListZone} if ztype is
@@ -1123,33 +1150,6 @@ public class DungeonGenerator {
 		// coord.
 		public /* @Nullable */ Zone get(Coord c) {
 			return cellToEncloser[c.x][c.y];
-		}
-	}
-
-	/**
-	 * @author smelC
-	 */
-	public static enum ZoneType {
-		/** The type of rooms */
-		ROOM,
-		/** The type associated to chasms */
-		CHASM,
-		/** The type associated to corridors */
-		CORRIDOR,
-		/** The type associated to deep water */
-		DEEP_WATER;
-
-		boolean needsCaching() {
-			switch (this) {
-			case CHASM:
-			case CORRIDOR:
-			case ROOM:
-				return true;
-			case DEEP_WATER:
-				/* No caching, since these zones are muted */
-				return false;
-			}
-			throw Exceptions.newUnmatchedISE(this);
 		}
 	}
 
