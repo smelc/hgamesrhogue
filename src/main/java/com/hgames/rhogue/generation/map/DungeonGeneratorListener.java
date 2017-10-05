@@ -19,13 +19,17 @@ public class DungeonGeneratorListener implements IDungeonGeneratorListener {
 	protected Set<Coord> lockedDoors;
 
 	@Override
-	public void punchDoor(Dungeon dungeon, IRoomGenerator g1, Zone z1, Coord door, IRoomGenerator g2, Zone z2) {
-		if (g1 == null || g2 == null) {
+	public void punchedDoor(Dungeon dungeon, IRoomGenerator g1, Zone z1, Coord door, IRoomGenerator g2, Zone z2) {
+		assert Dungeons.hasRoomOrCorridor(dungeon, z1) : z1 + " is not a room or corridor";
+		assert Dungeons.hasRoomOrCorridor(dungeon, z2) : z2 + " is not a room or corridor";
+		assert (g1 == null) == dungeon.getCorridors().contains(z1);
+		assert (g2 == null) == dungeon.getCorridors().contains(z2);
+		if (g1 == null && g2 == null) {
 			assert false;
 			/* Cannot do */
 			return;
 		}
-		if (1 == g1.getMaxConnections() || 1 == g2.getMaxConnections()) {
+		if ((g1 != null && 1 == g1.getMaxConnections()) || (g2 != null && 1 == g2.getMaxConnections())) {
 			System.out.println("Adding a locked door at " + door);
 			addLockedDoor(door);
 		}

@@ -17,6 +17,7 @@ import com.hgames.rhogue.zone.SingleCellZone;
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
+import squidpony.squidmath.RNG;
 
 /**
  * Generation of doors between almost adjacent rooms: generate doors/floors on
@@ -38,6 +39,7 @@ public class PassagesComponent implements GeneratorComponent {
 		final Map<Pair<Zone, Zone>, List<Coord>> connectedsToCandidates = new HashMap<Pair<Zone, Zone>, List<Coord>>(
 				16);
 		final IConnectionControl control = gen.connectionControl;
+		final IDungeonGeneratorListener listener = gen.listener;
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
 				if (!isDoorCandidate(gdata, x, y, true) && !isDoorCandidate(gdata, x, y, false))
@@ -50,11 +52,9 @@ public class PassagesComponent implements GeneratorComponent {
 					/* Can happen with weird zones (U shape) */
 					continue;
 				if (control != null) {
-					final IRoomGenerator g0 = gen.roomToGenerator.get(z0);
-					assert g0 != null : IRoomGenerator.class.getSimpleName() + " for zone " + z0 + " is missing";
-					final IRoomGenerator g1 = gen.roomToGenerator.get(z1);
-					assert g1 != null : IRoomGenerator.class.getSimpleName() + " for zone " + z1 + " is missing";
-					if (!control.acceptsConnection(dungeon, g0, z0, g1, z1))
+					final IRoomGenerator g0 = gen.getRoomGenerator(dungeon, z0);
+					final IRoomGenerator g1 = gen.getRoomGenerator(dungeon, z1);
+					if (!control.acceptsConnection(gen, dungeon, g0, z0, g1, z1))
 						/* Connection is disallowed */
 						continue;
 				}
@@ -90,8 +90,8 @@ public class PassagesComponent implements GeneratorComponent {
 			}
 			final Coord door = cell.get();
 			assert door != null;
-			final DungeonSymbol sym = gen.rng.next(101) <= gen.doorProbability ? DungeonSymbol.DOOR
-					: DungeonSymbol.FLOOR;
+			final boolean doorOrFloor = doorOrFloor(gen, dungeon, z0, z1);
+			final DungeonSymbol sym = doorOrFloor ? DungeonSymbol.DOOR : DungeonSymbol.FLOOR;
 			final Zone zdoor = new SingleCellZone(door);
 			gen.addZone(gdata, zdoor, null, null, ZoneType.CORRIDOR);
 			final DungeonBuilder builder = dungeon.getBuilder();
@@ -99,8 +99,26 @@ public class PassagesComponent implements GeneratorComponent {
 			builder.addConnection(z1, zdoor);
 			builder.setSymbol(door.x, door.y, sym);
 			gen.draw(dungeon);
+			if (listener != null && doorOrFloor) {
+				final IRoomGenerator g0 = gen.getRoomGenerator(dungeon, z0);
+				final IRoomGenerator g1 = gen.getRoomGenerator(dungeon, z1);
+				listener.punchedDoor(dungeon, g0, z0, door, g1, z1);
+			}
 		}
 		return true;
+	}
+
+	/** @return Whether a door should be created or a wall should be carved */
+	private boolean doorOrFloor(DungeonGenerator gen, Dungeon dungeon, Zone z0, Zone z1) {
+		final IConnectionControl control = gen.connectionControl;
+		if (control != null && (control.forceDoor(gen, dungeon, gen.getRoomGenerator(dungeon, z0), z0)
+				|| control.forceDoor(gen, dungeon, gen.getRoomGenerator(dungeon, z1), z1))) {
+			System.out.println("Forcing door");
+			return true;
+		} else {
+			final RNG rng = gen.rng;
+			return rng.next(101) <= gen.doorProbability;
+		}
 	}
 
 	/**
@@ -138,6 +156,7 @@ public class PassagesComponent implements GeneratorComponent {
 		case WALL:
 			break;
 		}
+		/* As in CorridorsComponent */
 		final int x1 = x + (southNorthOrEastWest ? Direction.DOWN.deltaX : Direction.LEFT.deltaX);
 		final int y1 = y + (southNorthOrEastWest ? Direction.DOWN.deltaY : Direction.LEFT.deltaY);
 		if (!isDoorNeighborCandidate(dungeon.getSymbol(x1, y1)))
@@ -164,7 +183,7 @@ public class PassagesComponent implements GeneratorComponent {
 		return true;
 	}
 
-	private static boolean isDoorNeighborCandidate(/* @Nullable */ DungeonSymbol sym) {
+	static boolean isDoorNeighborCandidate(/* @Nullable */ DungeonSymbol sym) {
 		if (sym == null)
 			return false;
 		switch (sym) {
@@ -172,12 +191,12 @@ public class PassagesComponent implements GeneratorComponent {
 		case DEEP_WATER:
 		case DOOR:
 		case HIGH_GRASS:
+		case GRASS:
 		case SHALLOW_WATER:
 		case STAIR_DOWN:
 		case STAIR_UP:
 		case WALL:
 			return false;
-		case GRASS:
 		case FLOOR:
 			return true;
 		}

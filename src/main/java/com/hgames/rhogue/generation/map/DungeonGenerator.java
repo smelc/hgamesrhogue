@@ -104,6 +104,7 @@ public class DungeonGenerator {
 	protected int connectivity = 3;
 	protected /* @Nullable */ IDungeonDrawer drawer;
 	protected /* @Nullable */ ILogger logger;
+	protected /* @Nullable */ IDungeonGeneratorListener listener = new DungeonGeneratorListener();
 
 	/** All elements of this table are in {@link #rgLifetimes} too */
 	protected final ProbabilityTable<IRoomGenerator> roomGenerators;
@@ -111,7 +112,7 @@ public class DungeonGenerator {
 	protected final Map<Zone, IRoomGenerator> roomToGenerator;
 	/** The domain of this map is {@link #roomGenerators} */
 	protected final Map<IRoomGenerator, Lifetime> rgLifetimes;
-	protected /* @Nullable */ IConnectionControl connectionControl;
+	protected /* @Nullable */ IConnectionControl connectionControl = DefaultConnectionControl.INSTANCE;
 
 	protected int minRoomWidth = 2;
 	protected int maxRoomWidth;
@@ -201,13 +202,22 @@ public class DungeonGenerator {
 	}
 
 	/**
+	 * This method is designed to plug a game-specific listener that will keep track
+	 * of extra information.
+	 * 
+	 * @param listener
+	 *            The listener to use, or null
+	 */
+	public void setListener(IDungeonGeneratorListener listener) {
+		this.listener = listener;
+	}
+
+	/**
 	 * @param logger
 	 *            The logger to use, or null to turn logging OFF.
-	 * @return {@code this}
 	 */
-	public DungeonGenerator setLogger(/* @Nullable */ ILogger logger) {
+	public void setLogger(/* @Nullable */ ILogger logger) {
 		this.logger = logger;
-		return this;
 	}
 
 	/**
@@ -216,11 +226,9 @@ public class DungeonGenerator {
 	 *            dungeons like this: <a href=
 	 *            "https://twitter.com/hgamesdev/status/899609612554559489"> image
 	 *            </a>). False by default.
-	 * @return {@code this}
 	 */
-	public DungeonGenerator setAllowWidthOrHeightOneRooms(boolean value) {
+	public void setAllowWidthOrHeightOneRooms(boolean value) {
 		this.allowWidthOrHeightOneRooms = value;
-		return this;
 	}
 
 	/**
@@ -259,38 +267,32 @@ public class DungeonGenerator {
 	/**
 	 * @param complexity
 	 *            Set the complexity of this dungeon.
-	 * @return {@code this}
 	 */
-	public DungeonGenerator setComplexity(Complexity complexity) {
+	public void setComplexity(Complexity complexity) {
 		this.complexity = complexity;
-		return this;
 	}
 
 	/**
 	 * Sets the upper bound of the number of connections of a room.
 	 * 
 	 * @param c
-	 * @return {@code this}
 	 */
-	public DungeonGenerator setConnectivity(int c) {
+	public void setConnectivity(int c) {
 		if (c <= 0)
 			throw new IllegalStateException("Connectivy must be greater than zero. Received: " + c);
 		this.connectivity = c;
-		return this;
 	}
 
 	/**
 	 * @param proba
 	 *            An int in [0, 100]
-	 * @return {@code this}
 	 * @throws IllegalStateException
 	 *             If {@code proba} isn't in [0, 100].
 	 */
-	public DungeonGenerator setDoorProbability(int proba) {
+	public void setDoorProbability(int proba) {
 		if (!Ints.inInterval(0, proba, 100))
 			throw new IllegalStateException("Excepted a value in [0, 100]. Received: " + proba);
 		this.doorProbability = proba;
-		return this;
 	}
 
 	/**
@@ -300,11 +302,10 @@ public class DungeonGenerator {
 	 * @param nbPools
 	 *            The number of pools of grasses to generate or something negative
 	 *            not to change anything.
-	 * @return {@code this}
 	 * @throws IllegalStateException
 	 *             If {@code 100 < percent}
 	 */
-	public DungeonGenerator setGrassObjectives(int percent, int nbPools) {
+	public void setGrassObjectives(int percent, int nbPools) {
 		if (100 < percent)
 			throw new IllegalStateException(
 					"Percentage of grass must be negative or in [0, 100]. Received: " + percent);
@@ -312,7 +313,6 @@ public class DungeonGenerator {
 			this.grassPercentage = percent;
 		if (0 <= nbPools)
 			this.grassPatches = nbPools;
-		return this;
 	}
 
 	/**
@@ -332,9 +332,8 @@ public class DungeonGenerator {
 	 *            The maximum height of rooms (inclusive). The default is
 	 *            {@link #height} / 5. Give anything negative to keep the existing
 	 *            value (useful to only change a subset of the sizes).
-	 * @return {@code this}
 	 */
-	public DungeonGenerator setRoomsBounds(int minWidth, int maxWidth, int minHeight, int maxHeight) {
+	public void setRoomsBounds(int minWidth, int maxWidth, int minHeight, int maxHeight) {
 		if (0 <= minWidth)
 			this.minRoomWidth = minWidth;
 		if (0 <= maxWidth)
@@ -343,7 +342,6 @@ public class DungeonGenerator {
 			this.minRoomHeight = minHeight;
 		if (0 <= maxHeight)
 			this.maxRoomHeight = maxHeight;
-		return this;
 	}
 
 	/**
@@ -355,26 +353,22 @@ public class DungeonGenerator {
 	 *            A coord or null.
 	 * @param downStair
 	 *            A coord or null.
-	 * @return {@code this}.
 	 */
-	public DungeonGenerator setStairsObjectives(/* @Nullable */Coord upStair, /* @Nullable */Coord downStair) {
+	public void setStairsObjectives(/* @Nullable */Coord upStair, /* @Nullable */Coord downStair) {
 		this.upStairObjective = upStair == null ? null : clamp(upStair);
 		this.downStairObjective = downStair == null ? null : clamp(downStair);
-		return this;
 	}
 
 	/**
 	 * @param objective
 	 *            The objective. Must be >= 0.
-	 * @return {@code this}
 	 * @throws IllegalStateException
 	 *             If {@code objective < 0}.
 	 */
-	public DungeonGenerator setDisconnectedRoomsObjective(int objective) {
+	public void setDisconnectedRoomsObjective(int objective) {
 		if (objective < 0)
 			throw new IllegalStateException("Disconnected rooms objective must be >= 0. Received: " + objective);
 		this.disconnectedRoomsObjective = objective;
-		return this;
 	}
 
 	/**
@@ -390,11 +384,10 @@ public class DungeonGenerator {
 	 *            An int in [0, Integer.MAX_VALUE]. The number of islands to
 	 *            generate. An island is a room solely surrounded by deep water. Or
 	 *            anything negative not to change it.
-	 * @return {@code this}
 	 * @throws IllegalStateException
 	 *             If {@code percent} is greater than 100.
 	 */
-	public DungeonGenerator setWaterObjective(boolean startWithWater, int percent, int pools, int islands) {
+	public void setWaterObjective(boolean startWithWater, int percent, int pools, int islands) {
 		this.startWithWater = startWithWater;
 		if (0 <= percent) {
 			if (100 < percent)
@@ -407,7 +400,6 @@ public class DungeonGenerator {
 		/* else do not change it */
 		if (0 <= islands)
 			this.waterIslands = islands;
-		return this;
 	}
 
 	/**
@@ -419,12 +411,10 @@ public class DungeonGenerator {
 	 *            The probability of using {@code roomGenerator} among all room
 	 *            generators installed.
 	 * @param lifetime
-	 * @return {@code this}.
 	 */
-	public DungeonGenerator installRoomGenerator(IRoomGenerator roomGenerator, int probability, Lifetime lifetime) {
+	public void installRoomGenerator(IRoomGenerator roomGenerator, int probability, Lifetime lifetime) {
 		this.roomGenerators.add(roomGenerator, probability);
 		this.rgLifetimes.put(roomGenerator, lifetime);
-		return this;
 	}
 
 	/** @return A fresh dungeon or null if it could not be generated. */
@@ -633,6 +623,13 @@ public class DungeonGenerator {
 			}
 			throw Exceptions.newUnmatchedISE(this);
 		}
+	}
+
+	protected IRoomGenerator getRoomGenerator(Dungeon dungeon, Zone room) {
+		assert dungeon.rooms.contains(room);
+		final IRoomGenerator rg = roomToGenerator.get(room);
+		assert rg != null : IRoomGenerator.class.getSimpleName() + " for zone " + room + " is missing";
+		return rg;
 	}
 
 	/**

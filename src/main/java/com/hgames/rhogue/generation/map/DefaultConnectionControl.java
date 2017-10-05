@@ -16,9 +16,8 @@ public class DefaultConnectionControl implements IConnectionControl {
 	public static final IConnectionControl INSTANCE = new DefaultConnectionControl();
 
 	@Override
-	public boolean forceDoor(DungeonGenerator gen, Dungeon dungeon, IRoomGenerator gen1, Zone z1, IRoomGenerator gen2,
-			Zone z2) {
-		return gen1.getMaxConnections() == 1 && gen2.getMaxConnections() == 1;
+	public boolean forceDoor(DungeonGenerator gen, Dungeon dungeon, IRoomGenerator rg, Zone z) {
+		return rg.getMaxConnections() == 1;
 	}
 
 	@Override

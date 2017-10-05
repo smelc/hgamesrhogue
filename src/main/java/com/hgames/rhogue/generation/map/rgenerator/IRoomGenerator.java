@@ -4,6 +4,7 @@ import java.util.HashSet;
 
 import com.hgames.rhogue.generation.map.DungeonGenerator;
 import com.hgames.rhogue.generation.map.RoomComponent;
+import com.hgames.rhogue.generation.map.connection.IConnectionControl;
 
 import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
@@ -15,6 +16,20 @@ import squidpony.squidmath.Coord;
  * @author smelC
  */
 public interface IRoomGenerator {
+
+	/**
+	 * Sets the value to be returned by {@link #requiresPerfect()}.
+	 * 
+	 * @param val
+	 */
+	public void setRequiresPerfect(boolean val);
+
+	/**
+	 * Sets the value returned by {@link #getMaxConnections()}.
+	 * 
+	 * @param val
+	 */
+	public void setMaxConnections(int val);
 
 	/**
 	 * @param component
@@ -51,5 +66,12 @@ public interface IRoomGenerator {
 	 *         neighbors are only walls or outgoing corridors (no chasm, no water).
 	 */
 	public boolean requiresPerfect();
+
+	/**
+	 * @return The maximum number of connections to rooms gnenerated by
+	 *         {@code this}. This value is by default used by
+	 *         {@link IConnectionControl}.
+	 */
+	int getMaxConnections();
 
 }

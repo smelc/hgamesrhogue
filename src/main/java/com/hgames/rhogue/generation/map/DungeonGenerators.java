@@ -75,6 +75,12 @@ public class DungeonGenerators {
 	public DungeonGenerator fancy() {
 		final DungeonGenerator result = halfRectanglesHalfCaves();
 		result.setWaterObjective(true, 20, 1, 10);
+		{
+			final IRoomGenerator treasureRoomGenerator = new RectangleRoomGenerator(rng);
+			/* To have a single door */
+			treasureRoomGenerator.setMaxConnections(1);
+			result.installRoomGenerator(treasureRoomGenerator, 200, new OneShot());
+		}
 		result.installRoomGenerator(new CircularRoomGenerator(rng), 100, new OneShot());
 		final IRoomGenerator shallow = rng.nextBoolean() ? new ShallowRectangleRoomGenerator()
 				: new ShallowCircularRoomGenerator(rng);

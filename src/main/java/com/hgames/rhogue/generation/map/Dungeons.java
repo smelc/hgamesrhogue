@@ -220,6 +220,18 @@ public class Dungeons {
 
 	/**
 	 * @param dungeon
+	 * @param z
+	 *            A room or corridor
+	 * @return The number of connections of {@code z}.
+	 */
+	public static int getNumberOfConnections(Dungeon dungeon, Zone z) {
+		assert Dungeons.hasRoomOrCorridor(dungeon, z);
+		final List<Zone> out = dungeon.connections.get(z);
+		return out == null ? 0 : out.size();
+	}
+
+	/**
+	 * @param dungeon
 	 * @return The sum of the number of rooms and of corridors.
 	 */
 	public static int getNumberOfZones(Dungeon dungeon) {
@@ -285,6 +297,23 @@ public class Dungeons {
 	public static boolean hasGrassPool(Dungeon dungeon, Zone z, boolean lowOrHighGrass) {
 		final List<Zone> target = lowOrHighGrass ? dungeon.grassPools : dungeon.highGrassPools;
 		return target != null && target.contains(z);
+	}
+
+	/**
+	 * @param dungeon
+	 * @param c
+	 * @param sym
+	 * @param considerDiagonals
+	 *            Whether to consider diagonal neighbors.
+	 * @return true if {@code c} has {@code sym} as neighbor.
+	 */
+	public static boolean hasNeighbor(Dungeon dungeon, Coord c, DungeonSymbol sym, boolean considerDiagonals) {
+		final Direction[] dirs = considerDiagonals ? Direction.OUTWARDS : Direction.CARDINALS;
+		for (Direction dir : dirs) {
+			if (sym == dungeon.getSymbol(c.translate(dir)))
+				return true;
+		}
+		return false;
 	}
 
 	/**

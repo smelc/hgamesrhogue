@@ -14,7 +14,8 @@ import squidpony.squidmath.Coord;
 public interface IDungeonGeneratorListener {
 
 	/**
-	 * Callback done when a door is punched between {@code z1} and {@code z2}.
+	 * Callback done when a door is punched between {@code z1} and {@code z2} (one
+	 * of them being a room, or both of them).
 	 * 
 	 * <p>
 	 * This method is typically used to keep track of locked doors. You could define
@@ -26,13 +27,18 @@ public interface IDungeonGeneratorListener {
 	 * @param dungeon
 	 *            The dungeon being built.
 	 * @param g1
-	 *            {@code z1}'s generator
+	 *            {@code z1}'s generator if {@code z1} is a room or null if it's a
+	 *            corridor.
 	 * @param z1
+	 *            A room or corridor.
 	 * @param door
 	 * @param g2
-	 *            {@code z2}'s generator
+	 *            {@code z2}'s generator if {@code z2} is a room or null if it's a
+	 *            corridor.
 	 * @param z2
+	 *            A room or corridor.
 	 */
-	public void punchDoor(Dungeon dungeon, IRoomGenerator g1, Zone z1, Coord door, IRoomGenerator g2, Zone z2);
+	public void punchedDoor(Dungeon dungeon, /* @Nullable */ IRoomGenerator g1, Zone z1, Coord door,
+			/* @Nullable */ IRoomGenerator g2, Zone z2);
 
 }
