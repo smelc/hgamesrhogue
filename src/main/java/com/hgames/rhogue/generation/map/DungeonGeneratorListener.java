@@ -10,7 +10,8 @@ import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**
- * An example implementation of {@link IDungeonGeneratorListener}.
+ * An example implementation of {@link IDungeonGeneratorListener} that uses
+ * {@link IRoomGenerator#getMaxConnections()} to determine locked doors.
  * 
  * @author smelC
  */
@@ -20,9 +21,10 @@ public class DungeonGeneratorListener implements IDungeonGeneratorListener {
 
 	@Override
 	public void placedRoom(Dungeon dungeon, IRoomGenerator rg, Zone room) {
-		if (rg.getMaxConnections() == 1) {
-			dungeon.getBuilder().setSymbol(room.getCenter(), DungeonSymbol.HIGH_GRASS);
-		}
+		// An example of debugging:
+		// if (rg.getMaxConnections() == 1) {
+		// dungeon.getBuilder().setSymbol(room.getCenter(), DungeonSymbol.HIGH_GRASS);
+		// }
 	}
 
 	@Override

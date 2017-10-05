@@ -99,7 +99,6 @@ public class CorridorsComponent extends SkeletalComponent {
 		}
 		if (!someChance)
 			return false;
-		final /* @Nullable */ IDungeonGeneratorListener listener = gen.listener;
 		final boolean perfect = control.getPerfect();
 		boolean needWaterPoolsCleanup = false;
 		final Set<Coord> buf = new HashSet<Coord>();
@@ -154,23 +153,18 @@ public class CorridorsComponent extends SkeletalComponent {
 				builder.addConnection(dest, recorded);
 				// Punch corridor
 				for (Coord c : built) {
+					if (c.equals(zDoor) || c.equals(destDoor))
+						/* Done after the loop */
+						continue;
 					final boolean shallowWater = buf != null && buf.contains(c);
-					if (shallowWater) {
-						builder.setSymbol(c, DungeonSymbol.SHALLOW_WATER);
-					} else {
-						final boolean doZDoor = c.equals(zDoor) && shouldPutDoor(gen, gdata, z, c);
-						final boolean doDestDoor = c.equals(destDoor) && shouldPutDoor(gen, gdata, dest, c);
-						final boolean door = doZDoor || doDestDoor;
-						builder.setSymbol(c, door ? DungeonSymbol.DOOR : DungeonSymbol.FLOOR);
-						if (door && listener != null) {
-							if (doZDoor)
-								listener.punchedDoor(dungeon, gen.getRoomGenerator(dungeon, z), z, c, null, recorded);
-							if (doDestDoor)
-								listener.punchedDoor(dungeon, null, recorded, c, gen.getRoomGenerator(dungeon, dest),
-										dest);
-						}
-					}
+					builder.setSymbol(c, shallowWater ? DungeonSymbol.SHALLOW_WATER : DungeonSymbol.FLOOR);
 				}
+				/*
+				 * Must be done after the loop above, because we check adequacy of walkable
+				 * cells which is set partially by the loop.
+				 */
+				punchCorridorExtremity(gen, gdata, z, recorded, zDoor, buf != null && buf.contains(zDoor));
+				punchCorridorExtremity(gen, gdata, dest, recorded, destDoor, buf != null && buf.contains(destDoor));
 				gen.draw(dungeon);
 				result++;
 				connections++;
@@ -179,6 +173,43 @@ public class CorridorsComponent extends SkeletalComponent {
 		if (needWaterPoolsCleanup)
 			gen.cleanWaterPools(gdata, null);
 		return 0 < result;
+	}
+
+	/**
+	 * @param gen
+	 * @param gdata
+	 * @param room
+	 *            The room being connected.
+	 * @param corridor
+	 *            The corridor built.
+	 * @param c
+	 * @param shallowWater
+	 *            If shallow water must be put on {@code c}.
+	 */
+	private void punchCorridorExtremity(DungeonGenerator gen, GenerationData gdata, Zone room, Zone corridor, Coord c,
+			boolean shallowWater) {
+		final Dungeon dungeon = gdata.dungeon;
+		assert dungeon.getRooms().contains(room);
+		boolean door = false;
+		if (!shallowWater) {
+			door = forceDoors(gen, dungeon, room);
+			if (!door) {
+				final RNG rng = gen.rng;
+				door |= rng.nextInt(101) <= gen.doorProbability;
+			}
+			door &= isDoorCandidate(gdata, dungeon, c, null);
+		}
+		assert !(shallowWater && door);
+		/* Do it */
+		final DungeonBuilder builder = dungeon.getBuilder();
+		final DungeonSymbol sym = shallowWater ? DungeonSymbol.SHALLOW_WATER
+				: (door ? DungeonSymbol.DOOR : DungeonSymbol.FLOOR);
+		builder.setSymbol(c, sym);
+		if (door) {
+			final IDungeonGeneratorListener listener = gen.listener;
+			if (listener != null)
+				listener.punchedDoor(dungeon, gen.getRoomGenerator(dungeon, room), room, c, null, corridor);
+		}
 	}
 
 	/** @return Whether a corridor was found */
@@ -309,17 +340,6 @@ public class CorridorsComponent extends SkeletalComponent {
 				buf.add(coord);
 		}
 		return !buf.isEmpty();
-	}
-
-	private boolean shouldPutDoor(DungeonGenerator gen, GenerationData gdata, Zone z, Coord c) {
-		final Dungeon dungeon = gdata.dungeon;
-		assert dungeon.getRooms().contains(z);
-		if (!forceDoors(gen, dungeon, z)) {
-			final RNG rng = gen.rng;
-			if (gen.doorProbability < rng.nextInt(101))
-				return false;
-		}
-		return isDoorCandidate(gdata, dungeon, c, null);
 	}
 
 	private static Direction toGoFromZoneToZone(Coord c1, Coord c2, boolean cardinalsOnly) {

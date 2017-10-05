@@ -103,7 +103,7 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 		return change ? new ListZone(new ArrayList<Coord>(all)) : rectangle;
 	}
 
-	/** @return The size under which a zone cannot be carved anymore */
+	/** @return The size at which a zone cannot be carved anymore */
 	protected int getZoneMinSize() {
 		return 4;
 	}
@@ -124,7 +124,7 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 		todos.add(start);
 		int carved = 0;
 		final int mzsz = getZoneMinSize();
-		while (!todos.isEmpty() && carved < maxCarvingPerCorner && mzsz <= zone.size()) {
+		while (!todos.isEmpty() && carved < maxCarvingPerCorner && mzsz < zone.size()) {
 			final Coord next = todos.remove();
 			if (!zone.contains(next))
 				continue;
