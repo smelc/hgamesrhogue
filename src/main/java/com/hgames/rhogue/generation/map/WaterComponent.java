@@ -82,7 +82,7 @@ public class WaterComponent implements GeneratorComponent {
 				builder.setSymbol(spilt, DungeonSymbol.DEEP_WATER);
 				filled++;
 			}
-			gen.addZone(gdata, new ListZone(new ArrayList<Coord>(spill)), null, ZoneType.DEEP_WATER);
+			gen.addZone(gdata, new ListZone(new ArrayList<Coord>(spill)), null, null, ZoneType.DEEP_WATER);
 			if (gen.logger != null && gen.logger.isInfoEnabled())
 				gen.logger.infoLog(Tags.GENERATION, "Created water pool of size " + sz); // + ": " + spill);
 			gen.draw(dungeon);

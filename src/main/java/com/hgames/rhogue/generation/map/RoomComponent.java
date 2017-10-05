@@ -123,6 +123,8 @@ public class RoomComponent implements GeneratorComponent {
 	}
 
 	/**
+	 * @param rg
+	 *            The room generator used to generate {@code zone}.
 	 * @param zone
 	 *            The zone to add.
 	 * @param boundingBox
@@ -131,13 +133,14 @@ public class RoomComponent implements GeneratorComponent {
 	 * @param sym
 	 *            The symbol to put in {@code zone}.
 	 */
-	public void addZone(Zone zone, /* @Nullable */ Rectangle boundingBox, ZoneType ztype, DungeonSymbol sym) {
+	public void addZone(IRoomGenerator rg, Zone zone, /* @Nullable */ Rectangle boundingBox, ZoneType ztype,
+			DungeonSymbol sym) {
 		final Dungeon dungeon = gdata.dungeon;
 		assert !Dungeons.anyOnEdge(dungeon, zone.iterator()) : "Zone is on the dungeon's edge: " + zone;
 		// infoLog("Generated room: " + zone);
 		rgh.prepareRegistration(zone);
 		/* Record the zone */
-		gen.addZone(gdata, zone, boundingBox, ztype);
+		gen.addZone(gdata, zone, boundingBox, rg, ztype);
 		/* Punch it */
 		final DungeonBuilder builder = dungeon.getBuilder();
 		builder.setSymbols(zone.iterator(), sym);
@@ -223,8 +226,9 @@ public class RoomComponent implements GeneratorComponent {
 				 * 'zone' must be used now, since the generator's usage has been recorded in
 				 * 'generateRoomAt'.
 				 */
+				final IRoomGenerator rg = RGZ.getFst();
 				final Zone zone = RGZ.getSnd();
-				addZone(zone, new Rectangle.Impl(blCandidate, mw, mh), ZoneType.ROOM, DungeonSymbol.FLOOR);
+				addZone(rg, zone, new Rectangle.Impl(blCandidate, mw, mh), ZoneType.ROOM, DungeonSymbol.FLOOR);
 				return true;
 			}
 			/* Unreachable */

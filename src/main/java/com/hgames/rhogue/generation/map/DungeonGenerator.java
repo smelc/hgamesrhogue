@@ -20,6 +20,7 @@ import com.hgames.lib.Ints;
 import com.hgames.lib.Stopwatch;
 import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.Tags;
+import com.hgames.rhogue.generation.map.connection.IConnectionControl;
 import com.hgames.rhogue.generation.map.corridor.CorridorBuilders;
 import com.hgames.rhogue.generation.map.corridor.ICorridorBuilder;
 import com.hgames.rhogue.generation.map.draw.ConsoleDungeonDrawer;
@@ -99,14 +100,18 @@ public class DungeonGenerator {
 	 * An upper bound of the number of corridors to and from a room (ignores doors
 	 * punched because of rooms being adjacent).
 	 */
+	@Deprecated // Check if not overridden by IConnectionControl
 	protected int connectivity = 3;
 	protected /* @Nullable */ IDungeonDrawer drawer;
 	protected /* @Nullable */ ILogger logger;
 
 	/** All elements of this table are in {@link #rgLifetimes} too */
 	protected final ProbabilityTable<IRoomGenerator> roomGenerators;
-	/** All elements of this map are in {@link #roomGenerators} too */
+	/** A map that keep tracks of rooms' generators */
+	protected final Map<Zone, IRoomGenerator> roomToGenerator;
+	/** The domain of this map is {@link #roomGenerators} */
 	protected final Map<IRoomGenerator, Lifetime> rgLifetimes;
+	protected /* @Nullable */ IConnectionControl connectionControl;
 
 	protected int minRoomWidth = 2;
 	protected int maxRoomWidth;
@@ -182,6 +187,7 @@ public class DungeonGenerator {
 		this.height = height;
 		this.roomGenerators = ProbabilityTable.create();
 		this.rgLifetimes = new HashMap<IRoomGenerator, Lifetime>();
+		this.roomToGenerator = new HashMap<Zone, IRoomGenerator>();
 	}
 
 	/**
@@ -215,6 +221,14 @@ public class DungeonGenerator {
 	public DungeonGenerator setAllowWidthOrHeightOneRooms(boolean value) {
 		this.allowWidthOrHeightOneRooms = value;
 		return this;
+	}
+
+	/**
+	 * @param cc
+	 *            Sets the connection control to use, or null for none.
+	 */
+	public void setConnectionControl(/* @Nullable */ IConnectionControl cc) {
+		this.connectionControl = cc;
 	}
 
 	/**
@@ -424,6 +438,7 @@ public class DungeonGenerator {
 				System.out.println(msg);
 			return null;
 		}
+		roomToGenerator.clear();
 		computeMaxRoomSizes();
 		/*
 		 * /!\ Don't forget to disable assertions when checking performances. Assertions
@@ -628,10 +643,13 @@ public class DungeonGenerator {
 	 * @param boundingBox
 	 *            {@code z}'s bounding box. Not required if a {@link ZoneType#CHASM}
 	 *            or {@link ZoneType#DEEP_WATER}.
+	 * @param rg
+	 *            The generator that generated {@code z}, if any.
 	 * @param ztype
 	 * @return The zone added (might be a cache over {@code z}).
 	 */
-	protected Zone addZone(GenerationData gdata, Zone z, /* @Nullable */ Rectangle boundingBox, ZoneType ztype) {
+	protected Zone addZone(GenerationData gdata, Zone z, /* @Nullable */ Rectangle boundingBox,
+			/* @Nullable */ IRoomGenerator rg, ZoneType ztype) {
 		assert z != null;
 		final Dungeon dungeon = gdata.dungeon;
 		final DungeonBuilder builder = dungeon.getBuilder();
@@ -640,13 +658,25 @@ public class DungeonGenerator {
 		case CHASM:
 			builder.addChasm(recorded);
 			break;
-		case CORRIDOR:
 		case ROOM:
+			if (rg == null) {
+				assert false;
+				if (logger != null && logger.isErrEnabled())
+					logger.errLog(Tags.GENERATION,
+							"No " + IRoomGenerator.class.getSimpleName() + " given when adding a " + ztype
+									+ " zone. This is a bug. Continuing but hoping for the best...");
+			}
+			//$FALL-THROUGH$
+		case CORRIDOR:
 			builder.addZone(recorded, boundingBox, ztype == ZoneType.ROOM);
 			break;
 		case DEEP_WATER:
 			builder.addWaterPool((ListZone) z);
 			break;
+		}
+		if (rg != null) {
+			assert !roomToGenerator.containsKey(recorded);
+			roomToGenerator.put(recorded, rg);
 		}
 		if (logger != null && logger.isDebugEnabled())
 			logger.debugLog(Tags.GENERATION, "Recording " + ztype + " zone: " + z);

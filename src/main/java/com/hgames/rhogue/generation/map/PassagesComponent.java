@@ -10,6 +10,8 @@ import com.hgames.lib.collection.Multimaps;
 import com.hgames.lib.collection.pair.Pair;
 import com.hgames.rhogue.generation.map.DungeonGenerator.GenerationData;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ZoneType;
+import com.hgames.rhogue.generation.map.connection.IConnectionControl;
+import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 import com.hgames.rhogue.zone.SingleCellZone;
 
 import squidpony.squidgrid.Direction;
@@ -35,6 +37,7 @@ public class PassagesComponent implements GeneratorComponent {
 		/* The Lists do not contain doublons */
 		final Map<Pair<Zone, Zone>, List<Coord>> connectedsToCandidates = new HashMap<Pair<Zone, Zone>, List<Coord>>(
 				16);
+		final IConnectionControl control = gen.connectionControl;
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
 				if (!isDoorCandidate(gdata, x, y, true) && !isDoorCandidate(gdata, x, y, false))
@@ -46,6 +49,15 @@ public class PassagesComponent implements GeneratorComponent {
 				if (z0 == z1)
 					/* Can happen with weird zones (U shape) */
 					continue;
+				if (control != null) {
+					final IRoomGenerator g0 = gen.roomToGenerator.get(z0);
+					assert g0 != null : IRoomGenerator.class.getSimpleName() + " for zone " + z0 + " is missing";
+					final IRoomGenerator g1 = gen.roomToGenerator.get(z1);
+					assert g1 != null : IRoomGenerator.class.getSimpleName() + " for zone " + z1 + " is missing";
+					if (!control.acceptsConnection(dungeon, g0, z0, g1, z1))
+						/* Connection is disallowed */
+						continue;
+				}
 				final Coord doorCandidate = Coord.get(x, y);
 				Multimaps.addToListMultimap(connectedsToCandidates, orderedPair(gdata, z0, z1), doorCandidate);
 				assert Dungeons.findZoneContaining(dungeon, x, y) == null : "Candidate for door: " + doorCandidate
@@ -81,7 +93,7 @@ public class PassagesComponent implements GeneratorComponent {
 			final DungeonSymbol sym = gen.rng.next(101) <= gen.doorProbability ? DungeonSymbol.DOOR
 					: DungeonSymbol.FLOOR;
 			final Zone zdoor = new SingleCellZone(door);
-			gen.addZone(gdata, zdoor, null, ZoneType.CORRIDOR);
+			gen.addZone(gdata, zdoor, null, null, ZoneType.CORRIDOR);
 			final DungeonBuilder builder = dungeon.getBuilder();
 			builder.addConnection(z0, zdoor);
 			builder.addConnection(z1, zdoor);

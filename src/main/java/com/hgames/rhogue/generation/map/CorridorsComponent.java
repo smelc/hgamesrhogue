@@ -17,7 +17,9 @@ import com.hgames.lib.collection.pair.Pair;
 import com.hgames.rhogue.generation.map.DungeonGenerator.GenerationData;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ICorridorControl;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ZoneType;
+import com.hgames.rhogue.generation.map.connection.IConnectionControl;
 import com.hgames.rhogue.generation.map.corridor.ICorridorBuilder;
+import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 import com.hgames.rhogue.zone.SingleCellZone;
 
 import squidpony.squidgrid.Direction;
@@ -94,6 +96,7 @@ public class CorridorsComponent implements GeneratorComponent {
 		}
 		if (!someChance)
 			return false;
+		final /* @Nullable */ IConnectionControl connectionsControl = gen.connectionControl;
 		final boolean perfect = control.getPerfect();
 		boolean needWaterPoolsCleanup = false;
 		final Set<Coord> buf = new HashSet<Coord>();
@@ -110,9 +113,17 @@ public class CorridorsComponent implements GeneratorComponent {
 			int connections = dungeon.getNeighbors(z).size();
 			for (int j = 0; j < gen.connectivity && connections < gen.connectivity && j < nbcd; j++) {
 				final Zone dest = candidateDests.get(j).getSnd();
-				// XXX CH Check it wouldn't exceed dest's connectivity ?
 				if (Dungeons.areConnected(dungeon, z, dest, 6))
 					continue;
+				if (connectionsControl != null) {
+					final IRoomGenerator zg = gen.roomToGenerator.get(z);
+					assert zg != null : IRoomGenerator.class.getSimpleName() + " for zone " + z + " is missing";
+					final IRoomGenerator destg = gen.roomToGenerator.get(dest);
+					assert destg != null : IRoomGenerator.class.getSimpleName() + " for zone " + dest + " is missing";
+					if (!connectionsControl.acceptsConnection(dungeon, zg, z, destg, dest))
+						/* Connection is disallowed */
+						continue;
+				}
 				final Zone built = generateCorridor(gen, gdata, z, dest, buf1, buf2, control, startEndBuffer);
 				if (built == null)
 					continue;
@@ -136,7 +147,7 @@ public class CorridorsComponent implements GeneratorComponent {
 						gen.draw(dungeon);
 					}
 				}
-				final Zone recorded = gen.addZone(gdata, built, null, ZoneType.CORRIDOR);
+				final Zone recorded = gen.addZone(gdata, built, null, null, ZoneType.CORRIDOR);
 				builder.addConnection(z, recorded);
 				builder.addConnection(dest, recorded);
 				// Punch corridor

@@ -41,7 +41,7 @@ public abstract class AbstractShallowRoomGenerator extends SkeletalRoomGenerator
 		}
 		if (change) {
 			final Zone chasm = toRemove.translate(translation);
-			component.addZone(chasm, null, ZoneType.CHASM, DungeonSymbol.CHASM);
+			component.addZone(this, chasm, null, ZoneType.CHASM, DungeonSymbol.CHASM);
 			return new ListZone(all);
 		} else {
 			/* This is likely not intended */
