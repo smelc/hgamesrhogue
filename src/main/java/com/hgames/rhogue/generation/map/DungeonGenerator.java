@@ -662,12 +662,20 @@ public class DungeonGenerator {
 		return recorded;
 	}
 
-	protected void removeZone(GenerationData gdata, Zone z) {
+	protected void removeRoomOrCorridor(GenerationData gdata, Zone z) {
 		final Dungeon dungeon = gdata.dungeon;
 		final DungeonBuilder builder = dungeon.getBuilder();
-		builder.removeZone(z);
+		final boolean room = dungeon.getRooms().contains(z);
+		final IRoomGenerator rg = room ? getRoomGenerator(gdata.dungeon, z) : null;
+		builder.removeRoomOrCorridor(z);
 		for (Coord c : z) {
 			gdata.cellToEncloser[c.x][c.y] = null;
+		}
+		if (room) {
+			if (listener != null)
+				listener.removedRoom(dungeon, rg, z);
+			final boolean rmed = roomToGenerator.remove(z) != null;
+			assert rmed;
 		}
 	}
 

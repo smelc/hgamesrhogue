@@ -174,7 +174,7 @@ public class DensityComponent implements GeneratorComponent {
 		final Dungeon dungeon = gdata.dungeon;
 		final DungeonBuilder builder = dungeon.getBuilder();
 		assert Dungeons.hasZone(dungeon, z);
-		gen.removeZone(gdata, z);
+		gen.removeRoomOrCorridor(gdata, z);
 		builder.setSymbols(z.iterator(), DungeonSymbol.WALL);
 		gen.draw(dungeon);
 	}

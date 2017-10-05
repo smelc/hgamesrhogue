@@ -26,6 +26,11 @@ public class DungeonGeneratorListener implements IDungeonGeneratorListener {
 	}
 
 	@Override
+	public void removedRoom(Dungeon dungeon, IRoomGenerator rg, Zone room) {
+		/* Nothing done */
+	}
+
+	@Override
 	public void punchedDoor(Dungeon dungeon, IRoomGenerator g1, Zone z1, Coord door, IRoomGenerator g2, Zone z2) {
 		assert Dungeons.hasRoomOrCorridor(dungeon, z1) : z1 + " is not a room or corridor";
 		assert Dungeons.hasRoomOrCorridor(dungeon, z2) : z2 + " is not a room or corridor";

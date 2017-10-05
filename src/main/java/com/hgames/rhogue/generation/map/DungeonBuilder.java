@@ -183,17 +183,21 @@ public class DungeonBuilder implements Serializable {
 	/**
 	 * @param z
 	 *            The zone to remove.
+	 * @return true if {@code z} was a zone, false if a corridor.
 	 */
-	public void removeZone(Zone z) {
+	public boolean removeRoomOrCorridor(Zone z) {
+		assert Dungeons.hasRoomOrCorridor(dungeon, z);
 		boolean done = dungeon.rooms.remove(z);
+		final boolean result = done;
 		if (!done)
 			done = dungeon.corridors.remove(z);
 		if (!done)
-			throw new IllegalStateException("Cannot remove zone (not found): " + z);
+			throw new IllegalStateException("Cannot remove room or corridor: " + z);
 		dungeon.boundingBoxes.remove(z);
 		dungeon.connections.remove(z);
 		for (List<Zone> destinations : dungeon.connections.values())
 			destinations.remove(z);
+		return result;
 	}
 
 	/**
