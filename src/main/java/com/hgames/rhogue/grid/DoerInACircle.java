@@ -5,7 +5,12 @@ package com.hgames.rhogue.grid;
  * 
  * @author smelC
  */
-public abstract class DoerInACircle {
+public abstract class DoerInACircle extends SkeletalCellsDoer {
+
+	@Override
+	public void doOnCells() {
+		throw new IllegalStateException();
+	}
 
 	/**
 	 * @param x
@@ -15,6 +20,7 @@ public abstract class DoerInACircle {
 	 * @param radius
 	 *            The circle's radius (rayon).
 	 */
+	@Deprecated // Harmonize with DoerInACenteredRectangle
 	public void doInACircle(int x, int y, int radius) {
 		if (radius < 0)
 			return;
@@ -27,12 +33,5 @@ public abstract class DoerInACircle {
 			}
 		}
 	}
-
-	/**
-	 * @param x
-	 * @param y
-	 * @return true to stop
-	 */
-	protected abstract boolean doOnACell(int x, int y);
 
 }
