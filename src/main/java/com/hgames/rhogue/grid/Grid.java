@@ -2,6 +2,8 @@ package com.hgames.rhogue.grid;
 
 import java.io.Serializable;
 
+import squidpony.squidmath.Coord;
+
 /**
  * A 2D grid.
  * 
@@ -18,6 +20,12 @@ public interface Grid extends Serializable {
 	 * @return The grid's height.
 	 */
 	public int getHeight();
+
+	/**
+	 * @param c
+	 * @return Whether {@code c} is a valid location.
+	 */
+	public boolean isInGrid(Coord c);
 
 	/**
 	 * @param x

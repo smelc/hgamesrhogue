@@ -31,11 +31,16 @@ public class ConsoleDungeonDrawer implements IDungeonDrawer {
 		for (int y = 0; y < height; y++) {
 			for (int x = 0; x < width; x++) {
 				final DungeonSymbol sym = dungeon[x][y];
-				System.out.print(symbolDrawer.draw(sym));
+				System.out.print(print(sym, x, y));
 			}
 			System.out.println("");
 		}
 		nbDrawn++;
 	}
 
+	/* Clients may override */
+	@SuppressWarnings("unused")
+	protected char print(DungeonSymbol sym, int x, int y) {
+		return symbolDrawer.draw(sym);
+	}
 }
