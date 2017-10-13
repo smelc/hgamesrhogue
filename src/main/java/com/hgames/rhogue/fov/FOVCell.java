@@ -3,28 +3,51 @@ package com.hgames.rhogue.fov;
 import com.hgames.rhogue.lighting.ILightSource;
 
 /**
- * A cell lit by some light source.
+ * A concrete implementation of {@link IFOVCell} that keeps track of the
+ * strongest source.
  * 
  * @author smelC
  * @param <T>
- *            The type of light emitters.
  */
-public interface FOVCell<T extends ILightSource> {
+public class FOVCell<T extends ILightSource> implements IFOVCell<T> {
 
-	/** @return {@code 0.0} if cell not lit, else something {@code <= 1.0} */
-	public float getLighting();
-
-	/** Resets this cell's state */
-	public void clear();
+	protected double lighting;
+	protected /* @Nullable */ T source;
 
 	/**
-	 * Callback done when this cell is found to receive light from {@code source}.
-	 * 
-	 * @param source
-	 *            The light source.
-	 * @param v
-	 *            The amount of light received from the source.
+	 * A pristine cell.
 	 */
-	public void unionLight(T source, float v);
+	public FOVCell() {
+		this.lighting = 0;
+		this.source = null;
+	}
+
+	@Override
+	public double getLighting() {
+		return lighting;
+	}
+
+	@Override
+	public void clear() {
+		lighting = 0;
+		source = null;
+	}
+
+	@Override
+	public void unionLight(T src, double v) {
+		assert 0 <= v && v <= 1.0;
+		if (lighting < v) {
+			/* Take strongest source */
+			this.lighting = v;
+			this.source = src;
+		}
+	}
+
+	/**
+	 * @return The source of light in this cell, or null if none.
+	 */
+	public /* @Nullable */ T getSource() {
+		return source;
+	}
 
 }

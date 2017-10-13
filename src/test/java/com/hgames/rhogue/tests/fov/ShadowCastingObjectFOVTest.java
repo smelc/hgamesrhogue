@@ -7,6 +7,7 @@ import com.hgames.lib.Exceptions;
 import com.hgames.lib.color.Colors;
 import com.hgames.lib.color.IColor;
 import com.hgames.rhogue.fov.FOVCell;
+import com.hgames.rhogue.fov.IFOVCell;
 import com.hgames.rhogue.fov.ShadowCastingObjectFOV;
 import com.hgames.rhogue.generation.map.Dungeon;
 import com.hgames.rhogue.generation.map.DungeonGenerator;
@@ -52,17 +53,17 @@ public class ShadowCastingObjectFOVTest {
 		final int height = width == 0 ? 0 : map[0].length;
 		@SuppressWarnings("unchecked")
 		final FOVCell<LightSource>[][] lightMap = new FOVCell[width][height];
-		final float[][] resistanceMap = toResistanceMap(map);
+		final double[][] resistanceMap = toResistanceMap(map);
 		final ShadowCastingObjectFOV<LightSource, FOVCell<LightSource>> fov = new ShadowCastingObjectFOV<LightSource, FOVCell<LightSource>>(
 				resistanceMap, lightMap) {
 			@Override
 			protected FOVCell<LightSource> buildCell() {
-				return new Cell();
+				return new FOVCell<LightSource>();
 			}
 		};
 		final List<LightSource> sources = buildSources(rng, map);
 		fov.computeFOV(sources);
-		final FOVCell<LightSource>[][] result = fov.getFOV();
+		final IFOVCell<LightSource>[][] result = fov.getFOV();
 		final IDungeonDrawer ddrawer = new ConsoleDungeonDrawer(new DungeonSymbolDrawer()) {
 			@Override
 			protected char print(DungeonSymbol sym, int x, int y) {
@@ -70,15 +71,15 @@ public class ShadowCastingObjectFOVTest {
 					if (source.getX() == x && source.getY() == y)
 						return source.getSymbol();
 				}
-				final FOVCell<LightSource> cell = result[x][y];
+				final IFOVCell<LightSource> cell = result[x][y];
 				if (cell != null) {
-					final float lighting = cell.getLighting();
+					final double lighting = cell.getLighting();
 					if (0.0 < lighting) {
 						assert lighting <= 1.0;
 						if (lighting == 1.0)
 							return '^';
 						else
-							return Integer.toString(Math.round(lighting * 10)).charAt(0);
+							return Long.toString(Math.round(lighting * 10)).charAt(0);
 					}
 				}
 				return super.print(sym, x, y);
@@ -87,10 +88,10 @@ public class ShadowCastingObjectFOVTest {
 		ddrawer.draw(map);
 	}
 
-	private static float[][] toResistanceMap(DungeonSymbol[][] map) {
+	private static double[][] toResistanceMap(DungeonSymbol[][] map) {
 		final int width = map.length;
 		final int height = width == 0 ? 0 : map[0].length;
-		final float[][] result = new float[width][height];
+		final double[][] result = new double[width][height];
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
 				final DungeonSymbol sym = map[x][y];
@@ -155,37 +156,6 @@ public class ShadowCastingObjectFOVTest {
 			throw Exceptions.newUnmatchedISE(sym);
 		}
 		return null;
-	}
-
-	/**
-	 * @author smelC
-	 */
-	private static final class Cell implements FOVCell<LightSource> {
-
-		private float lighting;
-		@SuppressWarnings("unused")
-		private LightSource source;
-
-		@Override
-		public float getLighting() {
-			return lighting;
-		}
-
-		@Override
-		public void clear() {
-			lighting = 0;
-		}
-
-		@Override
-		public void unionLight(LightSource src, float v) {
-			assert 0 <= v && v <= 1.0;
-			if (lighting < v) {
-				/* Take strongest source */
-				this.lighting = v;
-				this.source = src;
-			}
-		}
-
 	}
 
 	/**

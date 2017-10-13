@@ -20,9 +20,9 @@ import squidpony.squidgrid.Direction;
  * @param <T>
  *            The type of cells.
  */
-public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned, T extends FOVCell<U>> {
+public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned, T extends IFOVCell<U>> {
 
-	protected final float[][] resistanceMap;
+	protected final double[][] resistanceMap;
 	protected final T[][] lightMap;
 
 	protected final int width;
@@ -32,7 +32,7 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 	 * @param resistanceMap
 	 * @param lightMap
 	 */
-	public ShadowCastingObjectFOV(float[][] resistanceMap, T[][] lightMap) {
+	public ShadowCastingObjectFOV(double[][] resistanceMap, T[][] lightMap) {
 		this.resistanceMap = resistanceMap;
 		this.lightMap = lightMap;
 
@@ -44,7 +44,7 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 	 * @param ab
 	 * @param resistanceMap
 	 */
-	public ShadowCastingObjectFOV(ArrayBuilder<T> ab, float[][] resistanceMap) {
+	public ShadowCastingObjectFOV(ArrayBuilder<T> ab, double[][] resistanceMap) {
 		this(resistanceMap,
 				ab.build(resistanceMap.length, resistanceMap.length == 0 ? 0 : resistanceMap[0].length, true));
 	}
