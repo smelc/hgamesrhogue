@@ -2,10 +2,15 @@ package com.hgames.rhogue.animate;
 
 import com.hgames.rhogue.grid.Positioned;
 import com.hgames.rhogue.level.ILevel;
+import com.hgames.rhogue.lighting.ILightSource;
 import com.hgames.rhogue.team.Team;
 
 /**
  * A monster, a player, something like that.
+ * 
+ * <p>
+ * Your concrete subtype may also implement {@link ILightSource}.
+ * </p>
  * 
  * @author smelC
  */
