@@ -54,7 +54,7 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 	 * 
 	 * @param sources
 	 */
-	public void computeFOV(List<U> sources) {
+	public void computeFOV(List<? extends U> sources) {
 		final int sz = sources.size();
 		for (int i = 0; i < sz; i++) {
 			final U source = sources.get(i);
