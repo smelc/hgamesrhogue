@@ -24,7 +24,8 @@ public interface IFOVCell<T extends ILightSource> {
 	 *            The light source.
 	 * @param v
 	 *            The amount of light received from the source.
+	 * @return Whether something changed.
 	 */
-	public void unionLight(T source, double v);
+	public boolean unionLight(T source, double v);
 
 }

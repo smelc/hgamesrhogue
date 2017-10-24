@@ -34,13 +34,15 @@ public class FOVCell<T extends ILightSource> implements IFOVCell<T> {
 	}
 
 	@Override
-	public void unionLight(T src, double v) {
+	public boolean unionLight(T src, double v) {
 		assert 0 <= v && v <= 1.0;
 		if (lighting < v) {
 			/* Take strongest source */
 			this.lighting = v;
 			this.source = src;
-		}
+			return true;
+		} else
+			return false;
 	}
 
 	/**
