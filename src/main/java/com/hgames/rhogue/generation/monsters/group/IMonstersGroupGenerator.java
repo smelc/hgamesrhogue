@@ -39,13 +39,6 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 	public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc);
 
 	/**
-	 * @param minOrMax
-	 * @return The minimum or maximum number of monsters that {@code this} may add
-	 *         to the accumulator during a call to {@link #generate}.
-	 */
-	public int size(boolean minOrMax);
-
-	/**
 	 * Fulfill the implementation of {@link IMonstersGenerator}, ignoring its
 	 * {@code size} argument. For convenience, and to save allocations.
 	 * 
@@ -95,20 +88,7 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 			if (delegate == null)
 				/* Table is empty */
 				return;
-			delegate.generate(null, null, acc);
-		}
-
-		@Override
-		public int size(boolean minOrMax) {
-			int result = minOrMax ? Integer.MAX_VALUE : 0;
-			for (IMonstersGroupGenerator<U, T> t : table.getDomain()) {
-				final int val = t.size(minOrMax);
-				if (minOrMax && val < result)
-					result = val;
-				else if (!minOrMax && result < val)
-					result = val;
-			}
-			return result;
+			delegate.generate(factory, rng, acc);
 		}
 
 	}
@@ -142,16 +122,7 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc) {
 			final int size = delegates.size();
 			for (int i = 0; i < size; i++)
-				delegates.get(i).generate(null, null, acc);
-		}
-
-		@Override
-		public int size(boolean minOrMax) {
-			final int size = delegates.size();
-			int result = 0;
-			for (int i = 0; i < size; i++)
-				result += delegates.get(i).size(minOrMax);
-			return result;
+				delegates.get(i).generate(factory, rng, acc);
 		}
 
 	}
@@ -189,11 +160,6 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 			acc.add(factory.create(identifier));
 		}
 
-		@Override
-		public int size(boolean minOrMax) {
-			return 1;
-		}
-
 	}
 
 	/**
@@ -227,11 +193,6 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 			final int sz = identifiers.size();
 			for (int i = 0; i < sz; i++)
 				acc.add(factory.create(identifiers.get(i)));
-		}
-
-		@Override
-		public int size(boolean minOrMax) {
-			return identifiers.size();
 		}
 
 	}
@@ -280,9 +241,63 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 				acc.add(factory.create(identifier));
 		}
 
+	}
+
+	/**
+	 * A generator that most of the time delegates to another generator (the base
+	 * one) and sometimes to another generator (the spicing one).
+	 * 
+	 * @author smelC
+	 * @param <U>
+	 *            Identifiers of monsters
+	 * @param <T>
+	 *            The concrete type of {@link IAnimate}s used.
+	 */
+	public class Roulette<U, T extends IAnimate> extends SkeletalMGG<U, T> {
+
+		/** Base generator, called repeatedly */
+		protected final IMonstersGroupGenerator<U, T> base;
+		/**
+		 * Spicy generator, called once in a while when {@link #base} has been used
+		 * enough
+		 */
+		protected final IMonstersGroupGenerator<U, T> roulette;
+
+		private int baseRolls = 0;
+		private final int firstRouletteRoll;
+
+		/**
+		 * @param base
+		 * @param roulette
+		 */
+		public Roulette(IMonstersGroupGenerator<U, T> base, IMonstersGroupGenerator<U, T> roulette) {
+			this(base, roulette, 2);
+		}
+
+		/**
+		 * @param base
+		 * @param roulette
+		 * @param firstRouletteRoll
+		 */
+		public Roulette(IMonstersGroupGenerator<U, T> base, IMonstersGroupGenerator<U, T> roulette,
+				int firstRouletteRoll) {
+			this.base = base;
+			this.roulette = roulette;
+			this.firstRouletteRoll = firstRouletteRoll;
+		}
+
 		@Override
-		public int size(boolean minOrMax) {
-			return minOrMax ? min : max;
+		public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc) {
+			final IMonstersGroupGenerator<U, T> toUse;
+			if ((baseRolls == firstRouletteRoll && rng.nextBoolean()) || (firstRouletteRoll + 1 <= baseRolls)) {
+				assert baseRolls <= firstRouletteRoll + 1;
+				toUse = roulette;
+				baseRolls = 0;
+			} else {
+				toUse = base;
+				baseRolls++;
+			}
+			toUse.generate(factory, rng, acc);
 		}
 
 	}

@@ -33,9 +33,21 @@ public class MonstersGenerator<U, T extends IAnimate> implements IMonstersGenera
 	 *            repeatedly. Cannot be null. It's the "base" generator in the sense
 	 *            that it's used to populate the levels.
 	 */
-	public MonstersGenerator(/* @Nullable */ IMonstersGroupGenerator<U, T> must, IMonstersGroupGenerator<U, T> default_) {
+	public MonstersGenerator(/* @Nullable */ IMonstersGroupGenerator<U, T> must,
+			IMonstersGroupGenerator<U, T> default_) {
 		this.must = must;
 		this.default_ = default_;
+	}
+
+	@SuppressWarnings("javadoc")
+	public static <U, T extends IAnimate> MonstersGenerator<U, T> create(IMonstersGroupGenerator<U, T> default_) {
+		return new MonstersGenerator<U, T>(null, default_);
+	}
+
+	@SuppressWarnings("javadoc")
+	public static <U, T extends IAnimate> MonstersGenerator<U, T> create(
+			/* @Nullable */ IMonstersGroupGenerator<U, T> must, IMonstersGroupGenerator<U, T> default_) {
+		return new MonstersGenerator<U, T>(must, default_);
 	}
 
 	@Override

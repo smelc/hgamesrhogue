@@ -48,6 +48,14 @@ public class ProbabilityTable<T> {
 	}
 
 	/**
+	 * @param expectedSize
+	 * @return A fresh instance.
+	 */
+	public static <T> ProbabilityTable<T> create(int expectedSize) {
+		return new ProbabilityTable<T>(expectedSize);
+	}
+
+	/**
 	 * @param domain
 	 * @return A table that assigns the same probability (1) to every member of
 	 *         {@code domain}.
@@ -57,6 +65,98 @@ public class ProbabilityTable<T> {
 		final ProbabilityTable<T> result = new ProbabilityTable<T>(sz);
 		for (int i = 0; i < sz; i++)
 			result.add(domain.get(i), 1);
+		return result;
+	}
+
+	/**
+	 * @param t1
+	 * @param w1
+	 *            {@code t1}'s probability.
+	 * @param t2
+	 * @param w2
+	 *            {@code t2}'s probability.
+	 * @return A fresh instance initialized with the given elements and
+	 *         probabilities.
+	 */
+	public static <T> ProbabilityTable<T> create(T t1, int w1, T t2, int w2) {
+		final ProbabilityTable<T> result = new ProbabilityTable<T>(2);
+		result.put(t1, w1);
+		result.put(t2, w2);
+		return result;
+	}
+
+	/**
+	 * @param t1
+	 * @param w1
+	 *            {@code t1}'s probability.
+	 * @param t2
+	 * @param w2
+	 *            {@code t2}'s probability.
+	 * @param t3
+	 * @param w3
+	 *            {@code t3}'s probability.
+	 * @return A fresh instance initialized with the given elements and
+	 *         probabilities.
+	 */
+	public static <T> ProbabilityTable<T> create(T t1, int w1, T t2, int w2, T t3, int w3) {
+		final ProbabilityTable<T> result = new ProbabilityTable<T>(3);
+		result.put(t1, w1);
+		result.put(t2, w2);
+		result.put(t3, w3);
+		return result;
+	}
+
+	/**
+	 * @param t1
+	 * @param w1
+	 *            {@code t1}'s probability.
+	 * @param t2
+	 * @param w2
+	 *            {@code t2}'s probability.
+	 * @param t3
+	 * @param w3
+	 *            {@code t3}'s probability.
+	 * @param t4
+	 * @param w4
+	 *            {@code t4}'s probability.
+	 * @return A fresh instance initialized with the given elements and
+	 *         probabilities.
+	 */
+	public static <T> ProbabilityTable<T> create(T t1, int w1, T t2, int w2, T t3, int w3, T t4, int w4) {
+		final ProbabilityTable<T> result = new ProbabilityTable<T>(4);
+		result.put(t1, w1);
+		result.put(t2, w2);
+		result.put(t3, w3);
+		result.put(t4, w4);
+		return result;
+	}
+
+	/**
+	 * @param t1
+	 * @param w1
+	 *            {@code t1}'s probability.
+	 * @param t2
+	 * @param w2
+	 *            {@code t2}'s probability.
+	 * @param t3
+	 * @param w3
+	 *            {@code t3}'s probability.
+	 * @param t4
+	 * @param w4
+	 *            {@code t4}'s probability.
+	 * @param t5
+	 * @param w5
+	 *            {@code t4}'s probability.
+	 * @return A fresh instance initialized with the given elements and
+	 *         probabilities.
+	 */
+	public static <T> ProbabilityTable<T> create(T t1, int w1, T t2, int w2, T t3, int w3, T t4, int w4, T t5, int w5) {
+		final ProbabilityTable<T> result = new ProbabilityTable<T>(5);
+		result.put(t1, w1);
+		result.put(t2, w2);
+		result.put(t3, w3);
+		result.put(t4, w4);
+		result.put(t5, w5);
 		return result;
 	}
 
