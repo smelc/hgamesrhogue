@@ -1,6 +1,8 @@
 package com.hgames.rhogue.rng;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import squidpony.squidmath.RNG;
@@ -30,9 +32,32 @@ public class ProbabilityTable<T> {
 		this.total = 0;
 	}
 
+	/**
+	 * Creates a new probability table.
+	 * 
+	 * @param expectedSize
+	 */
+	public ProbabilityTable(int expectedSize) {
+		this.table = new LinkedHashMap<T, Integer>(expectedSize);
+		this.total = 0;
+	}
+
 	/** @return A fresh instance. */
 	public static <T> ProbabilityTable<T> create() {
 		return new ProbabilityTable<T>();
+	}
+
+	/**
+	 * @param domain
+	 * @return A table that assigns the same probability (1) to every member of
+	 *         {@code domain}.
+	 */
+	public static <T> ProbabilityTable<T> createUniform(List<T> domain) {
+		final int sz = domain.size();
+		final ProbabilityTable<T> result = new ProbabilityTable<T>(sz);
+		for (int i = 0; i < sz; i++)
+			result.add(domain.get(i), 1);
+		return result;
 	}
 
 	/**
@@ -110,6 +135,13 @@ public class ProbabilityTable<T> {
 
 		assert false;
 		return null;
+	}
+
+	/**
+	 * @return Elements that can be returned by {@link #get(RNG)}.
+	 */
+	public Collection<T> getDomain() {
+		return table.keySet();
 	}
 
 	/**
