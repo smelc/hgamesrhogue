@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**

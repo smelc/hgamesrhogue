@@ -11,11 +11,11 @@ import java.util.Map;
 import java.util.Set;
 
 import com.hgames.lib.collection.multiset.EnumMultiset;
+import com.hgames.rhogue.zone.Rectangle;
+import com.hgames.rhogue.zone.Zone;
 import com.hgames.rhogue.zone.Zones;
 
 import squidpony.squidgrid.Direction;
-import squidpony.squidgrid.mapping.Rectangle;
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**

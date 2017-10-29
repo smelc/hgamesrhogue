@@ -2,10 +2,10 @@ package com.hgames.rhogue.generation.map.rgenerator;
 
 import com.hgames.lib.Ints;
 import com.hgames.rhogue.generation.map.RoomComponent;
+import com.hgames.rhogue.zone.Rectangle;
 import com.hgames.rhogue.zone.SingleCellZone;
+import com.hgames.rhogue.zone.Zone;
 
-import squidpony.squidgrid.mapping.Rectangle;
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**

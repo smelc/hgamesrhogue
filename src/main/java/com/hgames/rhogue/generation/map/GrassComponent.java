@@ -10,9 +10,9 @@ import com.hgames.rhogue.generation.map.DungeonGenerator.GenerationData;
 import com.hgames.rhogue.generation.map.flood.DungeonGrassFloodFill;
 import com.hgames.rhogue.generation.map.flood.FloodFill;
 import com.hgames.rhogue.generation.map.flood.IFloodObjective;
+import com.hgames.rhogue.zone.ListZone;
+import com.hgames.rhogue.zone.Zone;
 
-import squidpony.squidgrid.zone.ListZone;
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;
 

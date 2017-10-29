@@ -4,9 +4,9 @@ import java.util.EnumSet;
 
 import com.hgames.rhogue.generation.map.Dungeon;
 import com.hgames.rhogue.generation.map.DungeonSymbol;
+import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidgrid.Direction;
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;
 

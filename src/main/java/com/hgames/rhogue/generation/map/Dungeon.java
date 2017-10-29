@@ -10,10 +10,10 @@ import java.util.Map;
 
 import com.hgames.lib.Exceptions;
 import com.hgames.rhogue.generation.map.draw.DungeonSymbolArrayDrawer;
+import com.hgames.rhogue.zone.ListZone;
+import com.hgames.rhogue.zone.Rectangle;
+import com.hgames.rhogue.zone.Zone;
 
-import squidpony.squidgrid.mapping.Rectangle;
-import squidpony.squidgrid.zone.ListZone;
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**

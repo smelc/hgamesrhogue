@@ -5,8 +5,8 @@ import java.util.HashSet;
 import com.hgames.rhogue.generation.map.DungeonGenerator;
 import com.hgames.rhogue.generation.map.IDungeonGeneratorListener;
 import com.hgames.rhogue.generation.map.RoomComponent;
+import com.hgames.rhogue.zone.Zone;
 
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**

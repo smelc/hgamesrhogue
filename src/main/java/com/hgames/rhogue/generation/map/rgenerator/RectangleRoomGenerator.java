@@ -1,8 +1,8 @@
 package com.hgames.rhogue.generation.map.rgenerator;
 
 import com.hgames.rhogue.generation.map.RoomComponent;
+import com.hgames.rhogue.zone.Rectangle;
 
-import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;
 

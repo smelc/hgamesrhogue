@@ -5,7 +5,6 @@ import java.util.EnumSet;
 import java.util.List;
 
 import squidpony.squidgrid.Direction;
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**

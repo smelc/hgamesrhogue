@@ -17,8 +17,8 @@ import com.hgames.rhogue.generation.map.DungeonZonesCrawler;
 import com.hgames.rhogue.generation.map.Dungeons;
 import com.hgames.rhogue.generation.map.ICellToZone;
 import com.hgames.rhogue.generation.map.connection.IConnectionFinder;
+import com.hgames.rhogue.zone.Zone;
 
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;
 

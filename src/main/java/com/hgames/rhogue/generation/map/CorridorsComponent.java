@@ -18,11 +18,11 @@ import com.hgames.rhogue.generation.map.DungeonGenerator.GenerationData;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ICorridorControl;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ZoneType;
 import com.hgames.rhogue.generation.map.corridor.ICorridorBuilder;
+import com.hgames.rhogue.zone.Rectangle;
 import com.hgames.rhogue.zone.SingleCellZone;
+import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidgrid.Direction;
-import squidpony.squidgrid.mapping.Rectangle;
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;
 

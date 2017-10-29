@@ -5,8 +5,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.hgames.rhogue.grid.Grids;
+import com.hgames.rhogue.zone.ListZone;
 
-import squidpony.squidgrid.zone.ListZone;
 import squidpony.squidmath.Coord;
 
 /**

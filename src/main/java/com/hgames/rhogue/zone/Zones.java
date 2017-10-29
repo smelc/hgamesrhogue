@@ -11,8 +11,6 @@ import com.hgames.lib.collection.pair.Pair;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.DungeonUtility;
-import squidpony.squidgrid.zone.ListZone;
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**

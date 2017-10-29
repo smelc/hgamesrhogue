@@ -8,11 +8,11 @@ import java.util.Set;
 import com.hgames.lib.Ints;
 import com.hgames.lib.collection.set.Sets;
 import com.hgames.rhogue.generation.map.RoomComponent;
+import com.hgames.rhogue.zone.ListZone;
+import com.hgames.rhogue.zone.Rectangle;
+import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidgrid.Direction;
-import squidpony.squidgrid.mapping.Rectangle;
-import squidpony.squidgrid.zone.ListZone;
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;
 

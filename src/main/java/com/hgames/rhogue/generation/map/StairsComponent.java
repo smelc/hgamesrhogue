@@ -13,8 +13,8 @@ import com.hgames.rhogue.generation.map.DungeonGenerator.ICorridorControl;
 import com.hgames.rhogue.generation.map.connection.IConnectionFinder;
 import com.hgames.rhogue.generation.map.stair.IStairGenerator;
 import com.hgames.rhogue.generation.map.stair.StairGenerator;
+import com.hgames.rhogue.zone.Zone;
 
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**

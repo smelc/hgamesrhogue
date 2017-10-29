@@ -1,6 +1,7 @@
 package com.hgames.rhogue.generation.map;
 
-import squidpony.squidgrid.zone.Zone;
+import com.hgames.rhogue.zone.Zone;
+
 import squidpony.squidmath.Coord;
 
 /**

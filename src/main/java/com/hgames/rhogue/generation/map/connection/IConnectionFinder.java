@@ -1,8 +1,7 @@
 package com.hgames.rhogue.generation.map.connection;
 
 import com.hgames.rhogue.generation.map.Dungeon;
-
-import squidpony.squidgrid.zone.Zone;
+import com.hgames.rhogue.zone.Zone;
 
 /**
  * Whether two zones are connected in a dungeon. Not in {@link Dungeon} itself

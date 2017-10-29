@@ -1,8 +1,8 @@
 package com.hgames.rhogue.generation.map;
 
 import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
+import com.hgames.rhogue.zone.Zone;
 
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**

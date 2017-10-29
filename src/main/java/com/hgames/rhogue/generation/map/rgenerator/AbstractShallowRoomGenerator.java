@@ -4,11 +4,11 @@ import java.util.List;
 
 import com.hgames.lib.collection.list.Lists;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ZoneType;
+import com.hgames.rhogue.zone.ListZone;
+import com.hgames.rhogue.zone.Zone;
 import com.hgames.rhogue.generation.map.DungeonSymbol;
 import com.hgames.rhogue.generation.map.RoomComponent;
 
-import squidpony.squidgrid.zone.ListZone;
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**

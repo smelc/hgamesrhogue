@@ -3,7 +3,6 @@ package com.hgames.rhogue.zone;
 import java.util.ArrayList;
 import java.util.List;
 
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**

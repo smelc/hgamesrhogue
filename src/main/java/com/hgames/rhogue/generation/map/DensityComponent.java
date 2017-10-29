@@ -11,9 +11,8 @@ import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.Tags;
 import com.hgames.rhogue.generation.map.DungeonGenerator.GenerationData;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ICorridorControl;
+import com.hgames.rhogue.zone.Zone;
 import com.hgames.rhogue.zone.Zones;
-
-import squidpony.squidgrid.zone.Zone;
 
 /**
  * Component that makes sure that the dungeon is connected enough.

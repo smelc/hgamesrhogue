@@ -1,6 +1,7 @@
 package com.hgames.rhogue.generation.map.corridor;
 
-import squidpony.squidgrid.zone.Zone;
+import com.hgames.rhogue.zone.Zone;
+
 import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;
 

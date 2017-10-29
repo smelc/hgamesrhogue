@@ -3,9 +3,9 @@ package com.hgames.rhogue.generation.map;
 import com.hgames.lib.Exceptions;
 import com.hgames.rhogue.generation.map.DungeonGenerator.GenerationData;
 import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
+import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidgrid.Direction;
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**

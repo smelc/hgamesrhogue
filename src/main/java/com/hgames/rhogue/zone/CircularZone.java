@@ -5,12 +5,11 @@ import java.util.List;
 
 import com.hgames.rhogue.grid.DoerInACircle;
 
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Coord;
 
 /**
  * A zone in the shape of a circle. Could be optimized by overriding some method
- * from {@link squidpony.squidgrid.zone.Zone.Skeleton}. Examples:
+ * from {@link com.hgames.rhogue.zone.Zone.Skeleton}. Examples:
  * <a href="http://imgur.com/gallery/13sH3">imgur</a>
  * 
  * @author smelC

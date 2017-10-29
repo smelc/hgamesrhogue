@@ -11,8 +11,8 @@ import com.hgames.rhogue.generation.map.DungeonGenerator.GenerationData;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ZoneType;
 import com.hgames.rhogue.generation.map.flood.DungeonWaterStartFloodFill;
 import com.hgames.rhogue.generation.map.flood.FloodFill;
+import com.hgames.rhogue.zone.ListZone;
 
-import squidpony.squidgrid.zone.ListZone;
 import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;
 

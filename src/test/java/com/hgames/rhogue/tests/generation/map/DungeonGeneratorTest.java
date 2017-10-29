@@ -13,8 +13,8 @@ import com.hgames.rhogue.generation.map.DungeonSymbolDrawer;
 import com.hgames.rhogue.generation.map.DungeonZonesCrawler;
 import com.hgames.rhogue.generation.map.draw.ConsoleDungeonDrawer;
 import com.hgames.rhogue.generation.map.draw.IDungeonDrawer;
+import com.hgames.rhogue.zone.Zone;
 
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.RNG;
 
 /**

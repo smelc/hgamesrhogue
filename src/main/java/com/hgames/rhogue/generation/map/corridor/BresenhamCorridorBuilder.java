@@ -7,10 +7,10 @@ import java.util.List;
 import com.hgames.lib.collection.Collections;
 import com.hgames.rhogue.generation.map.Dungeon;
 import com.hgames.rhogue.generation.map.DungeonSymbol;
+import com.hgames.rhogue.zone.ListZone;
+import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidgrid.Direction;
-import squidpony.squidgrid.zone.ListZone;
-import squidpony.squidgrid.zone.Zone;
 import squidpony.squidmath.Bresenham;
 import squidpony.squidmath.Coord;
 import squidpony.squidmath.RNG;

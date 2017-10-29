@@ -6,10 +6,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.hgames.rhogue.zone.Rectangle;
 import com.hgames.rhogue.zone.Zones;
 
 import squidpony.squidgrid.Direction;
-import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidmath.Coord;
 
 /**

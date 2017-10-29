@@ -7,9 +7,9 @@ import java.util.NoSuchElementException;
 import com.hgames.lib.Exceptions;
 import com.hgames.lib.Objects;
 import com.hgames.lib.collection.Collections;
+import com.hgames.rhogue.zone.Rectangle;
 
 import squidpony.squidgrid.Direction;
-import squidpony.squidgrid.mapping.Rectangle;
 import squidpony.squidmath.Coord;
 
 /**

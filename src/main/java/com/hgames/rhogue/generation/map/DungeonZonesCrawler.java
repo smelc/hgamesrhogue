@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import squidpony.squidgrid.zone.Zone;
+import com.hgames.rhogue.zone.Zone;
 
 /**
  * An iterator over zones of a dungeon, that starts from a zone, and then visits
