@@ -14,19 +14,15 @@ import squidpony.squidmath.RNG;
  */
 public class CircularRoomGenerator extends SkeletalRoomGenerator {
 
-	protected final RNG rng;
-
 	/**
-	 * @param rng
-	 *            The RNG to use.
+	 * A fresh instance.
 	 */
-	public CircularRoomGenerator(RNG rng) {
-		this.rng = rng;
+	public CircularRoomGenerator() {
 	}
 
 	@Override
-	public Zone generate(RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
-		final int radius = radius(maxWidth, maxHeight);
+	public Zone generate(RNG rng, RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
+		final int radius = radius(rng, maxWidth, maxHeight);
 		if (radius <= 1)
 			return null;
 		final int cx = maxWidth / 2;
@@ -34,7 +30,7 @@ public class CircularRoomGenerator extends SkeletalRoomGenerator {
 		return new CircularZone(Coord.get(cx, cy), radius);
 	}
 
-	protected int radius(int maxWidth, int maxHeight) {
+	protected int radius(RNG rng, int maxWidth, int maxHeight) {
 		final int constraint = Math.min(maxWidth, maxHeight);
 		final int max = constraint / 2; // Exclusive
 		return max <= 2 ? -1 : rng.between(1, max);

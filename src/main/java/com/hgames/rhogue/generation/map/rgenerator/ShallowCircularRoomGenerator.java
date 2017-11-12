@@ -16,17 +16,15 @@ public class ShallowCircularRoomGenerator extends AbstractShallowRoomGenerator {
 
 	protected final CircularRoomGenerator delegate;
 
-	/**
-	 * @param rng
-	 */
-	public ShallowCircularRoomGenerator(RNG rng) {
-		this.delegate = new CircularRoomGenerator(rng);
+	/** A fresh instance */
+	public ShallowCircularRoomGenerator() {
+		this.delegate = new CircularRoomGenerator();
 		this.keepCenter = false;
 	}
 
 	@Override
-	protected Zone getZoneToCarve(RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
-		final Zone result = delegate.generate(component, translation, maxWidth, maxHeight);
+	protected Zone getZoneToCarve(RNG rng, RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
+		final Zone result = delegate.generate(rng, component, translation, maxWidth, maxHeight);
 		return result;
 	}
 

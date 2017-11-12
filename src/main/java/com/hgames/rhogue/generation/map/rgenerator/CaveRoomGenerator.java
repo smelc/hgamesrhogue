@@ -23,8 +23,6 @@ import squidpony.squidmath.RNG;
  */
 public class CaveRoomGenerator extends SkeletalRoomGenerator {
 
-	protected final RNG rng;
-
 	/**
 	 * The degree of caveness, 0 being the minimum (yielding a rectangle room), 100
 	 * being the maximum.
@@ -41,15 +39,12 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 	}
 
 	/**
-	 * @param rng
-	 *            The RNG to use.
 	 * @param caveness
 	 *            The caveness level to use. Must be in [0, 100].
 	 * @throws IllegalStateException
 	 *             If {@code caveness} is not in {@code [0, 100]}.
 	 */
-	public CaveRoomGenerator(RNG rng, int caveness) {
-		this.rng = rng;
+	public CaveRoomGenerator(int caveness) {
 		setCaveness(caveness);
 	}
 
@@ -66,9 +61,9 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 	}
 
 	@Override
-	public Zone generate(RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
-		final RectangleRoomGenerator delegate = new RectangleRoomGenerator(rng);
-		final Rectangle rectangle = delegate.generate(component, translation, maxWidth, maxHeight);
+	public Zone generate(RNG rng, RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
+		final RectangleRoomGenerator delegate = new RectangleRoomGenerator();
+		final Rectangle rectangle = delegate.generate(rng, component, translation, maxWidth, maxHeight);
 		if (rectangle == null) {
 			/* Should not happen */
 			assert false;
@@ -85,7 +80,7 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 		/* The maximum number of cells to carve at every corner */
 		final int maxCarvingPerCorner = (rsz / 8) + 1;
 		for (Direction dir : Direction.DIAGONALS) {
-			if (!roll())
+			if (!roll(rng))
 				continue;
 			// XXX CH Try all 8 ""corners"" ? <- YES DO IT
 			final Coord start = Rectangle.Utils.getCorner(rectangle, dir);
@@ -97,7 +92,7 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 				todos = new LinkedList<Coord>();
 			else
 				assert todos.isEmpty();
-			change |= carve(all, start, maxCarvingPerCorner);
+			change |= carve(rng, all, start, maxCarvingPerCorner);
 			assert todos.isEmpty();
 		}
 		return change ? new ListZone(new ArrayList<Coord>(all)) : rectangle;
@@ -108,7 +103,7 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 		return 4;
 	}
 
-	protected boolean roll() {
+	protected boolean roll(RNG rng) {
 		return rng.nextInt(101) <= caveness;
 	}
 
@@ -119,7 +114,7 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 	 *            The carving starting point (a corner).
 	 * @return Whether something was carved.
 	 */
-	private boolean carve(Collection<Coord> zone, Coord start, int maxCarvingPerCorner) {
+	private boolean carve(RNG rng, Collection<Coord> zone, Coord start, int maxCarvingPerCorner) {
 		assert todos.isEmpty();
 		todos.add(start);
 		int carved = 0;
@@ -130,7 +125,7 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 				continue;
 			zone.remove(next);
 			carved++;
-			if (!roll())
+			if (!roll(rng))
 				/* Stop here */
 				break;
 			rng.shuffle(DIRS_BUF);

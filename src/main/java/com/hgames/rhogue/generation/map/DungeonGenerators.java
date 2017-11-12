@@ -41,7 +41,7 @@ public class DungeonGenerators {
 	/** @return A generator that builds dungeons with only rectangle rooms. */
 	public DungeonGenerator basic() {
 		final DungeonGenerator result = new DungeonGenerator(rng, width, height);
-		result.installRoomGenerator(new RectangleRoomGenerator(rng), 1, Eternity.INSTANCE);
+		result.installRoomGenerator(new RectangleRoomGenerator(), 1, Eternity.INSTANCE);
 		return result;
 	}
 
@@ -51,19 +51,19 @@ public class DungeonGenerators {
 	 */
 	public DungeonGenerator halfRectanglesHalfCaves() {
 		final DungeonGenerator result = new DungeonGenerator(rng, width, height);
-		result.installRoomGenerator(new RectangleRoomGenerator(rng), 3, Eternity.INSTANCE);
-		result.installRoomGenerator(new CaveRoomGenerator(rng, 75), 1, Eternity.INSTANCE);
-		result.installRoomGenerator(new CaveRoomGenerator(rng, 50), 1, Eternity.INSTANCE);
-		result.installRoomGenerator(new CaveRoomGenerator(rng, 25), 1, Eternity.INSTANCE);
+		result.installRoomGenerator(new RectangleRoomGenerator(), 3, Eternity.INSTANCE);
+		result.installRoomGenerator(new CaveRoomGenerator(75), 1, Eternity.INSTANCE);
+		result.installRoomGenerator(new CaveRoomGenerator(50), 1, Eternity.INSTANCE);
+		result.installRoomGenerator(new CaveRoomGenerator(25), 1, Eternity.INSTANCE);
 		return result;
 	}
 
 	/** @return A generator that builds dungeons with only caves */
 	public DungeonGenerator cave() {
 		final DungeonGenerator result = new DungeonGenerator(rng, width, height);
-		result.installRoomGenerator(new CaveRoomGenerator(rng, 75), 1, Eternity.INSTANCE);
-		result.installRoomGenerator(new CaveRoomGenerator(rng, 50), 1, Eternity.INSTANCE);
-		result.installRoomGenerator(new CaveRoomGenerator(rng, 25), 1, Eternity.INSTANCE);
+		result.installRoomGenerator(new CaveRoomGenerator(75), 1, Eternity.INSTANCE);
+		result.installRoomGenerator(new CaveRoomGenerator(50), 1, Eternity.INSTANCE);
+		result.installRoomGenerator(new CaveRoomGenerator(25), 1, Eternity.INSTANCE);
 		return result;
 	}
 
@@ -76,15 +76,15 @@ public class DungeonGenerators {
 		final DungeonGenerator result = halfRectanglesHalfCaves();
 		result.setWaterObjective(true, 20, 1, 10);
 		{
-			final IRoomGenerator treasureRoomGenerator = new RectangleRoomGenerator(rng);
+			final IRoomGenerator treasureRoomGenerator = new RectangleRoomGenerator();
 			/* To have a single door */
 			treasureRoomGenerator.setMaxConnections(1);
 			treasureRoomGenerator.setForceDoors(true);
 			result.installRoomGenerator(treasureRoomGenerator, 200, new OneShot());
 		}
-		result.installRoomGenerator(new CircularRoomGenerator(rng), 100, new OneShot());
+		result.installRoomGenerator(new CircularRoomGenerator(), 100, new OneShot());
 		final IRoomGenerator shallow = rng.nextBoolean() ? new ShallowRectangleRoomGenerator()
-				: new ShallowCircularRoomGenerator(rng);
+				: new ShallowCircularRoomGenerator();
 		result.installRoomGenerator(shallow, 100, new OneShot());
 		return result;
 	}

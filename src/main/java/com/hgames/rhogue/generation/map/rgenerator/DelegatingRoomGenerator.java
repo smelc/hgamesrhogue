@@ -5,6 +5,7 @@ import com.hgames.rhogue.generation.map.RoomComponent;
 import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidmath.Coord;
+import squidpony.squidmath.RNG;
 
 /**
  * A generator that delegates to another generator and has an identifier. The
@@ -51,8 +52,8 @@ public class DelegatingRoomGenerator implements IRoomGenerator {
 	}
 
 	@Override
-	public Zone generate(RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
-		return delegate.generate(component, translation, maxWidth, maxHeight);
+	public Zone generate(RNG rng, RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
+		return delegate.generate(rng, component, translation, maxWidth, maxHeight);
 	}
 
 	@Override

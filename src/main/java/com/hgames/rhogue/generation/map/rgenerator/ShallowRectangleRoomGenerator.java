@@ -7,6 +7,7 @@ import com.hgames.rhogue.zone.SingleCellZone;
 import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidmath.Coord;
+import squidpony.squidmath.RNG;
 
 /**
  * A room generator that produces a rectangular room whose internal border
@@ -17,7 +18,7 @@ import squidpony.squidmath.Coord;
 public class ShallowRectangleRoomGenerator extends AbstractShallowRoomGenerator {
 
 	@Override
-	protected Zone getZoneToCarve(RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
+	protected Zone getZoneToCarve(RNG rng, RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
 		if (maxWidth < 3 || maxHeight < 3)
 			/* Cannot do */
 			return null;

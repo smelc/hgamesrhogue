@@ -179,8 +179,8 @@ public class RoomComponent implements GeneratorComponent {
 		outer: while (frustration < 8 + (gen.startWithWater ? 4 : 0)) {
 			frustration++;
 			/* +1 to account for the surrounding wall */
-			int maxWidth = getMaxRoomSideSize(gen, true, rng.nextInt(10) == 0) + 1;
-			int maxHeight = getMaxRoomSideSize(gen, false, rng.nextInt(10) == 0) + 1;
+			int maxWidth = getMaxRoomSideSize(true, rng.nextInt(10) == 0) + 1;
+			int maxHeight = getMaxRoomSideSize(false, rng.nextInt(10) == 0) + 1;
 			final int max = Math.max(maxWidth, maxHeight);
 			final int min = Math.min(maxWidth, maxHeight);
 			if (min < max / 2) {
@@ -221,7 +221,7 @@ public class RoomComponent implements GeneratorComponent {
 					continue;
 				assert dungeon.isValid(brCandidate);
 				assert !Dungeons.isOnEdge(dungeon, brCandidate);
-				final boolean done = generateRoomAt(gen, gdata, blCandidate, mw, mh);
+				final boolean done = generateRoomAt(blCandidate, mw, mh);
 				if (!done)
 					continue;
 				assert RGZ.getFst() != null && RGZ.getSnd() != null;
@@ -243,8 +243,7 @@ public class RoomComponent implements GeneratorComponent {
 	}
 
 	/** @return Whether a room was generated (recorded in {@link #RGZ}) */
-	private boolean generateRoomAt(DungeonGenerator gen, GenerationData gdata, Coord bottomLeft, int maxWidth,
-			int maxHeight) {
+	private boolean generateRoomAt(Coord bottomLeft, int maxWidth, int maxHeight) {
 		assert 1 <= maxWidth;
 		assert 1 <= maxHeight;
 		final RNG rng = gen.rng;
@@ -253,7 +252,7 @@ public class RoomComponent implements GeneratorComponent {
 			return false;
 		// infoLog("Trying " + maxWidth + "x" + maxHeight + " room at " +
 		// bottomLeft);
-		final Zone zeroZeroZone = rg.generate(this, bottomLeft, maxWidth, maxHeight);
+		final Zone zeroZeroZone = rg.generate(rng, this, bottomLeft, maxWidth, maxHeight);
 		if (zeroZeroZone == null)
 			return false;
 		final Zone zone = zeroZeroZone.translate(bottomLeft);
@@ -285,7 +284,7 @@ public class RoomComponent implements GeneratorComponent {
 	}
 
 	// FIXME CH Add a parameter to control variance
-	protected int getMaxRoomSideSize(DungeonGenerator gen, boolean widthOrHeight, boolean spiceItUp) {
+	protected int getMaxRoomSideSize(boolean widthOrHeight, boolean spiceItUp) {
 		final RNG rng = gen.rng;
 		int min = widthOrHeight ? gen.minRoomWidth : gen.minRoomHeight;
 		if (min == 1 && !gen.allowWidthOrHeightOneRooms)

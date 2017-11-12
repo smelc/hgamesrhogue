@@ -4,12 +4,13 @@ import java.util.List;
 
 import com.hgames.lib.collection.list.Lists;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ZoneType;
-import com.hgames.rhogue.zone.ListZone;
-import com.hgames.rhogue.zone.Zone;
 import com.hgames.rhogue.generation.map.DungeonSymbol;
 import com.hgames.rhogue.generation.map.RoomComponent;
+import com.hgames.rhogue.zone.ListZone;
+import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidmath.Coord;
+import squidpony.squidmath.RNG;
 
 /**
  * An abstract room generator to generate a room where only the internal border
@@ -24,8 +25,9 @@ public abstract class AbstractShallowRoomGenerator extends SkeletalRoomGenerator
 	protected boolean keepCenter = false;
 
 	@Override
-	public /* @Nullable */ Zone generate(RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
-		final Zone zone = getZoneToCarve(component, translation, maxWidth, maxHeight);
+	public /* @Nullable */ Zone generate(RNG rng, RoomComponent component, Coord translation, int maxWidth,
+			int maxHeight) {
+		final Zone zone = getZoneToCarve(rng, component, translation, maxWidth, maxHeight);
 		if (zone == null)
 			return null;
 		final List<Coord> all = Lists.newArrayList(zone.iterator(), zone.size());
@@ -50,6 +52,7 @@ public abstract class AbstractShallowRoomGenerator extends SkeletalRoomGenerator
 		}
 	}
 
-	protected abstract Zone getZoneToCarve(RoomComponent component, Coord translation, int maxWidth, int maxHeight);
+	protected abstract Zone getZoneToCarve(RNG rng, RoomComponent component, Coord translation, int maxWidth,
+			int maxHeight);
 
 }

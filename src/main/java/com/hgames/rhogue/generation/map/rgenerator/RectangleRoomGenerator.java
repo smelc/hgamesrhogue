@@ -13,18 +13,12 @@ import squidpony.squidmath.RNG;
  */
 public class RectangleRoomGenerator extends SkeletalRoomGenerator {
 
-	protected final RNG rng;
-
-	/**
-	 * @param rng
-	 *            The rng to use.
-	 */
-	public RectangleRoomGenerator(RNG rng) {
-		this.rng = rng;
+	/** A fresh instance */
+	public RectangleRoomGenerator() {
 	}
 
 	@Override
-	public Rectangle generate(RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
+	public Rectangle generate(RNG rng, RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
 		assert 0 < maxWidth;
 		assert 0 < maxHeight;
 		/* Avoid generating corridors (width or height == 1) if possible */
