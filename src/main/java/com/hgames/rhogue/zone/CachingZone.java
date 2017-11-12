@@ -202,6 +202,11 @@ public class CachingZone implements Zone {
 	}
 
 	@Override
+	public Zone getDelegate() {
+		return delegate.getDelegate();
+	}
+
+	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "[" + delegate.toString() + "]";
 	}

@@ -50,6 +50,8 @@ public class Tags {
 
 	public static final String NET = "net";
 
+	public static final String QUESTS = "quests";
+
 	public static final String RENDER = "render";
 
 	public static final String PARSING = "parsing";

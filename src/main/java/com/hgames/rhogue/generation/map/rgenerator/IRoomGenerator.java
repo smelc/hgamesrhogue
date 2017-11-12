@@ -70,6 +70,7 @@ public interface IRoomGenerator {
 	 *         Or null if the size constraint cannot be honored.
 	 *         </p>
 	 */
+	// FIXME CH Require the RNG here
 	public /* @Nullable */ Zone generate(RoomComponent component, Coord translation, int maxWidth, int maxHeight);
 
 	/**

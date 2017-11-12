@@ -174,6 +174,14 @@ public class Dungeon implements Serializable {
 		return disconnectedRooms == null ? Collections.<Zone>emptyList() : disconnectedRooms;
 	}
 
+	/** @return Chasms. */
+	public List<Zone> getChasms() {
+		if (chasms == null)
+			return Collections.emptyList();
+		else
+			return chasms;
+	}
+
 	/** @return Pools of deep water. */
 	public List<? extends Zone> getDeepWaterPools() {
 		if (waterPools == null)

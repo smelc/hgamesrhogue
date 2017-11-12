@@ -150,6 +150,12 @@ public interface Zone extends Serializable, Iterable<Coord> {
 	Zone shrink();
 
 	/**
+	 * @return The zone being delegated to, or {@code this} if it's not a delegating
+	 *         zone.
+	 */
+	Zone getDelegate();
+
+	/**
 	 * A convenience partial implementation. Please try for all new implementations
 	 * of {@link Zone} to be subtypes of this class. It usually prove handy at some
 	 * point to have a common superclass.
@@ -334,6 +340,11 @@ public interface Zone extends Serializable, Iterable<Coord> {
 			final List<Coord> list = new ArrayList<Coord>(getAll());
 			list.removeAll(getInternalBorder());
 			return new ListZone(list);
+		}
+
+		@Override
+		public Zone getDelegate() {
+			return this;
 		}
 
 		private int smallest(boolean xOrY) {
