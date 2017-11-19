@@ -52,7 +52,7 @@ public class PassagesComponent extends SkeletalComponent {
 					/* Connection is disallowed */
 					continue;
 				Multimaps.addToListMultimap(connectedsToCandidates, orderedPair(gdata, z0, z1), doorCandidate);
-				assert Dungeons.findZoneContaining(dungeon, x, y) == null : "Candidate for door: " + doorCandidate
+				assert Dungeons.findRoomOrCorridorContaining(dungeon, x, y) == null : "Candidate for door: " + doorCandidate
 						+ " should not be in a zone";
 			}
 		}

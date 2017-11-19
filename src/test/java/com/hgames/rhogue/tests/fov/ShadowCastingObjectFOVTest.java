@@ -197,12 +197,18 @@ public class ShadowCastingObjectFOVTest {
 
 		@Override
 		public boolean setX(int x) {
-			throw new IllegalStateException();
+			return false;
 		}
 
 		@Override
 		public boolean setY(int y) {
-			throw new IllegalStateException();
+			return false;
+		}
+
+		@Override
+		public boolean ensureCoord(int ensuredX, int ensuredY) {
+			/* Because this.x and this.y cannot be set */
+			return getX() == ensuredX && getY() == ensuredY;
 		}
 
 		protected char getSymbol() {

@@ -135,7 +135,7 @@ public class Dungeons {
 	 *         {@link Zone#contains(int, int)} {@code (x, y)}, or {@code null} if
 	 *         none.
 	 */
-	public static /* @Nullable */ Zone findZoneContaining(Dungeon dungeon, int x, int y) {
+	public static /* @Nullable */ Zone findRoomOrCorridorContaining(Dungeon dungeon, int x, int y) {
 		Zone result = findZoneContaining(dungeon.rooms, dungeon.boundingBoxes, x, y, true);
 		if (result != null)
 			return result;
@@ -161,7 +161,7 @@ public class Dungeons {
 			final Coord c = iborder.get(i);
 			for (Direction dir : dirs) {
 				final Coord d = c.translate(dir);
-				final Zone zo = dungeon.findZoneContaining(d);
+				final Zone zo = dungeon.findRoomOrCorridorContaining(d);
 				if (zo != null && zo != z) {
 					if (acc != null)
 						acc.add(c);
@@ -211,7 +211,7 @@ public class Dungeons {
 		final Direction[] dirs = considerDiagonals ? Direction.OUTWARDS : Direction.CARDINALS;
 		for (Direction dir : dirs) {
 			final Coord neighbor = Coord.get(x + dir.deltaX, y + dir.deltaY);
-			final Zone z = dungeon.findZoneContaining(neighbor);
+			final Zone z = dungeon.findRoomOrCorridorContaining(neighbor);
 			if (z != null)
 				result.add(z);
 		}

@@ -30,4 +30,15 @@ public interface Positioned {
 	 * @return Whether the change could be honored.
 	 */
 	public boolean setY(int y);
+
+	/**
+	 * Sets {@code x} and {@code y}.
+	 * 
+	 * @param x
+	 * @param y
+	 * @return Whether the coordinate was {@code (x, y)} before this call. In other
+	 *         words, whether this method had nothing to do.
+	 */
+	public boolean ensureCoord(int x, int y);
+
 }

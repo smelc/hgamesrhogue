@@ -165,7 +165,7 @@ public class StairGenerator extends AbstractStairGenerator {
 		if (result == null) {
 			/* Fallback (bad) */
 			assert false : "Zone containing " + c + " cannot be found";
-			result = Dungeons.findZoneContaining(dungeon, c.x, c.y);
+			result = Dungeons.findRoomOrCorridorContaining(dungeon, c.x, c.y);
 		}
 		return result;
 	}

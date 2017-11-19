@@ -52,7 +52,7 @@ public class Dungeon implements Serializable {
 	/**
 	 * Map whose keys are {@link #rooms} and whose values wrap the keys. It can be
 	 * used for example to quickly rule out zones when searching which zone contains
-	 * a cell (see {@link Dungeons#findZoneContaining(Dungeon, int, int)}). It can
+	 * a cell (see {@link Dungeons#findRoomOrCorridorContaining(Dungeon, int, int)}). It can
 	 * be incomplete both for {@link #rooms} and for {@link #corridors}, as rooms
 	 * whose bounding box is the room itself aren't recorded in there (search tag
 	 * (NO_BBOX) to see which implementations of {@link Zone} satisfy that).
@@ -249,8 +249,8 @@ public class Dungeon implements Serializable {
 	 * @return The zone containing {@code z} or null if none.
 	 */
 	// FIXME CH put GenerationData's cache in there ?
-	public /* @Nullable */ Zone findZoneContaining(Coord c) {
-		return Dungeons.findZoneContaining(this, c.x, c.y);
+	public /* @Nullable */ Zone findRoomOrCorridorContaining(Coord c) {
+		return Dungeons.findRoomOrCorridorContaining(this, c.x, c.y);
 	}
 
 	/** @return The number of cells in this dungeon */
@@ -320,7 +320,7 @@ public class Dungeon implements Serializable {
 				case DOOR:
 				case FLOOR:
 				case SHALLOW_WATER: {
-					final Zone zone = Dungeons.findZoneContaining(this, x, y);
+					final Zone zone = Dungeons.findRoomOrCorridorContaining(this, x, y);
 					if (zone == null) {
 						System.err.println(sym + " cell (" + x + "," + y + ") doesn't belong to a zone.");
 						return false;
@@ -332,7 +332,7 @@ public class Dungeon implements Serializable {
 				case STAIR_DOWN:
 				case STAIR_UP:
 				case WALL:
-					final Zone zone = Dungeons.findZoneContaining(this, x, y);
+					final Zone zone = Dungeons.findRoomOrCorridorContaining(this, x, y);
 					if (zone != null) {
 						System.err.println(
 								sym + " cell (" + x + "," + y + ") shouldn't belong to a zone (found " + zone + ").");

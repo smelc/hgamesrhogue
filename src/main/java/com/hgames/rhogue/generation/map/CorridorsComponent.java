@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +12,9 @@ import java.util.Set;
 
 import com.hgames.lib.choice.DoublePriorityCell;
 import com.hgames.lib.choice.PriorityCell3;
+import com.hgames.lib.collection.list.Lists;
 import com.hgames.lib.collection.pair.Pair;
+import com.hgames.lib.collection.set.Sets;
 import com.hgames.rhogue.generation.map.DungeonGenerator.GenerationData;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ICorridorControl;
 import com.hgames.rhogue.generation.map.DungeonGenerator.ZoneType;
@@ -101,11 +102,11 @@ public class CorridorsComponent extends SkeletalComponent {
 			return false;
 		final boolean perfect = control.getPerfect();
 		boolean needWaterPoolsCleanup = false;
-		final Set<Coord> buf = new HashSet<Coord>();
+		final Set<Coord> buf = Sets.newHashSet();
 		int result = 0;
 		final Coord[] startEndBuffer = new Coord[2];
-		final List<Coord> buf1 = new ArrayList<Coord>();
-		final List<Coord> buf2 = new ArrayList<Coord>();
+		final List<Coord> buf1 = Lists.newArrayList();
+		final List<Coord> buf2 = Lists.newArrayList();
 		for (Zone z : zoneToOtherZones.keySet()) {
 			final List<Pair<Double, Zone>> candidateDests = zoneToOtherZones.get(z);
 			if (candidateDests == null)

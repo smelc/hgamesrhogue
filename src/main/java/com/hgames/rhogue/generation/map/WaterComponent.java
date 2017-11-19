@@ -75,10 +75,10 @@ public class WaterComponent implements GeneratorComponent {
 				continue;
 			final int sz = spill.size();
 			for (Coord spilt : spill) {
-				assert Dungeons.findZoneContaining(dungeon, spilt.x,
+				assert Dungeons.findRoomOrCorridorContaining(dungeon, spilt.x,
 						spilt.y) == null : ("Cells spilt on should not belong to a zone. You should fix 'impassable'. Cell spilt on: "
 								+ spilt + " belonging to zone: "
-								+ Dungeons.findZoneContaining(dungeon, spilt.x, spilt.y));
+								+ Dungeons.findRoomOrCorridorContaining(dungeon, spilt.x, spilt.y));
 				builder.setSymbol(spilt, DungeonSymbol.DEEP_WATER);
 				filled++;
 			}

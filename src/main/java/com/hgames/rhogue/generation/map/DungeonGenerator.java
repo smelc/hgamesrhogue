@@ -89,6 +89,7 @@ import squidpony.squidmath.RNG;
  * @author smelC
  * @see Dungeon
  * @see DungeonGenerators
+ * @see GeneratorComponent for the various parts of the implementation
  */
 public class DungeonGenerator {
 
@@ -1055,7 +1056,7 @@ public class DungeonGenerator {
 		protected Zone findZoneContaining(int x, int y) {
 			if (cellToEncloser != null)
 				return cellToEncloser[x][y];
-			return Dungeons.findZoneContaining(dungeon, x, y);
+			return Dungeons.findRoomOrCorridorContaining(dungeon, x, y);
 		}
 
 		protected void addWaterFillStartCandidate(Coord c) {
