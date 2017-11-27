@@ -1,7 +1,6 @@
 package com.hgames.rhogue.zone;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -69,7 +68,7 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
-	public Collection<Coord> getExternalBorder() {
+	public List<Coord> getExternalBorder() {
 		final List<Coord> result = new ArrayList<Coord>(9);
 		final Coord center = getCenter();
 		for (Direction out : Direction.OUTWARDS)

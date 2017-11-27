@@ -1,6 +1,5 @@
 package com.hgames.rhogue.zone;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -29,7 +28,7 @@ public class CachingZone implements Zone {
 
 	protected transient /* @Nullable */ List<Coord> all;
 	protected transient /* @Nullable */ List<Coord> internalBorder;
-	protected transient /* @Nullable */ Collection<Coord> externalBorder;
+	protected transient /* @Nullable */ List<Coord> externalBorder;
 	protected transient /* @Nullable */ Zone extension;
 	protected transient /* @Nullable */ Zone shrunk;
 
@@ -181,7 +180,7 @@ public class CachingZone implements Zone {
 	}
 
 	@Override
-	public Collection<Coord> getExternalBorder() {
+	public List<Coord> getExternalBorder() {
 		if (externalBorder == null)
 			externalBorder = delegate.getExternalBorder();
 		return externalBorder;

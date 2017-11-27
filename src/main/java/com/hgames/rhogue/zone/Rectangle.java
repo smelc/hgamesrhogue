@@ -477,7 +477,7 @@ public interface Rectangle extends Zone {
 		}
 
 		@Override
-		public Collection<Coord> getExternalBorder() {
+		public List<Coord> getExternalBorder() {
 			final Rectangle extension = extend();
 			final List<Coord> result = new ArrayList<Coord>((extension.getWidth() + extension.getHeight()) * 2);
 			for (Direction dir : Direction.CARDINALS)

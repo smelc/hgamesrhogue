@@ -2,7 +2,6 @@ package com.hgames.rhogue.zone;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -134,7 +133,7 @@ public interface Zone extends Serializable, Iterable<Coord> {
 	List<Coord> getInternalBorder();
 
 	/** @return Cells adjacent to {@code this} that aren't in {@code this} */
-	Collection<Coord> getExternalBorder();
+	List<Coord> getExternalBorder();
 
 	/**
 	 * @return A variant of {@code this} where cells adjacent to {@code this}
@@ -311,7 +310,7 @@ public interface Zone extends Serializable, Iterable<Coord> {
 
 		@Override
 		/* Convenience implementation, feel free to override. */
-		public Collection<Coord> getExternalBorder() {
+		public List<Coord> getExternalBorder() {
 			final List<Coord> result = new ArrayList<Coord>(size());
 			final List<Coord> internalBorder = getInternalBorder();
 			final int ibsz = internalBorder.size();
