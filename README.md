@@ -10,4 +10,6 @@ This library does assumptions:
 * All players of a game are always in the same level. Another way to put it is that there's only
   one ILevel being displayed at once (but maybe more are being simulated).
 
+At some point in the future, a standalone version of this library will be released (including the required fragment of SquidLib and com.hgames.lib).
+
 Code in this library is in the public domain (see LICENSE).

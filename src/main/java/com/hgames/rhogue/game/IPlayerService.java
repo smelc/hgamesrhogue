@@ -1,5 +1,7 @@
 package com.hgames.rhogue.game;
 
+import java.util.List;
+
 import com.hgames.rhogue.animate.IAnimate;
 
 /**
@@ -12,11 +14,24 @@ import com.hgames.rhogue.animate.IAnimate;
 public interface IPlayerService<I extends IAnimate> {
 
 	/**
+	 * This method should likely be fast (no allocations).
+	 * 
 	 * @return Whether it's a player's turn.
 	 */
 	public boolean isPlayerTurn();
 
 	/**
+	 * This method should likely be fast (no allocations).
+	 * 
+	 * @param liveOnly
+	 *            Whether to filter away dead players.
+	 * @return The current players.
+	 */
+	public List<I> getPlayers(boolean liveOnly);
+
+	/**
+	 * This method should likely be fast (no allocations).
+	 * 
 	 * @return The player whose turn it is, or {@code null} if
 	 *         {@link #isPlayerTurn()} doesn't hold.
 	 */
