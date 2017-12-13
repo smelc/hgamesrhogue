@@ -238,10 +238,20 @@ public class ProbabilityTable<T> {
 	}
 
 	/**
-	 * @return Elements that can be returned by {@link #get(RNG)}.
+	 * @return Elements that can be returned by {@link #get(RNG)} if their
+	 *         probability is > 0.
 	 */
 	public Collection<T> getDomain() {
 		return table.keySet();
+	}
+
+	/**
+	 * @param t
+	 * @return {@code t}'s weight in this table.
+	 */
+	public int weight(T t) {
+		final Integer i = table.get(t);
+		return i == null ? 0 : i;
 	}
 
 	/**

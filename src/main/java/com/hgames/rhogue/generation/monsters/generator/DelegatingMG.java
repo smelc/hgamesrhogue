@@ -11,7 +11,8 @@ import squidpony.squidmath.RNG;
 
 /**
  * A forwarder to another {@link IMonstersGenerator}, typically to postprocess
- * its result.
+ * its result. Think about redefining {@link #may(Object)} if you delete
+ * monsters in {@link #intercept(List)}.
  * 
  * @author smelC
  * @param <U>
@@ -37,6 +38,11 @@ public abstract class DelegatingMG<U, T extends IAnimate> implements IMonstersGe
 		delegate.generate(factory, rng, interceptor, size);
 		intercept(interceptor);
 		acc.addAll(interceptor);
+	}
+
+	@Override
+	public boolean may(U u) {
+		return delegate.may(u);
 	}
 
 	/**

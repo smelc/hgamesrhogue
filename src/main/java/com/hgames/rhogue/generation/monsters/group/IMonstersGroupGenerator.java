@@ -39,6 +39,14 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 	public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc);
 
 	/**
+	 * @param u
+	 * @return Whether {@code this} may generate a monster whose identifier is
+	 *         {@code u}.
+	 */
+	@Override
+	public boolean may(U u);
+
+	/**
 	 * Fulfill the implementation of {@link IMonstersGenerator}, ignoring its
 	 * {@code size} argument. For convenience, and to save allocations.
 	 * 
@@ -91,6 +99,14 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 			delegate.generate(factory, rng, acc);
 		}
 
+		@Override
+		public boolean may(U u) {
+			for (IMonstersGroupGenerator<U, T> sub : table.getDomain()) {
+				if (sub.may(u))
+					return true;
+			}
+			return false;
+		}
 	}
 
 	/**
@@ -123,6 +139,16 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 			final int size = delegates.size();
 			for (int i = 0; i < size; i++)
 				delegates.get(i).generate(factory, rng, acc);
+		}
+
+		@Override
+		public boolean may(U u) {
+			final int size = delegates.size();
+			for (int i = 0; i < size; i++) {
+				if (delegates.get(i).may(u))
+					return true;
+			}
+			return false;
 		}
 
 	}
@@ -160,6 +186,10 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 			acc.add(factory.create(identifier));
 		}
 
+		@Override
+		public boolean may(U u) {
+			return identifier.equals(u);
+		}
 	}
 
 	/**
@@ -195,6 +225,10 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 				acc.add(factory.create(identifiers.get(i)));
 		}
 
+		@Override
+		public boolean may(U u) {
+			return identifiers.contains(u);
+		}
 	}
 
 	/**
@@ -241,6 +275,10 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 				acc.add(factory.create(identifier));
 		}
 
+		@Override
+		public boolean may(U u) {
+			return identifier.equals(u);
+		}
 	}
 
 	/**
@@ -300,6 +338,10 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 			toUse.generate(factory, rng, acc);
 		}
 
+		@Override
+		public boolean may(U u) {
+			return base.may(u) || roulette.may(u);
+		}
 	}
 
 }

@@ -65,4 +65,8 @@ public class MonstersGenerator<U, T extends IAnimate> implements IMonstersGenera
 		}
 	}
 
+	@Override
+	public boolean may(U u) {
+		return (must != null && must.may(u)) || default_.may(u);
+	}
 }
