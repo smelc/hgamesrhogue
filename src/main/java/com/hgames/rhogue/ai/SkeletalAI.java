@@ -32,4 +32,8 @@ public abstract class SkeletalAI<T extends IAnimate> implements IAI<T> {
 		return other == null || other.isDead() || !other.getTeam().adversaries(animate.getTeam());
 	}
 
+	@Override
+	public String toString() {
+		return "AI: " + animate.toString();
+	}
 }

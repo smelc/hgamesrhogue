@@ -34,4 +34,17 @@ public interface Grid extends Serializable {
 	 */
 	public boolean isInGrid(int x, int y);
 
+	/**
+	 * @param c
+	 * @return Whether {@code c} is on one of this grid's edge.
+	 */
+	public boolean isOnEdge(Coord c);
+
+	/**
+	 * @param x
+	 * @param y
+	 * @return Whether {@code (x, y)} is on one of this grid's edge.
+	 */
+	public boolean isOnEdge(int x, int y);
+
 }

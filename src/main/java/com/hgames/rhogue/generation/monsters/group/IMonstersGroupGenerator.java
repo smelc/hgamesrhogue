@@ -154,6 +154,63 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 	}
 
 	/**
+	 * A generator that delegates to a generator, and maybe to another one.
+	 * 
+	 * @author smelC
+	 * @param <U>
+	 * @param <T>
+	 */
+	public static class AndMaybe<U, T extends IAnimate> extends SkeletalMGG<U, T> {
+
+		protected final IMonstersGroupGenerator<U, T> base;
+		protected final IMonstersGroupGenerator<U, T> maybe;
+		protected final int maybeProbability;
+
+		/**
+		 * @param base
+		 *            The generator to which this generator always delegates.
+		 * @param maybe
+		 *            The generator to which this generator may delegate.
+		 * @param maybeProbability
+		 *            The probability with which to delegate to {@code maybe}. 0 means
+		 *            never, 1 means 50%, etc.
+		 */
+		public AndMaybe(IMonstersGroupGenerator<U, T> base, IMonstersGroupGenerator<U, T> maybe, int maybeProbability) {
+			this.base = base;
+			this.maybe = maybe;
+			this.maybeProbability = maybeProbability;
+		}
+
+		/**
+		 * @param base
+		 *            The generator to which this generator always delegates.
+		 * @param maybe
+		 *            The generator to which this generator may delegate.
+		 * @param maybeProbability
+		 *            The probability with which to delegate to {@code maybe}. 0 means
+		 *            never, 1 means 50%, etc.
+		 * @return A generator combining {@code base} and {@code maybe}.
+		 */
+		public static <U, T extends IAnimate> AndMaybe<U, T> create(IMonstersGroupGenerator<U, T> base,
+				IMonstersGroupGenerator<U, T> maybe, int maybeProbability) {
+			return new AndMaybe<>(base, maybe, maybeProbability);
+		}
+
+		@Override
+		public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc) {
+			base.generate(factory, rng, acc);
+			if (0 < maybeProbability && rng.nextInt(maybeProbability) == 0)
+				maybe.generate(factory, rng, acc);
+		}
+
+		@Override
+		public boolean may(U u) {
+			return base.may(u) || maybe.may(u);
+		}
+
+	}
+
+	/**
 	 * A group generator that generates a single monster.
 	 * 
 	 * @author smelC
