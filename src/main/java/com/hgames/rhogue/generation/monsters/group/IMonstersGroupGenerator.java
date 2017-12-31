@@ -193,7 +193,7 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		 */
 		public static <U, T extends IAnimate> AndMaybe<U, T> create(IMonstersGroupGenerator<U, T> base,
 				IMonstersGroupGenerator<U, T> maybe, int maybeProbability) {
-			return new AndMaybe<>(base, maybe, maybeProbability);
+			return new AndMaybe<U, T>(base, maybe, maybeProbability);
 		}
 
 		@Override
@@ -206,6 +206,55 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		@Override
 		public boolean may(U u) {
 			return base.may(u) || maybe.may(u);
+		}
+
+	}
+
+	/**
+	 * A generator that may delegate to a generator or do nothing.
+	 * 
+	 * @author smelC
+	 * @param <U>
+	 * @param <T>
+	 */
+	public static class Maybe<U, T extends IAnimate> extends SkeletalMGG<U, T> {
+
+		protected final IMonstersGroupGenerator<U, T> maybe;
+		protected final int probability;
+
+		/**
+		 * @param maybe
+		 *            The generator to which this generator may delegate.
+		 * @param proba
+		 *            The probability with which to delegate to {@code maybe}. 0 means
+		 *            never, 1 means 50%, etc.
+		 */
+		public Maybe(IMonstersGroupGenerator<U, T> maybe, int proba) {
+			this.maybe = maybe;
+			this.probability = proba;
+		}
+
+		/**
+		 * @param maybe
+		 *            The generator to which this generator may delegate.
+		 * @param probability
+		 *            The probability with which to delegate to {@code maybe}. 0 means
+		 *            never, 1 means 50%, etc.
+		 * @return A generator that may do something, using {@code maybe}.
+		 */
+		public static <U, T extends IAnimate> Maybe<U, T> create(IMonstersGroupGenerator<U, T> maybe, int probability) {
+			return new Maybe<U, T>(maybe, probability);
+		}
+
+		@Override
+		public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc) {
+			if (0 < probability && rng.nextInt(probability) == 0)
+				maybe.generate(factory, rng, acc);
+		}
+
+		@Override
+		public boolean may(U u) {
+			return 0 < probability && maybe.may(u);
 		}
 
 	}

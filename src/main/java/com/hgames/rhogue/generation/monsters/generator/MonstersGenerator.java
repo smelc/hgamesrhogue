@@ -52,12 +52,10 @@ public class MonstersGenerator<U, T extends IAnimate> implements IMonstersGenera
 
 	@Override
 	public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc, int size) {
-		int addeds = 0;
-		if (must != null) {
-			final int before = acc.size();
+		/* Monsters added as part of the 'must' generator aren't counted: intentional */
+		if (must != null)
 			must.generate(factory, rng, acc);
-			addeds += acc.size() - before;
-		}
+		int addeds = 0;
 		while (addeds < size) {
 			final int before = acc.size();
 			default_.generate(factory, rng, acc);

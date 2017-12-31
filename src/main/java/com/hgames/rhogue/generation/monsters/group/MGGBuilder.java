@@ -67,6 +67,18 @@ public class MGGBuilder {
 	}
 
 	/**
+	 * @param base
+	 * @param maybe
+	 * @param probability
+	 * @return A generator that always delegates to {@code base} and with some
+	 *         probability to {@code maybe}.
+	 */
+	public static <U, T extends IAnimate> IMonstersGroupGenerator<U, T> andMaybe(IMonstersGroupGenerator<U, T> base,
+			IMonstersGroupGenerator<U, T> maybe, int probability) {
+		return new IMonstersGroupGenerator.AndMaybe<U, T>(base, maybe, probability);
+	}
+
+	/**
 	 * @param idents
 	 * @return A generator that creates all monsters in {@code idents}.
 	 */
@@ -90,6 +102,17 @@ public class MGGBuilder {
 	 */
 	public static <U, T extends IAnimate> IMonstersGroupGenerator<U, T> list(U ident, int min, int max) {
 		return IMonstersGroupGenerator.RandomLengthUniformList.create(ident, min, max);
+	}
+
+	/**
+	 * @param maybe
+	 * @param probability
+	 * @return A generator that delegates to {@code maybe} with some probability, or
+	 *         does nothing.
+	 */
+	public static <U, T extends IAnimate> IMonstersGroupGenerator<U, T> maybe(IMonstersGroupGenerator<U, T> maybe,
+			int probability) {
+		return new IMonstersGroupGenerator.Maybe<U, T>(maybe, probability);
 	}
 
 	/**
@@ -150,6 +173,20 @@ public class MGGBuilder {
 	 */
 	public static <U, T extends IAnimate> IMonstersGroupGenerator<U, T> or(List<IMonstersGroupGenerator<U, T>> mgs) {
 		return IMonstersGroupGenerator.Or.create(ProbabilityTable.createUniform(mgs));
+	}
+
+	/**
+	 * @param delegate
+	 * @param lower
+	 *            The minimum number of times to call {@code delegate}
+	 * @param higher
+	 *            The maximum number of times to call {@code delegate}
+	 * @return A generator that calls {@code delegate} between lower and higher
+	 *         times.
+	 */
+	public static <U, T extends IAnimate> IMonstersGroupGenerator<U, T> repeater(IMonstersGroupGenerator<U, T> delegate,
+			int lower, int higher) {
+		return new RepeatingMGG<U, T>(delegate, lower, higher);
 	}
 
 	/**
