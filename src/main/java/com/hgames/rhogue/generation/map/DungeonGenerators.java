@@ -6,8 +6,7 @@ import com.hgames.rhogue.generation.map.rgenerator.CaveRoomGenerator;
 import com.hgames.rhogue.generation.map.rgenerator.CircularRoomGenerator;
 import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 import com.hgames.rhogue.generation.map.rgenerator.RectangleRoomGenerator;
-import com.hgames.rhogue.generation.map.rgenerator.ShallowCircularRoomGenerator;
-import com.hgames.rhogue.generation.map.rgenerator.ShallowRectangleRoomGenerator;
+import com.hgames.rhogue.generation.map.rgenerator.ShallowRoomGenerator;
 
 import squidpony.squidmath.RNG;
 
@@ -83,8 +82,10 @@ public class DungeonGenerators {
 			result.installRoomGenerator(treasureRoomGenerator, 200, new OneShot());
 		}
 		result.installRoomGenerator(new CircularRoomGenerator(), 100, new OneShot());
-		final IRoomGenerator shallow = rng.nextBoolean() ? new ShallowRectangleRoomGenerator()
-				: new ShallowCircularRoomGenerator();
+		final boolean circularCarved = rng.nextBoolean();
+		/* Carve center only in circular rooms */
+		final IRoomGenerator shallow = new ShallowRoomGenerator(
+				circularCarved ? new CircularRoomGenerator() : new RectangleRoomGenerator(), circularCarved);
 		result.installRoomGenerator(shallow, 100, new OneShot());
 		return result;
 	}

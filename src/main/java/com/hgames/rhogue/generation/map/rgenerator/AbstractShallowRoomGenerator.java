@@ -20,39 +20,62 @@ import squidpony.squidmath.RNG;
  */
 public abstract class AbstractShallowRoomGenerator extends SkeletalRoomGenerator {
 
-	// Change implementors so that they deal with it in 'getZoneToCarve'
-	@Deprecated
-	protected boolean keepCenter = false;
+	protected final IRoomGenerator delegate;
+
+	/**
+	 * @param delegate
+	 *            How to build the room. This generator is used to generate the full
+	 *            room, and then it is carved with
+	 *            {@link #getZoneToCarve(Zone, RNG, RoomComponent, Coord, int, int)}.
+	 */
+	protected AbstractShallowRoomGenerator(IRoomGenerator delegate) {
+		this.delegate = delegate;
+	}
 
 	@Override
 	public /* @Nullable */ Zone generate(RNG rng, RoomComponent component, Coord translation, int maxWidth,
 			int maxHeight) {
-		final Zone zone = getZoneToCarve(rng, component, translation, maxWidth, maxHeight);
-		if (zone == null)
+		final Zone toCarve = delegate.generate(rng, component, translation, maxWidth, maxHeight);
+		if (toCarve == null)
+			/* Cannot do */
 			return null;
-		final List<Coord> all = Lists.newArrayList(zone.iterator(), zone.size());
-		final Zone toRemove = zone.shrink();
-		assert zone.contains(toRemove) : "Shallow zone (" + zone + ") doesn't contain the carved zone: " + toRemove;
-		final Coord center = zone.getCenter();
-		boolean change = false;
-		for (Coord c : toRemove) {
-			if (!keepCenter || !center.equals(c)) {
-				all.remove(c);
-				change = true;
-			}
-		}
+		final Zone carving = getZoneToCarve(toCarve, rng, component, translation, maxWidth, maxHeight);
+		if (carving == null)
+			/* Cannot do */
+			return null;
+		assert toCarve.contains(carving) : "Initial zone (" + toCarve + ") doesn't completely contain the carved zone: "
+				+ carving;
+		final List<Coord> result = Lists.newArrayList(toCarve.iterator(), toCarve.size());
+		final boolean change = result.removeAll(carving.getAll());
 		if (change) {
-			final Zone chasm = toRemove.translate(translation);
+			final Zone chasm = carving.translate(translation);
+			// Replace carved zone by chasms
 			component.addZone(this, chasm, null, ZoneType.CHASM, DungeonSymbol.CHASM);
-			return new ListZone(all);
+			return new ListZone(result);
 		} else {
 			/* This is likely not intended */
 			assert false;
-			return zone;
+			return toCarve;
 		}
 	}
 
-	protected abstract Zone getZoneToCarve(RNG rng, RoomComponent component, Coord translation, int maxWidth,
+	/**
+	 * @param full
+	 *            The zone to carve
+	 * @param rng
+	 *            The corresponding parameter given at {@link #generate}
+	 * @param component
+	 *            The corresponding parameter given at {@link #generate}
+	 * @param translation
+	 *            The corresponding parameter given at {@link #generate}
+	 * @param maxWidth
+	 *            The corresponding parameter given at {@link #generate}
+	 * @param maxHeight
+	 *            The corresponding parameter given at {@link #generate}
+	 * @return The zone to carve within {@code full}, or null if it cannot be done.
+	 */
+	protected abstract /* @Nullable */ Zone getZoneToCarve(Zone full, RNG rng, RoomComponent component,
+			Coord translation, int maxWidth,
 			int maxHeight);
 
 }
