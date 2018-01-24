@@ -1,7 +1,9 @@
 package com.hgames.rhogue.generation.monsters.group;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.hgames.rhogue.animate.IAnimate;
 import com.hgames.rhogue.generation.monsters.generator.IMonstersGenerator;
@@ -67,7 +69,8 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 	}
 
 	/**
-	 * A generator that picks a random delegate every time it is called.
+	 * A generator that picks a random delegate every time it is called. It offers
+	 * the option to remove a delegate after its first usage.
 	 * 
 	 * @author smelC
 	 * @param <U>
@@ -76,6 +79,11 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 	public static class Or<U, T extends IAnimate> extends SkeletalMGG<U, T> {
 
 		protected final ProbabilityTable<IMonstersGroupGenerator<U, T>> table;
+
+		/**
+		 * Members of {@link #table} that should be removed after having been used once.
+		 */
+		protected /* @Nullable */ Set<IMonstersGroupGenerator<U, T>> oneShots;
 
 		/**
 		 * @param table
@@ -90,6 +98,21 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 			return new Or<U, T>(table);
 		}
 
+		/**
+		 * @param delegate
+		 *            A member of the underlying table.
+		 */
+		public void markOneShot(IMonstersGroupGenerator<U, T> delegate) {
+			if (!table.getDomain().contains(delegate)) {
+				assert false;
+				System.err.println("Generator (" + delegate + ") should be a delegate to be marked one shot!");
+				return;
+			}
+			if (oneShots == null)
+				oneShots = new HashSet<IMonstersGroupGenerator<U, T>>();
+			oneShots.add(delegate);
+		}
+
 		@Override
 		public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc) {
 			final IMonstersGroupGenerator<U, T> delegate = table.get(rng);
@@ -97,6 +120,16 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 				/* Table is empty */
 				return;
 			delegate.generate(factory, rng, acc);
+			if (oneShots != null) {
+				if (oneShots.contains(delegate)) {
+					/* A one shotter, delete it */
+					table.remove(delegate);
+					oneShots.remove(delegate);
+					if (oneShots.isEmpty())
+						/* Free memory */
+						oneShots = null;
+				}
+			}
 		}
 
 		@Override

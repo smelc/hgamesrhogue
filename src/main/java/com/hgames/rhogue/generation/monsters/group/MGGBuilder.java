@@ -120,7 +120,7 @@ public class MGGBuilder {
 	 * @param mg2
 	 * @return The uniform disjunction of {@code mg1} and {@code mg2}.
 	 */
-	public static <U, T extends IAnimate> IMonstersGroupGenerator<U, T> or(IMonstersGroupGenerator<U, T> mg1,
+	public static <U, T extends IAnimate> IMonstersGroupGenerator.Or<U, T> or(IMonstersGroupGenerator<U, T> mg1,
 			IMonstersGroupGenerator<U, T> mg2) {
 		final List<IMonstersGroupGenerator<U, T>> list = new ArrayList<IMonstersGroupGenerator<U, T>>(2);
 		list.add(mg1);
@@ -134,7 +134,7 @@ public class MGGBuilder {
 	 * @param mg3
 	 * @return The uniform disjunction of {@code mg1}, {@code mg2}, and {@code mg3}.
 	 */
-	public static <U, T extends IAnimate> IMonstersGroupGenerator<U, T> or(IMonstersGroupGenerator<U, T> mg1,
+	public static <U, T extends IAnimate> IMonstersGroupGenerator.Or<U, T> or(IMonstersGroupGenerator<U, T> mg1,
 			IMonstersGroupGenerator<U, T> mg2, IMonstersGroupGenerator<U, T> mg3) {
 		final List<IMonstersGroupGenerator<U, T>> list = new ArrayList<IMonstersGroupGenerator<U, T>>(3);
 		list.add(mg1);
@@ -149,9 +149,9 @@ public class MGGBuilder {
 	 * @param mg3
 	 * @param mg4
 	 * @return The uniform disjunction of {@code mg1}, {@code mg2}, {@code mg3}, and
-	 *         {@code mg4},
+	 *         {@code mg4}.
 	 */
-	public static <U, T extends IAnimate> IMonstersGroupGenerator<U, T> or(IMonstersGroupGenerator<U, T> mg1,
+	public static <U, T extends IAnimate> IMonstersGroupGenerator.Or<U, T> or(IMonstersGroupGenerator<U, T> mg1,
 			IMonstersGroupGenerator<U, T> mg2, IMonstersGroupGenerator<U, T> mg3, IMonstersGroupGenerator<U, T> mg4) {
 		final List<IMonstersGroupGenerator<U, T>> list = new ArrayList<IMonstersGroupGenerator<U, T>>(4);
 		list.add(mg1);
@@ -161,8 +161,29 @@ public class MGGBuilder {
 		return IMonstersGroupGenerator.Or.create(ProbabilityTable.createUniform(list));
 	}
 
+	/**
+	 * @param mg1
+	 * @param mg2
+	 * @param mg3
+	 * @param mg4
+	 * @param mg5
+	 * @return The uniform disjunction of {@code mg1}, {@code mg2}, {@code mg3},
+	 *         {@code mg4}, and {@code mg5}.
+	 */
+	public static <U, T extends IAnimate> IMonstersGroupGenerator.Or<U, T> or(IMonstersGroupGenerator<U, T> mg1,
+			IMonstersGroupGenerator<U, T> mg2, IMonstersGroupGenerator<U, T> mg3, IMonstersGroupGenerator<U, T> mg4,
+			IMonstersGroupGenerator<U, T> mg5) {
+		final List<IMonstersGroupGenerator<U, T>> list = new ArrayList<IMonstersGroupGenerator<U, T>>(4);
+		list.add(mg1);
+		list.add(mg2);
+		list.add(mg3);
+		list.add(mg4);
+		list.add(mg5);
+		return IMonstersGroupGenerator.Or.create(ProbabilityTable.createUniform(list));
+	}
+
 	@SuppressWarnings("javadoc")
-	public static <U, T extends IAnimate> IMonstersGroupGenerator<U, T> or(
+	public static <U, T extends IAnimate> IMonstersGroupGenerator.Or<U, T> or(
 			ProbabilityTable<IMonstersGroupGenerator<U, T>> mgs) {
 		return IMonstersGroupGenerator.Or.create(mgs);
 	}
@@ -171,7 +192,7 @@ public class MGGBuilder {
 	 * @param mgs
 	 * @return The uniform disjunction of {@code mgs}.
 	 */
-	public static <U, T extends IAnimate> IMonstersGroupGenerator<U, T> or(List<IMonstersGroupGenerator<U, T>> mgs) {
+	public static <U, T extends IAnimate> IMonstersGroupGenerator.Or<U, T> or(List<IMonstersGroupGenerator<U, T>> mgs) {
 		return IMonstersGroupGenerator.Or.create(ProbabilityTable.createUniform(mgs));
 	}
 
