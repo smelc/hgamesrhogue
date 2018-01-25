@@ -37,11 +37,6 @@ public class DelegatingRoomGenerator implements IRoomGenerator {
 	}
 
 	@Override
-	public void setRequiresPerfect(boolean val) {
-		delegate.setRequiresPerfect(val);
-	}
-
-	@Override
 	public void setMaxConnections(int val) {
 		delegate.setMaxConnections(val);
 	}
@@ -54,11 +49,6 @@ public class DelegatingRoomGenerator implements IRoomGenerator {
 	@Override
 	public Zone generate(RNG rng, RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
 		return delegate.generate(rng, component, translation, maxWidth, maxHeight);
-	}
-
-	@Override
-	public boolean requiresPerfect() {
-		return delegate.requiresPerfect();
 	}
 
 	@Override
