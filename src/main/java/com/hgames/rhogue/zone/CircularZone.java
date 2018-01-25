@@ -25,8 +25,8 @@ public class CircularZone extends Zone.Skeleton implements Zone {
 	 * @param center
 	 *            The circle's center.
 	 * @param radius
-	 *            The radius of the circle. Starts at {@code 0} (yielding an
-	 *            empty zone), then 1 (yielding a size 5 zone), etc (see class
+	 *            The radius of the circle. Starts at {@code 0} (yielding an empty
+	 *            zone), then 1 (yielding a size 5 zone), etc (see class
 	 *            documentation for looks of this zone).
 	 */
 	public CircularZone(Coord center, int radius) {
@@ -47,14 +47,7 @@ public class CircularZone extends Zone.Skeleton implements Zone {
 	@Override
 	public List<Coord> getAll() {
 		final List<Coord> result = new ArrayList<Coord>(radius * 4);
-		final DoerInACircle doer = new DoerInACircle() {
-			@Override
-			protected boolean doOnACell(int x, int y) {
-				result.add(Coord.get(x, y));
-				return false;
-			}
-		};
-		doer.doInACircle(center.x, center.y, radius);
+		DoerInACircle.computeAll(center.x, center.y, radius, result);
 		return result;
 	}
 

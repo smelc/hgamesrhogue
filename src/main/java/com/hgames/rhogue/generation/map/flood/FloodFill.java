@@ -51,9 +51,9 @@ public abstract class FloodFill {
 	 * @param objective
 	 *            How to control when to stop the floodfill.
 	 * @param eatBorders
-	 *            Whether to eat the fill's borders using some kind of drunken
-	 *            walk. Give {@code true} if your floodfill isn't stopped by
-	 *            other symbols in {@code objective}.
+	 *            Whether to eat the fill's borders using some kind of drunken walk.
+	 *            Give {@code true} if your floodfill isn't stopped by other symbols
+	 *            in {@code objective}.
 	 * @param buf
 	 *            Where to store the result, or {@code null} for this method to
 	 *            allocate a fresh set.
@@ -101,10 +101,9 @@ public abstract class FloodFill {
 
 	/**
 	 * <ol>
-	 * <li>To avoid the fill to be to squarish, let's eat its border <- NOT
-	 * NEEDED FINALLY</li>
-	 * <li>For every cell in the result, remove it if it is too lonely. This
-	 * avoids:
+	 * <li>To avoid the fill to be to squarish, let's eat its border <- NOT NEEDED
+	 * FINALLY</li>
+	 * <li>For every cell in the result, remove it if it is too lonely. This avoids:
 	 * 
 	 * <pre>
 	 * ######
@@ -136,25 +135,25 @@ public abstract class FloodFill {
 
 	protected void eatBorders(RNG rng, final Collection<? extends Coord> result) {
 		/*
-		 * XXX We should not eat the border if it's connecting it to walkable
-		 * cells.
+		 * XXX We should not eat the border if it's connecting it to walkable cells.
 		 */
 		int eaters = (result.size() / 24) + 1;
 		final List<Coord> border = new ListZone(new ArrayList<Coord>(result)).getInternalBorder();
+		final DoerInACircle doer = new DoerInACircle() {
+			@Override
+			protected boolean doOnACell(int x, int y) {
+				final Coord rmed = Coord.get(x, y);
+				result.remove(rmed);
+				return result.isEmpty();
+			}
+		};
 		while (0 < eaters) {
 			final Coord eatCenter = rng.getRandomElement(border);
 			// At the first roll, 'eatCenter' is in 'result'
 			// (by spec of 'getInternalBorder')
 			assert 0 < eaters || result.contains(eatCenter);
-			final DoerInACircle doer = new DoerInACircle() {
-				@Override
-				protected boolean doOnACell(int x, int y) {
-					final Coord rmed = Coord.get(x, y);
-					result.remove(rmed);
-					return result.isEmpty();
-				}
-			};
-			doer.doInACircle(eatCenter.x, eatCenter.y, 2);
+			doer.init(eatCenter.x, eatCenter.y, 2);
+			doer.doOnCells();
 			eaters--;
 		}
 	}
