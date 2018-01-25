@@ -153,7 +153,7 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 	 * @param source
 	 *            The light's emitter
 	 * @param row
-	 * @param start
+	 * @param start_
 	 *            The maximum light
 	 * @param end
 	 *            The minimum light
@@ -164,7 +164,8 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 	 * @param radius
 	 *            The caster's radius.
 	 */
-	private void castLight(U source, int row, float start, float end, int xx, int xy, int yx, int yy, int radius) {
+	private void castLight(U source, int row, float start_, float end, int xx, int xy, int yx, int yy, int radius) {
+		float start = start_;
 		if (start < end)
 			return;
 		final int srcX = source.getX();
