@@ -120,6 +120,22 @@ public interface Rectangle extends Zone {
 
 		/**
 		 * @param r
+		 * @return true if {@code r} is an horizontal corridor.
+		 */
+		public static boolean isHorizontal(Rectangle r) {
+			return r.getHeight() == 1;
+		}
+
+		/**
+		 * @param r
+		 * @return true if {@code r} is a vertical corridor.
+		 */
+		public static boolean isVertical(Rectangle r) {
+			return r.getWidth() == 1;
+		}
+
+		/**
+		 * @param r
 		 *            a Rectangle
 		 * @return The number of cells that {@code r} covers.
 		 */

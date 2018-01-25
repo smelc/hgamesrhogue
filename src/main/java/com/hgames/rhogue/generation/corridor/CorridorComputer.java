@@ -71,7 +71,7 @@ public class CorridorComputer {
 		final List<Rectangle> horizontalCorridors = computeHorizontalCorridors();
 		List<Rectangle> hOfSize1 = null;
 		for (Rectangle horizontalCorridor : horizontalCorridors) {
-			assert Corridors.isHorizontal(horizontalCorridor);
+			assert Rectangle.Utils.isHorizontal(horizontalCorridor);
 			if (horizontalCorridor.size() == 1) {
 				if (hOfSize1 == null)
 					hOfSize1 = new ArrayList<Rectangle>();
@@ -176,7 +176,7 @@ public class CorridorComputer {
 							all.addAll(result);
 							all.add(candidate);
 							assert Zones.allDisjoint(all);
-							assert Corridors.isVertical(candidate);
+							assert Rectangle.Utils.isVertical(candidate);
 							result.add(candidate);
 						}
 						start = -1;
