@@ -121,7 +121,7 @@ public class CorridorsComponent extends SkeletalComponent {
 					continue;
 				if (Dungeons.areConnected(dungeon, z, dest, 6))
 					continue;
-				final boolean success = generateCorridor(gen, gdata, z, dest, buf1, buf2, control, startEndBuffer);
+				final boolean success = generateCorridor(gen, gdata, z, dest, buf1, buf2, startEndBuffer);
 				if (!success)
 					continue;
 				final Zone built = ZCC_CELL.get1();
@@ -215,7 +215,7 @@ public class CorridorsComponent extends SkeletalComponent {
 
 	/** @return Whether a corridor was found */
 	private boolean generateCorridor(DungeonGenerator gen, GenerationData gdata, Zone src, Zone dest, List<Coord> buf1,
-			List<Coord> buf2, ICorridorControl control, Coord[] startEndBuffer) {
+			List<Coord> buf2, Coord[] startEndBuffer) {
 		/* This is a bit tartelette aux concombres */
 		boolean found = getZonesConnectionEndpoints(gdata, src, dest, buf1, buf2, false);
 		boolean alternativeAvailable = control.force();
