@@ -47,4 +47,8 @@ public class SomeShots implements Lifetime {
 		/* Nothing done */
 	}
 
+	/** @return The number of remaining shots */
+	public int getRemainingShots() {
+		return remainingShots;
+	}
 }

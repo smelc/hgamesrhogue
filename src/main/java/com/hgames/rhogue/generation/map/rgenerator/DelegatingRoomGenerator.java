@@ -37,6 +37,16 @@ public class DelegatingRoomGenerator implements IRoomGenerator {
 	}
 
 	@Override
+	public boolean isAcceptingStairs() {
+		return delegate.isAcceptingStairs();
+	}
+
+	@Override
+	public void setAcceptsStairs(boolean val) {
+		delegate.setAcceptsStairs(val);
+	}
+
+	@Override
 	public void setMaxConnections(int val) {
 		delegate.setMaxConnections(val);
 	}
@@ -59,6 +69,36 @@ public class DelegatingRoomGenerator implements IRoomGenerator {
 	@Override
 	public boolean getForceDoors() {
 		return delegate.getForceDoors();
+	}
+
+	@Override
+	public int getMinSideSize(boolean widthOrHeight) {
+		return delegate.getMinSideSize(widthOrHeight);
+	}
+
+	@Override
+	public void setMinSideSize(int val, boolean widthOrHeight) {
+		delegate.setMinSideSize(val, widthOrHeight);
+	}
+
+	@Override
+	public void setMinSideSizes(int val) {
+		delegate.setMinSideSizes(val);
+	}
+
+	@Override
+	public int getMaxSideSize(boolean widthOrHeight) {
+		return delegate.getMaxSideSize(widthOrHeight);
+	}
+
+	@Override
+	public void setMaxSideSize(int val, boolean widthOrHeight) {
+		delegate.setMaxSideSize(val, widthOrHeight);
+	}
+
+	@Override
+	public void setMaxSideSizes(int val) {
+		delegate.setMaxSideSizes(val);
 	}
 
 	@Override

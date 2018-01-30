@@ -13,10 +13,12 @@ import com.hgames.lib.choice.DoublePriorityCell;
 import com.hgames.lib.iterator.Iterators;
 import com.hgames.lib.log.ILogger;
 import com.hgames.rhogue.generation.map.Dungeon;
+import com.hgames.rhogue.generation.map.DungeonGenerator;
 import com.hgames.rhogue.generation.map.DungeonZonesCrawler;
 import com.hgames.rhogue.generation.map.Dungeons;
 import com.hgames.rhogue.generation.map.ICellToZone;
 import com.hgames.rhogue.generation.map.connection.IConnectionFinder;
+import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidmath.Coord;
@@ -30,6 +32,7 @@ import squidpony.squidmath.RNG;
  */
 public class StairGenerator extends AbstractStairGenerator {
 
+	protected final DungeonGenerator gen;
 	protected final ICellToZone containerFinder;
 	protected final IConnectionFinder connections;
 
@@ -38,6 +41,7 @@ public class StairGenerator extends AbstractStairGenerator {
 	/**
 	 * @param logger
 	 * @param rng
+	 * @param gen
 	 * @param dungeon
 	 * @param objective
 	 * @param upOrDown
@@ -45,9 +49,10 @@ public class StairGenerator extends AbstractStairGenerator {
 	 *            A function which given a Coord, gives its enclosing Zone.
 	 * @param connections
 	 */
-	public StairGenerator(ILogger logger, RNG rng, Dungeon dungeon, Coord objective, boolean upOrDown,
-			ICellToZone containerFinder, IConnectionFinder connections) {
+	public StairGenerator(ILogger logger, RNG rng, DungeonGenerator gen, Dungeon dungeon, Coord objective,
+			boolean upOrDown, ICellToZone containerFinder, IConnectionFinder connections) {
 		super(logger, rng, dungeon, objective, upOrDown);
+		this.gen = gen;
 		this.containerFinder = containerFinder;
 		this.connections = connections;
 	}
@@ -114,7 +119,20 @@ public class StairGenerator extends AbstractStairGenerator {
 		final Zone start = findContainer(objective);
 		if (start == null)
 			return Collections.emptyIterator();
-		final Iterator<Zone> delegate = new DungeonZonesCrawler(dungeon, start).iterator();
+		final Iterator<Zone> delegate_ = new DungeonZonesCrawler(dungeon, start).iterator();
+		/* Filter away Zone whose IRoomGenerator specifies !isAcceptingStairs() */
+		final Iterator<Zone> delegate = Iterators.filter(delegate_, new Predicate<Zone>() {
+			@Override
+			public boolean apply(Zone z) {
+				final IRoomGenerator rg = gen.getRoomGenerator(z);
+				if (rg == null) {
+					assert dungeon.getCorridors().contains(z);
+					/* We don't want stairs in corridors */
+					return false;
+				}
+				return rg.isAcceptingStairs();
+			}
+		});
 		final Iterator<Coord> base = new Iterator<Coord>() {
 
 			private Iterator<Coord> current;

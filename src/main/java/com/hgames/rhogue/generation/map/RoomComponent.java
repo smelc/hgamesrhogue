@@ -1,5 +1,6 @@
 package com.hgames.rhogue.generation.map;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,11 +39,18 @@ public class RoomComponent implements GeneratorComponent {
 	 */
 	private RoomGeneratorHelper rgh;
 
+	/**
+	 * For allocation-less iterations in method
+	 * {@link #adjustSizeWithRoomGenerators}. Freed once it becomes useless
+	 */
+	private List<IRoomGenerator> roomGenerators;
+
 	private static final MutablePair<IRoomGenerator, Zone> RGZ = MutablePair.createEmpty();
 
 	RoomComponent(DungeonGenerator gen, GenerationData gdata) {
 		this.gen = gen;
 		this.gdata = gdata;
+		this.roomGenerators = new ArrayList<IRoomGenerator>(gen.roomGenerators.getDomain());
 	}
 
 	@Override
@@ -103,6 +111,7 @@ public class RoomComponent implements GeneratorComponent {
 			final int width = gen.width;
 			final int height = gen.height;
 			rgh = new RoomGeneratorHelper() {
+
 				@Override
 				public Iterator<Coord> getCoords() {
 					return new GridIterators.RectangleRandomStartAndDirection(width, height, gen.rng.nextInt(width),
@@ -115,6 +124,7 @@ public class RoomComponent implements GeneratorComponent {
 				}
 			};
 			while (true) {
+
 				final boolean done = generateRoom(overwritten);
 				if (!done)
 					/* Cannot place any more room */
@@ -173,7 +183,7 @@ public class RoomComponent implements GeneratorComponent {
 		 */
 		/*
 		 * Try a bit harder when #startWithWater is set, as these dungeons typically
-		 * waster some space.
+		 * waste some space.
 		 */
 		final RNG rng = gen.rng;
 		outer: while (frustration < 8 + (gen.startWithWater ? 4 : 0)) {
@@ -181,14 +191,16 @@ public class RoomComponent implements GeneratorComponent {
 			/* +1 to account for the surrounding wall */
 			int maxWidth = getMaxRoomSideSize(true, rng.nextInt(10) == 0) + 1;
 			int maxHeight = getMaxRoomSideSize(false, rng.nextInt(10) == 0) + 1;
-			final int max = Math.max(maxWidth, maxHeight);
-			final int min = Math.min(maxWidth, maxHeight);
-			if (min < max / 2) {
-				/* Correct that, because such very long or wide rooms look weird */
-				if (maxHeight < maxWidth)
-					maxHeight = maxWidth / 2;
-				else
-					maxWidth = maxHeight / 2;
+			{
+				final int max = Math.max(maxWidth, maxHeight);
+				final int min = Math.min(maxWidth, maxHeight);
+				if (min < max / 2) {
+					/* Correct that, because such very long or wide rooms look weird */
+					if (maxHeight < maxWidth)
+						maxHeight = maxWidth / 2;
+					else
+						maxWidth = maxHeight / 2;
+				}
 			}
 
 			/* Top-left coordinate */
@@ -243,15 +255,44 @@ public class RoomComponent implements GeneratorComponent {
 	}
 
 	/** @return Whether a room was generated (recorded in {@link #RGZ}) */
-	private boolean generateRoomAt(Coord bottomLeft, int maxWidth, int maxHeight) {
-		assert 1 <= maxWidth;
-		assert 1 <= maxHeight;
+	private boolean generateRoomAt(Coord bottomLeft, int maxWidth_, int maxHeight_) {
+		assert 1 <= maxWidth_;
+		assert 1 <= maxHeight_;
 		final RNG rng = gen.rng;
 		final IRoomGenerator rg = gen.roomGenerators.get(rng);
 		if (rg == null)
 			return false;
 		// infoLog("Trying " + maxWidth + "x" + maxHeight + " room at " +
 		// bottomLeft);
+
+		final int maxWidth;
+		final int maxHeight;
+		{
+			// Check that maxWidth and maxHeight meet the generator's specification
+			final int minw = rg.getMinSideSize(true);
+			if (0 <= minw && maxWidth_ < minw)
+				/*
+				 * The maximum width given by the caller is smaller than the generator's
+				 * minimum. There's no way to meet the constraints.
+				 */
+				return false;
+			final int minh = rg.getMinSideSize(false);
+			if (0 <= minh && maxHeight_ < minh)
+				/*
+				 * The maximum height given by the caller is smaller than the generator's
+				 * minimum. There's no way to meet the constraints.
+				 */
+				return false;
+			/*
+			 * Now union the constraints of the caller and of the room generator for the
+			 * maximum sizes.
+			 */
+			final int rgMaxW = rg.getMaxSideSize(true);
+			maxWidth = 0 <= rgMaxW ? Math.min(maxWidth_, rgMaxW) : maxWidth_;
+			final int rgMaxH = rg.getMaxSideSize(false);
+			maxHeight = 0 <= rgMaxH ? Math.min(maxHeight_, rgMaxH) : maxHeight_;
+		}
+
 		final Zone zeroZeroZone = rg.generate(rng, this, bottomLeft, maxWidth, maxHeight);
 		if (zeroZeroZone == null)
 			return false;
@@ -274,6 +315,9 @@ public class RoomComponent implements GeneratorComponent {
 					gen.roomGenerators.remove(rg);
 					gen.rgLifetimes.remove(rg);
 					lifetime.removeCallback();
+					if (logger != null && logger.isInfoEnabled())
+						logger.infoLog(Tags.GENERATION, "Removed room generator: " + rg + ", because its "
+								+ Lifetime.class.getSimpleName() + " is over.");
 				}
 			}
 		}
@@ -283,19 +327,66 @@ public class RoomComponent implements GeneratorComponent {
 		return true;
 	}
 
-	// FIXME CH Add a parameter to control variance
-	protected int getMaxRoomSideSize(boolean widthOrHeight, boolean spiceItUp) {
+	private int getMaxRoomSideSize(boolean widthOrHeight, boolean spiceItUp) {
 		final RNG rng = gen.rng;
 		int min = widthOrHeight ? gen.minRoomWidth : gen.minRoomHeight;
 		if (min == 1 && !gen.allowWidthOrHeightOneRooms)
 			min++;
 		/*
-		 * +1, because #maxRoomWidth and #maxRoomHeight are inclusive, where RNG#between
-		 * isn't.
+		 * +1, because #maxRoomWidth and #maxRoomHeight are inclusive, whereas
+		 * RNG#between isn't.
 		 */
-		final int max = (widthOrHeight ? gen.maxRoomWidth : gen.maxRoomHeight) + 1;
+		int max = (widthOrHeight ? gen.maxRoomWidth : gen.maxRoomHeight) + 1;
+		/* Now try to honor the possible IRoomGenerator specified sizes */
+		min = adjustSizeWithRoomGenerators(widthOrHeight, true, min, max);
+		max = adjustSizeWithRoomGenerators(widthOrHeight, false, min, max);
+
 		final int result = rng.between(min, max);
 		return result * (spiceItUp ? 2 : 1);
+	}
+
+	private int adjustSizeWithRoomGenerators(boolean widthOrHeight, boolean minOrMax, int min, int max) {
+		int result = minOrMax ? min : max;
+		if (roomGenerators == null)
+			/* Remaining generators do not specify constraints */
+			return result;
+		final int nbrgs = roomGenerators.size();
+
+		boolean isAConstraintPossible = false;
+
+		for (int i = 0; i < nbrgs; i++) {
+			final IRoomGenerator rg = roomGenerators.get(i);
+			final int local = minOrMax ? rg.getMinSideSize(widthOrHeight) : rg.getMaxSideSize(widthOrHeight);
+			if (local < 0)
+				/* No constraint */
+				continue;
+			if (!gen.roomGenerators.getDomain().contains(rg))
+				/* Room generator got unplugged */
+				continue;
+			/*
+			 * Assigned before checking inInterval, because this value should be correct no
+			 * matter the current values of min/max.
+			 */
+			isAConstraintPossible |= true;
+			if (minOrMax) {
+				if (result < local && local <= max) {
+					/* Constraint of this generator changes something and can be honored */
+					result = local;
+				}
+			} else if (min <= local && local < result) {
+				/* Constraint of this generator changes something and can be honored */
+				result = local;
+			}
+		}
+
+		if (!isAConstraintPossible)
+			/*
+			 * To speed up later calls. Correct because the list of IRoomGenerator can only
+			 * shrink.
+			 */
+			roomGenerators = null;
+
+		return result;
 	}
 
 }

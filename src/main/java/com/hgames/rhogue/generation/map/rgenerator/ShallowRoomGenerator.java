@@ -26,7 +26,8 @@ public class ShallowRoomGenerator extends AbstractShallowRoomGenerator {
 	 * @param delegate
 	 *            The delegate to build the zone to carve.
 	 * @param carveCenter
-	 *            Whether the center must be carved or not.
+	 *            Whether the center (a single cell) must be carved too, or left
+	 *            unaffected.
 	 */
 	public ShallowRoomGenerator(IRoomGenerator delegate, boolean carveCenter) {
 		super(delegate);
