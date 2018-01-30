@@ -1,6 +1,9 @@
 package com.hgames.rhogue.generation.map.rgenerator;
 
+import java.util.EnumSet;
+
 import com.hgames.rhogue.generation.map.DungeonGenerator;
+import com.hgames.rhogue.generation.map.DungeonSymbol;
 import com.hgames.rhogue.generation.map.RoomComponent;
 import com.hgames.rhogue.zone.Zone;
 
@@ -27,6 +30,16 @@ public class DelegatingRoomGenerator implements IRoomGenerator {
 	public DelegatingRoomGenerator(IRoomGenerator delegate, int identifier) {
 		this.delegate = delegate;
 		this.identifier = identifier;
+	}
+
+	@Override
+	public EnumSet<DungeonSymbol> getAcceptedNeighbors() {
+		return delegate.getAcceptedNeighbors();
+	}
+
+	@Override
+	public void setAcceptedNeighbors(EnumSet<DungeonSymbol> neighbors) {
+		delegate.setAcceptedNeighbors(neighbors);
 	}
 
 	/**

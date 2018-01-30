@@ -1,6 +1,7 @@
 package com.hgames.rhogue.generation.map;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -15,6 +16,7 @@ import com.hgames.rhogue.generation.map.DungeonGenerator.ZoneType;
 import com.hgames.rhogue.generation.map.lifetime.Lifetime;
 import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 import com.hgames.rhogue.grid.GridIterators;
+import com.hgames.rhogue.rng.ProbabilityTable;
 import com.hgames.rhogue.zone.ListZone;
 import com.hgames.rhogue.zone.Rectangle;
 import com.hgames.rhogue.zone.Zone;
@@ -124,7 +126,6 @@ public class RoomComponent implements GeneratorComponent {
 				}
 			};
 			while (true) {
-
 				final boolean done = generateRoom(overwritten);
 				if (!done)
 					/* Cannot place any more room */
@@ -176,6 +177,7 @@ public class RoomComponent implements GeneratorComponent {
 	private boolean generateRoom(EnumSet<DungeonSymbol> overwritten) {
 		final Dungeon dungeon = gdata.dungeon;
 		final IDungeonGeneratorListener listener = gen.listener;
+		final ProbabilityTable<IRoomGenerator> rgTable = getRoomGeneratorTable(overwritten);
 		int frustration = 0;
 		/*
 		 * This bound is quite important. Increasing it makes dungeon generation slower,
@@ -233,7 +235,7 @@ public class RoomComponent implements GeneratorComponent {
 					continue;
 				assert dungeon.isValid(brCandidate);
 				assert !Dungeons.isOnEdge(dungeon, brCandidate);
-				final boolean done = generateRoomAt(blCandidate, mw, mh);
+				final boolean done = generateRoomAt(rgTable, blCandidate, mw, mh);
 				if (!done)
 					continue;
 				assert RGZ.getFst() != null && RGZ.getSnd() != null;
@@ -255,11 +257,12 @@ public class RoomComponent implements GeneratorComponent {
 	}
 
 	/** @return Whether a room was generated (recorded in {@link #RGZ}) */
-	private boolean generateRoomAt(Coord bottomLeft, int maxWidth_, int maxHeight_) {
+	private boolean generateRoomAt(ProbabilityTable<IRoomGenerator> rgTable, Coord bottomLeft, int maxWidth_,
+			int maxHeight_) {
 		assert 1 <= maxWidth_;
 		assert 1 <= maxHeight_;
 		final RNG rng = gen.rng;
-		final IRoomGenerator rg = gen.roomGenerators.get(rng);
+		final IRoomGenerator rg = rgTable.get(rng);
 		if (rg == null)
 			return false;
 		// infoLog("Trying " + maxWidth + "x" + maxHeight + " room at " +
@@ -325,6 +328,37 @@ public class RoomComponent implements GeneratorComponent {
 		RGZ.setFst(rg);
 		RGZ.setSnd(zone);
 		return true;
+	}
+
+	private ProbabilityTable<IRoomGenerator> getRoomGeneratorTable(EnumSet<DungeonSymbol> overwritten) {
+		final Collection<IRoomGenerator> domain = gen.roomGenerators.getDomain();
+		Iterator<IRoomGenerator> it = domain.iterator();
+		boolean needChange = false;
+		while (it.hasNext() && !needChange) {
+			final IRoomGenerator candidate = it.next();
+			final /* @Nullable */ EnumSet<DungeonSymbol> neighbors = candidate.getAcceptedNeighbors();
+			if (neighbors != null && !neighbors.containsAll(overwritten)) {
+				/*
+				 * Room generator refuses a possibly overwritten symbol, we need to remove it.
+				 */
+				needChange = true;
+				break;
+			}
+		}
+		if (!needChange)
+			return gen.roomGenerators;
+		/* Reboot iterator */
+		it = domain.iterator();
+		final ProbabilityTable<IRoomGenerator> result = ProbabilityTable.create();
+		while (it.hasNext()) {
+			final IRoomGenerator candidate = it.next();
+			final /* @Nullable */ EnumSet<DungeonSymbol> neighbors = candidate.getAcceptedNeighbors();
+			if (neighbors == null || neighbors.containsAll(overwritten))
+				/* 'candidate' is compatible with 'overwritten' */
+				result.add(candidate, gen.roomGenerators.weight(candidate));
+			/* else skip it */
+		}
+		return result;
 	}
 
 	private int getMaxRoomSideSize(boolean widthOrHeight, boolean spiceItUp) {
