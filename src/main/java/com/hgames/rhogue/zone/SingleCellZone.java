@@ -1,7 +1,6 @@
 package com.hgames.rhogue.zone;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import squidpony.squidgrid.Direction;
@@ -17,8 +16,6 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 
 	protected final int x;
 	protected final int y;
-
-	private transient List<Coord> all = null;
 
 	private static final long serialVersionUID = 6267793374508699574L;
 
@@ -65,11 +62,8 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 
 	@Override
 	public List<Coord> getAll() {
-		if (all == null) {
-			all = new ArrayList<Coord>(1);
-			all.add(Coord.get(x, y));
-			all = Collections.unmodifiableList(all);
-		}
+		final List<Coord> all = new ArrayList<Coord>(1);
+		all.add(Coord.get(x, y));
 		return all;
 	}
 
@@ -100,6 +94,11 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 	@Override
 	public Zone shrink() {
 		return EmptyZone.INSTANCE;
+	}
+
+	@Override
+	public Zone remove(Coord c) {
+		return x == c.x && y == c.y ? EmptyZone.INSTANCE : this;
 	}
 
 	@Override

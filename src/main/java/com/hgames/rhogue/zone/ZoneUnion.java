@@ -16,9 +16,6 @@ public class ZoneUnion extends Zone.Skeleton {
 	protected final Zone z1;
 	protected final Zone z2;
 
-	protected transient List<Coord> all;
-	protected transient Coord center;
-
 	private static final long serialVersionUID = 1414500085497183858L;
 
 	/**
@@ -54,11 +51,9 @@ public class ZoneUnion extends Zone.Skeleton {
 
 	@Override
 	public List<Coord> getAll() {
-		if (all == null) {
-			all = new ArrayList<Coord>(size());
-			all.addAll(z1.getAll());
-			all.addAll(z2.getAll());
-		}
+		final List<Coord> all = new ArrayList<Coord>(size());
+		all.addAll(z1.getAll());
+		all.addAll(z2.getAll());
 		return all;
 	}
 
@@ -88,13 +83,10 @@ public class ZoneUnion extends Zone.Skeleton {
 
 	@Override
 	public Coord getCenter() {
-		if (center == null) {
-			final Coord z1c = z1.getCenter();
-			final Coord z2c = z2.getCenter();
-			center = Coord.get(Math.round(((z1c.x + z2c.x) * z1.size()) / 2f),
-					Math.round(((z1c.y + z2c.y) * z2.size()) / 2f));
-		}
-		return center;
+		final Coord z1c = z1.getCenter();
+		final Coord z2c = z2.getCenter();
+		return Coord.get(Math.round(((z1c.x + z2c.x) * z1.size()) / 2f),
+				Math.round(((z1c.y + z2c.y) * z2.size()) / 2f));
 	}
 
 	@Override

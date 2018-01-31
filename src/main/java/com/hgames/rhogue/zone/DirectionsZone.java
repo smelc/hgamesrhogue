@@ -61,17 +61,13 @@ public class DirectionsZone extends Zone.Skeleton implements Zone {
 		return false;
 	}
 
-	private transient List<Coord> all;
-
 	@Override
 	public List<Coord> getAll() {
-		if (all == null) {
-			all = new ArrayList<Coord>(size());
-			if (includesCenter)
-				all.add(center);
-			for (Direction dir : dirs)
-				all.add(center.translate(dir));
-		}
+		final List<Coord> all = new ArrayList<Coord>(size());
+		if (includesCenter)
+			all.add(center);
+		for (Direction dir : dirs)
+			all.add(center.translate(dir));
 		return all;
 	}
 
@@ -92,6 +88,20 @@ public class DirectionsZone extends Zone.Skeleton implements Zone {
 	 */
 	public DirectionsZone removeCenter() {
 		return includesCenter ? new DirectionsZone(center, dirs, false) : this;
+	}
+
+	@Override
+	public Zone remove(Coord c) {
+		if (includesCenter && c.equals(center))
+			return new DirectionsZone(center, EnumSet.copyOf(dirs), false);
+		if (c.isAdjacent(center)) {
+			assert contains(c);
+			final EnumSet<Direction> copy = EnumSet.copyOf(dirs);
+			final boolean rmed = copy.remove(center.toGoTo(c));
+			assert rmed;
+			return copy.isEmpty() ? EmptyZone.INSTANCE : new DirectionsZone(center, copy, includesCenter);
+		} else
+			return super.remove(c);
 	}
 
 	/**

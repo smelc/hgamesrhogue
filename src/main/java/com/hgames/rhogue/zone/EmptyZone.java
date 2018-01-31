@@ -17,6 +17,11 @@ public final class EmptyZone extends Zone.Skeleton implements Zone {
 	private static final long serialVersionUID = 1298295201124745841L;
 
 	@Override
+	public Zone add(Coord c) {
+		return new SingleCellZone(c);
+	}
+
+	@Override
 	public boolean isEmpty() {
 		return true;
 	}
@@ -44,6 +49,11 @@ public final class EmptyZone extends Zone.Skeleton implements Zone {
 	@Override
 	public Coord getRandom(RNG rng) {
 		return null;
+	}
+
+	@Override
+	public Zone remove(Coord c) {
+		return this;
 	}
 
 	@Override

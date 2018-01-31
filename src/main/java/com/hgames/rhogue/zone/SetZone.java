@@ -1,7 +1,9 @@
 package com.hgames.rhogue.zone;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -25,6 +27,15 @@ public class SetZone extends Zone.Skeleton implements Zone {
 	 */
 	public SetZone(Set<Coord> set) {
 		this.set = set;
+	}
+
+	@Override
+	public Zone add(Coord c) {
+		if (set instanceof HashSet || set instanceof LinkedHashSet) {
+			set.add(c);
+			return this;
+		} else
+			return super.add(c);
 	}
 
 	@Override
@@ -66,6 +77,17 @@ public class SetZone extends Zone.Skeleton implements Zone {
 	@Override
 	public List<Coord> getAll() {
 		return new ArrayList<Coord>(set);
+	}
+
+	@Override
+	public Zone remove(Coord c) {
+		if (set instanceof HashSet || set instanceof LinkedHashSet) {
+			set.remove(c);
+			return this;
+		} else if (!contains(c))
+			return this;
+		else
+			return super.remove(c);
 	}
 
 }

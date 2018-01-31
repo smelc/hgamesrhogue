@@ -32,6 +32,13 @@ import squidpony.squidmath.RNG;
 public interface Zone extends Serializable, Iterable<Coord> {
 
 	/**
+	 * @param c
+	 * @return A variant of {@code this}, or {@code this} itself; where {@code c}
+	 *         was added.
+	 */
+	public Zone add(Coord c);
+
+	/**
 	 * @return Whether this zone is empty.
 	 */
 	boolean isEmpty();
@@ -148,6 +155,13 @@ public interface Zone extends Serializable, Iterable<Coord> {
 	Zone extend();
 
 	/**
+	 * @param c
+	 * @return A variant of {@code this} or {@code this} itself, where {@code c} has
+	 *         been removed.
+	 */
+	Zone remove(Coord c);
+
+	/**
 	 * @return A variant of {@code this} where {@link #getInternalBorder()} has been
 	 *         removed.
 	 */
@@ -173,6 +187,17 @@ public interface Zone extends Serializable, Iterable<Coord> {
 		private transient int height = -2;
 
 		private static final long serialVersionUID = 4436698111716212256L;
+
+		@Override
+		/*
+		 * Convenience implementation which should be used iff getAll returns a FRESH
+		 * mutable list. Feel free to override
+		 */
+		public Zone add(Coord c) {
+			final List<Coord> extension = getAll();
+			extension.add(c);
+			return new ListZone(extension);
+		}
 
 		@Override
 		/* Convenience implementation, feel free to override */
@@ -358,11 +383,25 @@ public interface Zone extends Serializable, Iterable<Coord> {
 			return this;
 		}
 
+		@Override
+		/*
+		 * Convenience implementation which should be used iff getAll returns a FRESH
+		 * mutable list. Feel free to override
+		 */
+		public Zone remove(Coord c) {
+			final List<Coord> all = getAll();
+			final boolean rmed = all.remove(c);
+			return rmed ? new ListZone(all) : this;
+		}
+
 		private int smallest(boolean xOrY) {
 			if (isEmpty())
 				return -1;
 			int min = Integer.MAX_VALUE;
-			for (Coord c : this) {
+			final List<Coord> all = getAll();
+			final int nba = all.size();
+			for (int i = 0; i < nba; i++) {
+				final Coord c = all.get(i);
 				final int val = xOrY ? c.x : c.y;
 				if (val < min)
 					min = val;
@@ -372,7 +411,10 @@ public interface Zone extends Serializable, Iterable<Coord> {
 
 		private int biggest(boolean xOrY) {
 			int max = -1;
-			for (Coord c : this) {
+			final List<Coord> all = getAll();
+			final int nba = all.size();
+			for (int i = 0; i < nba; i++) {
+				final Coord c = all.get(i);
 				final int val = xOrY ? c.x : c.y;
 				if (max < val)
 					max = val;
