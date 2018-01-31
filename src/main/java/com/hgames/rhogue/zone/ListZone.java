@@ -3,6 +3,7 @@ package com.hgames.rhogue.zone;
 import java.util.List;
 
 import squidpony.squidmath.Coord;
+import squidpony.squidmath.RNG;
 
 /**
  * A zone defined by a {@link List}.
@@ -47,6 +48,11 @@ public class ListZone extends Zone.Skeleton {
 	@Override
 	public List<Coord> getAll() {
 		return coords;
+	}
+
+	@Override
+	public Coord getRandom(RNG rng) {
+		return rng.getRandomElement(coords);
 	}
 
 	/**

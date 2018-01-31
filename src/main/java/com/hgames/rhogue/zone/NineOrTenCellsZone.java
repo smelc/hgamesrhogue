@@ -5,6 +5,7 @@ import java.util.List;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
+import squidpony.squidmath.RNG;
 
 /**
  * A zone containing 9 or 10 cells, centered around a {@link Coord}.
@@ -90,6 +91,11 @@ public class NineOrTenCellsZone extends Zone.Skeleton {
 				all.add(center.translate(out));
 		}
 		return all;
+	}
+
+	@Override
+	public Coord getRandom(RNG rng) {
+		return center.translate(rng.getRandomElement(includesCenter ? Direction.values() : Direction.OUTWARDS));
 	}
 
 	@Override

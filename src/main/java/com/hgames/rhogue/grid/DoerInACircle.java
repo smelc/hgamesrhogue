@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import squidpony.squidmath.Coord;
+import squidpony.squidmath.RNG;
 
 /**
  * A class to execute some actions within all cells of a circle. It is reusable,
@@ -75,6 +76,21 @@ public abstract class DoerInACircle extends SkeletalCellsDoer {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * @param rng
+	 * @param x
+	 * @param y
+	 * @param radius
+	 * @return A random cell within the circle centered at (x, y) and of radius
+	 *         {@code radius}.
+	 */
+	public static Coord getRandom(RNG rng, int x, int y, int radius) {
+		final int dx = rng.between(-radius, radius);
+		final int high = (int) Math.floor(Math.sqrt((radius * radius) - (dx * dx)));
+		final int dy = rng.between(-high, high);
+		return Coord.get(x + dx, y + dy);
 	}
 
 }

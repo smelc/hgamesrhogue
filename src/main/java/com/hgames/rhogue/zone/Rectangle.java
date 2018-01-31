@@ -10,6 +10,7 @@ import java.util.List;
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.iterator.SquidIterators;
 import squidpony.squidmath.Coord;
+import squidpony.squidmath.RNG;
 
 /**
  * Rectangles in 2D grids. Checkout {@link Utils} for utility methods.
@@ -438,6 +439,16 @@ public interface Rectangle extends Zone {
 		public List<Coord> getAll() {
 			final List<Coord> result = Utils.cellsList(this);
 			assert result.size() == size();
+			return result;
+		}
+
+		@Override
+		public Coord getRandom(RNG rng) {
+			final int w = rng.between(0, width);
+			final int h = rng.between(0, height);
+			/* - h, because in SquidLib a smaller y is higher */
+			final Coord result = Coord.get(bottomLeft.x + w, bottomLeft.y - h);
+			assert contains(result);
 			return result;
 		}
 

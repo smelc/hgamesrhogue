@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import squidpony.squidmath.Coord;
+import squidpony.squidmath.RNG;
 
 /**
  * A wrapper around a {@link Zone} that caches potentially expensive
@@ -160,6 +161,11 @@ public class CachingZone implements Zone {
 		if (all == null)
 			all = delegate.getAll();
 		return all;
+	}
+
+	@Override
+	public Coord getRandom(RNG rng) {
+		return delegate.getRandom(rng);
 	}
 
 	@Override

@@ -6,6 +6,7 @@ import java.util.List;
 import com.hgames.rhogue.grid.DoerInACircle;
 
 import squidpony.squidmath.Coord;
+import squidpony.squidmath.RNG;
 
 /**
  * A zone in the shape of a circle. Could be optimized by overriding some method
@@ -48,6 +49,13 @@ public class CircularZone extends Zone.Skeleton implements Zone {
 	public List<Coord> getAll() {
 		final List<Coord> result = new ArrayList<Coord>(radius * 4);
 		DoerInACircle.computeAll(center.x, center.y, radius, result);
+		return result;
+	}
+
+	@Override
+	public Coord getRandom(RNG rng) {
+		final Coord result = DoerInACircle.getRandom(rng, center.x, center.y, radius);
+		assert contains(result);
 		return result;
 	}
 

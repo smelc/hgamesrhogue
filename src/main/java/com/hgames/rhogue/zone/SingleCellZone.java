@@ -6,6 +6,7 @@ import java.util.List;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
+import squidpony.squidmath.RNG;
 
 /**
  * A {@link Zone} containing a single cell.
@@ -58,6 +59,11 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
+	public Coord getCenter() {
+		return Coord.get(x, y);
+	}
+
+	@Override
 	public List<Coord> getAll() {
 		if (all == null) {
 			all = new ArrayList<Coord>(1);
@@ -68,8 +74,13 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
+	public Coord getRandom(RNG rng) {
+		return Coord.get(x, y);
+	}
+
+	@Override
 	public List<Coord> getExternalBorder() {
-		final List<Coord> result = new ArrayList<Coord>(9);
+		final List<Coord> result = new ArrayList<Coord>(Direction.OUTWARDS.length);
 		final Coord center = getCenter();
 		for (Direction out : Direction.OUTWARDS)
 			result.add(center.translate(out));
