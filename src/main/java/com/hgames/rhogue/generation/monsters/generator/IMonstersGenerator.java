@@ -35,10 +35,17 @@ public interface IMonstersGenerator<U, T extends IAnimate> {
 	public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc, int size);
 
 	/**
+	 * Adds to {@code acc} the {@code Us} that {@code this} may generate (i.e. for
+	 * which {@link #may(Object)} returns true.
+	 * 
+	 * @param acc
+	 */
+	public void addMay(Collection<U> acc);
+
+	/**
 	 * @param u
 	 * @return Whether {@code this} may generate a monster whose identifier is
 	 *         {@code u}.
 	 */
 	public boolean may(U u);
-
 }

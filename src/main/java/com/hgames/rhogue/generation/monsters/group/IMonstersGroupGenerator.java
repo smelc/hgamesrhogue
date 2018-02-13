@@ -40,13 +40,11 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 	 */
 	public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc);
 
-	/**
-	 * @param u
-	 * @return Whether {@code this} may generate a monster whose identifier is
-	 *         {@code u}.
-	 */
 	@Override
 	public boolean may(U u);
+
+	@Override
+	public void addMay(Collection<U> acc);
 
 	/**
 	 * Fulfill the implementation of {@link IMonstersGenerator}, ignoring its
@@ -140,6 +138,12 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 			}
 			return false;
 		}
+
+		@Override
+		public void addMay(Collection<U> acc) {
+			for (IMonstersGroupGenerator<U, T> sub : table.getDomain())
+				sub.addMay(acc);
+		}
 	}
 
 	/**
@@ -172,6 +176,14 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 			final int size = delegates.size();
 			for (int i = 0; i < size; i++)
 				delegates.get(i).generate(factory, rng, acc);
+		}
+
+		@Override
+		public void addMay(Collection<U> acc) {
+			final int size = delegates.size();
+			for (int i = 0; i < size; i++) {
+				delegates.get(i).addMay(acc);
+			}
 		}
 
 		@Override
@@ -237,6 +249,12 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		}
 
 		@Override
+		public void addMay(Collection<U> acc) {
+			base.addMay(acc);
+			maybe.addMay(acc);
+		}
+
+		@Override
 		public boolean may(U u) {
 			return base.may(u) || maybe.may(u);
 		}
@@ -286,6 +304,12 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		}
 
 		@Override
+		public void addMay(Collection<U> acc) {
+			if (0 < probability)
+				maybe.addMay(acc);
+		}
+
+		@Override
 		public boolean may(U u) {
 			return 0 < probability && maybe.may(u);
 		}
@@ -326,6 +350,11 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		}
 
 		@Override
+		public void addMay(Collection<U> acc) {
+			acc.add(identifier);
+		}
+
+		@Override
 		public boolean may(U u) {
 			return identifier.equals(u);
 		}
@@ -362,6 +391,13 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 			final int sz = identifiers.size();
 			for (int i = 0; i < sz; i++)
 				acc.add(factory.create(identifiers.get(i)));
+		}
+
+		@Override
+		public void addMay(Collection<U> acc) {
+			final int sz = identifiers.size();
+			for (int i = 0; i < sz; i++)
+				acc.add(identifiers.get(i));
 		}
 
 		@Override
@@ -412,6 +448,11 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 			final int sz = rng.between(min, max + 1); // +1 because 'between' is exclusive for the max
 			for (int i = 0; i < sz; i++)
 				acc.add(factory.create(identifier));
+		}
+
+		@Override
+		public void addMay(Collection<U> acc) {
+			acc.add(identifier);
 		}
 
 		@Override
@@ -475,6 +516,12 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 				baseRolls++;
 			}
 			toUse.generate(factory, rng, acc);
+		}
+
+		@Override
+		public void addMay(Collection<U> acc) {
+			base.addMay(acc);
+			roulette.addMay(acc);
 		}
 
 		@Override

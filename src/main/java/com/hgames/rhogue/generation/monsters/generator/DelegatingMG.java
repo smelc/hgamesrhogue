@@ -41,6 +41,11 @@ public abstract class DelegatingMG<U, T extends IAnimate> implements IMonstersGe
 	}
 
 	@Override
+	public void addMay(Collection<U> acc) {
+		delegate.addMay(acc);
+	}
+
+	@Override
 	public boolean may(U u) {
 		return delegate.may(u);
 	}

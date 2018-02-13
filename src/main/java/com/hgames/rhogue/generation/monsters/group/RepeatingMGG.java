@@ -48,6 +48,11 @@ public class RepeatingMGG<U, T extends IAnimate> implements IMonstersGroupGenera
 	}
 
 	@Override
+	public void addMay(Collection<U> acc) {
+		delegate.addMay(acc);
+	}
+
+	@Override
 	public boolean may(U u) {
 		return delegate.may(u);
 	}

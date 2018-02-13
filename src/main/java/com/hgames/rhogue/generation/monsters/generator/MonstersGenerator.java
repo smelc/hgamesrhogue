@@ -64,6 +64,13 @@ public class MonstersGenerator<U, T extends IAnimate> implements IMonstersGenera
 	}
 
 	@Override
+	public void addMay(Collection<U> acc) {
+		if (must != null)
+			must.addMay(acc);
+		default_.addMay(acc);
+	}
+
+	@Override
 	public boolean may(U u) {
 		return (must != null && must.may(u)) || default_.may(u);
 	}
