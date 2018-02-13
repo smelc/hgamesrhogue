@@ -27,6 +27,8 @@ public class ZoneNAryUnion extends Zone.Skeleton implements Zone {
 	}
 
 	/**
+	 * This call may capture {@code union}.
+	 * 
 	 * @param union
 	 * @return The nary union of {@code union}, being smart if possible.
 	 */
@@ -41,6 +43,24 @@ public class ZoneNAryUnion extends Zone.Skeleton implements Zone {
 		default:
 			return new ZoneNAryUnion(union);
 		}
+	}
+
+	/**
+	 * This call may capture {@code u1} and {@code u2}.
+	 * 
+	 * @param u1
+	 * @param u2
+	 * @return The nary union of {@code union}, being smart if possible.
+	 */
+	public static Zone create(List<Zone> u1, List<Zone> u2) {
+		if (u1.isEmpty())
+			return create(u2);
+		if (u2.isEmpty())
+			return create(u1);
+		final List<Zone> all = new ArrayList<Zone>(u1.size() + u2.size());
+		all.addAll(u1);
+		all.addAll(u2);
+		return create(all);
 	}
 
 	@Override
@@ -176,6 +196,19 @@ public class ZoneNAryUnion extends Zone.Skeleton implements Zone {
 	@Override
 	public Zone getDelegate() {
 		return this;
+	}
+
+	@Override
+	public Zone union(Zone other) {
+		if (union.contains(other))
+			/* No change */
+			return this;
+		else {
+			final List<Zone> bigger = new ArrayList<Zone>(union.size() + 1);
+			bigger.addAll(union);
+			bigger.add(other);
+			return new ZoneNAryUnion(bigger);
+		}
 	}
 
 	@Override

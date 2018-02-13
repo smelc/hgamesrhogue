@@ -32,10 +32,14 @@ import squidpony.squidmath.RNG;
 public interface Zone extends Serializable, Iterable<Coord> {
 
 	/**
+	 * @deprecated, Not in Zone's spirit (that do not handle mutations) and never
+	 * tested.
+	 * 
 	 * @param c
 	 * @return A variant of {@code this}, or {@code this} itself; where {@code c}
 	 *         was added.
 	 */
+	@Deprecated
 	public Zone add(Coord c);
 
 	/**
@@ -155,10 +159,13 @@ public interface Zone extends Serializable, Iterable<Coord> {
 	Zone extend();
 
 	/**
+	 * @deprecated not in Zone's spirit (that do not handle mutations) and never
+	 *             tested.
 	 * @param c
 	 * @return A variant of {@code this} or {@code this} itself, where {@code c} has
 	 *         been removed.
 	 */
+	@Deprecated
 	Zone remove(Coord c);
 
 	/**
@@ -166,6 +173,13 @@ public interface Zone extends Serializable, Iterable<Coord> {
 	 *         removed.
 	 */
 	Zone shrink();
+
+	/**
+	 * @param other
+	 * @return A variant of {@code this}, or {@code this} itself; where
+	 *         {@code other} has been added.
+	 */
+	Zone union(Zone other);
 
 	/**
 	 * @return The zone being delegated to, or {@code this} if it's not a delegating
@@ -392,6 +406,12 @@ public interface Zone extends Serializable, Iterable<Coord> {
 			final List<Coord> all = getAll();
 			final boolean rmed = all.remove(c);
 			return rmed ? new ListZone(all) : this;
+		}
+
+		@Override
+		/* Convenience implementation, feel free to override. */
+		public Zone union(Zone other) {
+			return new ZoneUnion(this, other);
 		}
 
 		private int smallest(boolean xOrY) {

@@ -90,6 +90,19 @@ public class ZoneUnion extends Zone.Skeleton {
 	}
 
 	@Override
+	public Zone union(Zone other) {
+		if (z1.equals(other) || z2.equals(other))
+			return this;
+		else {
+			final List<Zone> union = new ArrayList<Zone>(3);
+			union.add(z1);
+			union.add(z2);
+			union.add(other);
+			return new ZoneNAryUnion(union);
+		}
+	}
+
+	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "[" + z1.toString() + "|" + z2.toString() + "]";
 	}

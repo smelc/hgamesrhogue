@@ -60,4 +60,9 @@ public final class EmptyZone extends Zone.Skeleton implements Zone {
 	public Zone translate(int x, int y) {
 		return this;
 	}
+
+	@Override
+	public Zone union(Zone other) {
+		return other;
+	}
 }

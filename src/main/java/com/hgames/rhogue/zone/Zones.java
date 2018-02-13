@@ -147,6 +147,16 @@ public class Zones {
 
 	/**
 	 * @param zone
+	 *            A possibly null zone
+	 * @param c
+	 * @return Whether zone is non-null and contains {@code c}.
+	 */
+	public static boolean contains(/* @Nullable */ Zone zone, Coord c) {
+		return zone != null && zone.contains(c);
+	}
+
+	/**
+	 * @param zone
 	 * @param coords
 	 * @return Whether {@code zone} contains a member of {@code coors}.
 	 */
@@ -314,41 +324,15 @@ public class Zones {
 	/**
 	 * @param z1
 	 * @param z2
-	 * @return A {@link Zone} unioning {@code z1} and {@code z1}.
+	 * @return The smart union of {@code z1} and {@code z2}.
 	 */
-	public static Zone union(Zone z1, Zone z2) {
-		final int sz1 = z1.size();
-		if (sz1 == 0)
+	public static Zone union(/* @Nullable */ Zone z1, /* @Nullable */ Zone z2) {
+		if (z1 == null || z1.isEmpty())
 			return z2;
-		final int sz2 = z2.size();
-		if (sz2 == 0)
+		else if (z2 == null || z2.isEmpty())
 			return z1;
-		final List<Coord> union = new ArrayList<Coord>(sz1 + sz2);
-		for (Coord c1 : z1)
-			union.add(c1);
-		for (Coord c2 : z2)
-			union.add(c2);
-		return new ListZone(union);
-	}
-
-	/**
-	 * @param z1
-	 * @param z2
-	 * @param z3
-	 * @return A {@link Zone} unioning {@code z1}, {@code z2}, and {@code z3}.
-	 */
-	public static Zone union(Zone z1, Zone z2, Zone z3) {
-		final int sz1 = z1.size();
-		final int sz2 = z2.size();
-		final int sz3 = z3.size();
-		final List<Coord> union = new ArrayList<Coord>(sz1 + sz2 + sz3);
-		for (Coord c1 : z1)
-			union.add(c1);
-		for (Coord c2 : z2)
-			union.add(c2);
-		for (Coord c3 : z3)
-			union.add(c3);
-		return new ListZone(union);
+		else
+			return z1.union(z2);
 	}
 
 	/**
