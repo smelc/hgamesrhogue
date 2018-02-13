@@ -20,10 +20,10 @@ import com.hgames.rhogue.level.ILevel;
 public interface IGame<L extends ILevel<?>, I extends IAnimate> {
 
 	/**
-	 * @return The instance of player service. Typically created once and then
-	 *         stored.
+	 * @return The instance of {@link IInputService}. Typically created once and
+	 *         then stored.
 	 */
-	public IPlayerService<I> getPlayerService();
+	public IInputService getInputService();
 
 	/**
 	 * @return The instance of level service. Typically created once and then
@@ -32,16 +32,16 @@ public interface IGame<L extends ILevel<?>, I extends IAnimate> {
 	public ILevelService<L> getLevelService();
 
 	/**
-	 * @return The instance of {@link IInputService}. Typically created once and
-	 *         then stored.
-	 */
-	public IInputService getInputService();
-
-	/**
 	 * @return The instance of message service. Typically created once and then
 	 *         stored.
 	 */
 	public IMessageService getMessageService();
+
+	/**
+	 * @return The instance of player service. Typically created once and then
+	 *         stored.
+	 */
+	public IPlayerService<I> getPlayerService();
 
 	/**
 	 * @return The save of the current game.
