@@ -108,7 +108,6 @@ public class DensityComponent implements GeneratorComponent {
 			}
 		}
 
-		final int bound = getWallificationBound(dungeon);
 		if (csz == 1) {
 			/* Component is a single room */
 			/* Is it kindof a water island ? */
@@ -129,16 +128,11 @@ public class DensityComponent implements GeneratorComponent {
 			}
 		}
 
-		if (sz < bound && sz < getWallificationBound(dungeon)) {
+		final int bound = getWallificationBound(dungeon);
+		if (sz < bound) {
 			/* Component is small */
 			/* Replace it with walls (hereby removing it) */
-			for (int i = 0; i < csz; i++) {
-				final Zone z = component.get(i);
-				wallify(gen, gdata, z);
-				if (logger != null && logger.isInfoEnabled())
-					logger.infoLog(Tags.GENERATION, "Wallified a zone of size " + z.size());
-				gdata.addWaterFillStartCandidate(z.getCenter());
-			}
+			wallifyAll(gen, gdata, component);
 			if (logger != null && logger.isInfoEnabled())
 				logger.infoLog(Tags.GENERATION, "Total of wallification: " + sz + " (bound is " + bound + " cells)");
 			return 0;
@@ -155,6 +149,17 @@ public class DensityComponent implements GeneratorComponent {
 		} else {
 			if (logger != null && logger.isInfoEnabled())
 				logger.infoLog(Tags.GENERATION, "Could not treat a disconnected component of size " + sz);
+			final int discNow = dungeon.getDisconnectedRooms().size();
+			final int discObj = gen.disconnectedRoomsObjective;
+			if (discNow + csz <= discObj) {
+				logger.infoLog(Tags.GENERATION, "Using it to fill the disconnected rooms objective");
+				for (int i = 0; i < csz; i++)
+					builder.addDisconnectedRoom(component.get(i));
+			} else {
+				logger.infoLog(Tags.GENERATION,
+						"Wallifying it, despite above the wallification bound; as it's the only option");
+				wallifyAll(gen, gdata, component);
+			}
 			return 0;
 		}
 	}
@@ -166,6 +171,19 @@ public class DensityComponent implements GeneratorComponent {
 		final int width = dungeon.getWidth();
 		final int height = dungeon.getHeight();
 		return (width * height) / 128;
+	}
+
+	/** Turns zones into walls, hereby removing them */
+	protected void wallifyAll(DungeonGenerator gen, GenerationData gdata, List<Zone> component) {
+		final int csz = component.size();
+		final ILogger logger = gen.logger;
+		for (int i = 0; i < csz; i++) {
+			final Zone z = component.get(i);
+			wallify(gen, gdata, z);
+			if (logger != null && logger.isInfoEnabled())
+				logger.infoLog(Tags.GENERATION, "Wallified a zone of size " + z.size());
+			gdata.addWaterFillStartCandidate(z.getCenter());
+		}
 	}
 
 	/** Turns a zone into walls, hereby removing it */
