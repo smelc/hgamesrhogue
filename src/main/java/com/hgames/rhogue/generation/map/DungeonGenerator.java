@@ -37,7 +37,7 @@ import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * The dungeon generator I use in <a href="http://schplaf.org/hgames">Dungeon
@@ -94,7 +94,7 @@ import squidpony.squidmath.RNG;
  */
 public class DungeonGenerator {
 
-	protected final RNG rng;
+	protected final IRNG rng;
 	protected final int width;
 	protected final int height;
 
@@ -173,7 +173,7 @@ public class DungeonGenerator {
 	 * @param height
 	 *            The desired map's height.
 	 */
-	public DungeonGenerator(RNG rng, int width, int height) {
+	public DungeonGenerator(IRNG rng, int width, int height) {
 		if (width < 0)
 			throw new IllegalStateException("Invalid width for dungeon generator: " + width);
 		if (height < 0)

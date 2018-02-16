@@ -14,7 +14,7 @@ import com.hgames.rhogue.zone.ListZone;
 import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * Generation of grass.
@@ -36,7 +36,7 @@ public class GrassComponent implements GeneratorComponent {
 		final ILogger logger = gen.logger;
 		if (logger != null && logger.isInfoEnabled())
 			logger.infoLog(Tags.GENERATION, "Size objective of grass: " + cObjective + " cells");
-		final RNG rng = gen.rng;
+		final IRNG rng = gen.rng;
 		/* The number of cells turned into grass */
 		int cells = 0;
 		/* The number of grass patches done */

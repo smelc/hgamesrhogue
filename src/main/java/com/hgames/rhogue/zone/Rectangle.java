@@ -10,7 +10,7 @@ import java.util.List;
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.iterator.SquidIterators;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * Rectangles in 2D grids. Checkout {@link Utils} for utility methods.
@@ -443,7 +443,7 @@ public interface Rectangle extends Zone {
 		}
 
 		@Override
-		public Coord getRandom(RNG rng) {
+		public Coord getRandom(IRNG rng) {
 			final int w = rng.between(0, width);
 			final int h = rng.between(0, height);
 			/* - h, because in SquidLib a smaller y is higher */

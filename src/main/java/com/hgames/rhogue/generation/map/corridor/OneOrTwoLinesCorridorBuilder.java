@@ -11,7 +11,7 @@ import com.hgames.rhogue.zone.ZoneUnion;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A corridor builder that builds corridors consisting of a single line or of
@@ -46,7 +46,7 @@ public class OneOrTwoLinesCorridorBuilder extends SkeletalCorridorBuilder {
 	 * @return The corridor built or null if impossible.
 	 */
 	@Override
-	protected /* @Nullable */ Zone build(RNG stable, Coord start, Coord end) {
+	protected /* @Nullable */ Zone build(IRNG stable, Coord start, Coord end) {
 		final Zone firstPart;
 		final Zone secondPart;
 		if (needTurn(start, end)) {

@@ -13,7 +13,7 @@ import com.hgames.rhogue.zone.Zone;
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Bresenham;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * @author smelC
@@ -31,7 +31,7 @@ public class BresenhamCorridorBuilder extends SkeletalCorridorBuilder {
 	}
 
 	@Override
-	protected Zone build(RNG rng, Coord start, Coord end) {
+	protected Zone build(IRNG rng, Coord start, Coord end) {
 		final Coord[] array = Bresenham.line2D_(start, end);
 		final List<Coord> result = new ArrayList<Coord>(array.length + (array.length / 4));
 		assert array[0].equals(start);

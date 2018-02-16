@@ -25,7 +25,7 @@ import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * Generation of corridors.
@@ -195,7 +195,7 @@ public class CorridorsComponent extends SkeletalComponent {
 		if (!shallowWater) {
 			door = forceDoors(gen, dungeon, room);
 			if (!door) {
-				final RNG rng = gen.rng;
+				final IRNG rng = gen.rng;
 				door |= rng.nextInt(101) <= gen.doorProbability;
 			}
 			door &= isDoorCandidate(gdata, dungeon, c, null);

@@ -13,9 +13,8 @@ import com.hgames.rhogue.generation.map.DungeonSymbolDrawer;
 import com.hgames.rhogue.generation.map.DungeonZonesCrawler;
 import com.hgames.rhogue.generation.map.draw.ConsoleDungeonDrawer;
 import com.hgames.rhogue.generation.map.draw.IDungeonDrawer;
+import com.hgames.rhogue.rng.DefaultRNG;
 import com.hgames.rhogue.zone.Zone;
-
-import squidpony.squidmath.RNG;
 
 /**
  * Command line tests of {@link DungeonGenerator}.
@@ -36,7 +35,7 @@ public class DungeonGeneratorTest {
 		final IDungeonDrawer drawer = new ConsoleDungeonDrawer(new DungeonSymbolDrawer());
 		final int width = 60;
 		final int height = 40;
-		final DungeonGenerators dgens = new DungeonGenerators(new RNG(SEED), width, height);
+		final DungeonGenerators dgens = new DungeonGenerators(new DefaultRNG(SEED), width, height);
 		generate(dgens.fancy(), drawer);
 	}
 
@@ -50,7 +49,7 @@ public class DungeonGeneratorTest {
 		final List<Zone> rooms = dungeon.getRooms();
 		if (rooms.isEmpty())
 			return true;
-		final Zone start = new RNG().getRandomElement(rooms);
+		final Zone start = new DefaultRNG().getRandomElement(rooms);
 		final Iterator<Zone> crawler = new DungeonZonesCrawler(dungeon, start).iterator();
 		final Set<Zone> expected = new HashSet<Zone>(rooms.size());
 		expected.addAll(dungeon.getRooms());

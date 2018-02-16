@@ -4,7 +4,7 @@ import com.hgames.rhogue.generation.map.RoomComponent;
 import com.hgames.rhogue.zone.Rectangle;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A room generator that generates simple rectangle rooms.
@@ -18,7 +18,7 @@ public class RectangleRoomGenerator extends SkeletalRoomGenerator {
 	}
 
 	@Override
-	public Rectangle generate(RNG rng, RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
+	public Rectangle generate(IRNG rng, RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
 		assert 0 < maxWidth;
 		assert 0 < maxHeight;
 		/* Irrelevant or honored */

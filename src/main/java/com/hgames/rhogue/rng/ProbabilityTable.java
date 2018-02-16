@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A table to choose objects according to some probability.
@@ -162,7 +162,7 @@ public class ProbabilityTable<T> {
 
 	/**
 	 * Adds an object with the given probability. This object may later on be
-	 * returned by {@link #get(RNG)} if its probability is > 0.
+	 * returned by {@link #get(IRNG)} if its probability is > 0.
 	 * 
 	 * @param t
 	 *            The object to be added.
@@ -221,7 +221,7 @@ public class ProbabilityTable<T> {
 	 * @return The chosen object (can be null if null was put or if the table is
 	 *         empty).
 	 */
-	public /* @Nullable */ T get(RNG rng) {
+	public /* @Nullable */ T get(IRNG rng) {
 		if (table.isEmpty())
 			return null;
 
@@ -238,7 +238,7 @@ public class ProbabilityTable<T> {
 	}
 
 	/**
-	 * @return Elements that can be returned by {@link #get(RNG)} if their
+	 * @return Elements that can be returned by {@link #get(IRNG)} if their
 	 *         probability is > 0.
 	 */
 	public Collection<T> getDomain() {
@@ -255,7 +255,7 @@ public class ProbabilityTable<T> {
 	}
 
 	/**
-	 * @return true if this table {@link #get(RNG)} method cannot return something.
+	 * @return true if this table {@link #get(IRNG)} method cannot return something.
 	 */
 	public boolean isEmpty() {
 		return table.isEmpty() || total == 0;

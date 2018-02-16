@@ -11,7 +11,7 @@ import java.util.Set;
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.DungeonUtility;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * Implementation of floodfills. I originally wrote if for {@code SquidLib} and
@@ -42,7 +42,7 @@ public class Splash<T extends Enum<T>> {
 	 * @param start
 	 *            Where the spill should start. It should be passable, otherwise
 	 *            an empty list gets returned. Consider using
-	 *            {@link DungeonUtility#getRandomCell(RNG, char[][], Set, int)}
+	 *            {@link DungeonUtility#getRandomCell(IRNG, char[][], Set, int)}
 	 *            to find it.
 	 * @param volume
 	 *            The number of cells to spill on.
@@ -64,7 +64,7 @@ public class Splash<T extends Enum<T>> {
 	 *         passable. If non-empty, this is guaranteed to be an
 	 *         {@link ArrayList}.
 	 */
-	public List<Coord> spill(RNG rng, T[][] level, Coord start, int volume, int drunks) {
+	public List<Coord> spill(IRNG rng, T[][] level, Coord start, int volume, int drunks) {
 		final int width = level.length;
 		final int height = width == 0 ? 0 : level[0].length;
 		if (!insideLevel(width, height, start.x, start.y) || !passable(level[start.x][start.y]))
@@ -123,7 +123,7 @@ public class Splash<T extends Enum<T>> {
 	 * @param drunks
 	 *            The number of drunken walkers to consider
 	 */
-	protected void drunkinize(RNG rng, T[][] map, List<Coord> zone, List<Coord> border, int drunks) {
+	protected void drunkinize(IRNG rng, T[][] map, List<Coord> zone, List<Coord> border, int drunks) {
 		if (drunks == 0)
 			return;
 
@@ -151,7 +151,7 @@ public class Splash<T extends Enum<T>> {
 	 * @param border
 	 *            {@code result}'s border.
 	 */
-	private void drunkinize0(RNG rng, List<Coord> zone, List<Coord> border, int nb) {
+	private void drunkinize0(IRNG rng, List<Coord> zone, List<Coord> border, int nb) {
 		assert !border.isEmpty();
 		assert !zone.isEmpty();
 

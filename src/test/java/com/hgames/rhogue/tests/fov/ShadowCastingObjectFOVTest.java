@@ -18,8 +18,9 @@ import com.hgames.rhogue.generation.map.draw.ConsoleDungeonDrawer;
 import com.hgames.rhogue.generation.map.draw.IDungeonDrawer;
 import com.hgames.rhogue.grid.Positioned;
 import com.hgames.rhogue.lighting.ILightSource;
+import com.hgames.rhogue.rng.DefaultRNG;
 
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * Tests of {@link ShadowCastingObjectFOVTest}.
@@ -32,7 +33,7 @@ public class ShadowCastingObjectFOVTest {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		final RNG rng = new RNG();
+		final IRNG rng = new DefaultRNG();
 		final int width = 30;
 		final int height = 30;
 		for (int i = 0; i < 8; i++) {
@@ -48,7 +49,7 @@ public class ShadowCastingObjectFOVTest {
 		}
 	}
 
-	private static void doFOV(RNG rng, DungeonSymbol[][] map) {
+	private static void doFOV(IRNG rng, DungeonSymbol[][] map) {
 		final int width = map.length;
 		final int height = width == 0 ? 0 : map[0].length;
 		@SuppressWarnings("unchecked")
@@ -121,7 +122,7 @@ public class ShadowCastingObjectFOVTest {
 		return result;
 	}
 
-	private static List<LightSource> buildSources(RNG rng, DungeonSymbol[][] map) {
+	private static List<LightSource> buildSources(IRNG rng, DungeonSymbol[][] map) {
 		final List<LightSource> result = new ArrayList<LightSource>();
 		for (int i = 0; i < 8; i++) {
 			final LightSource source = buildSource(rng, map);
@@ -131,7 +132,7 @@ public class ShadowCastingObjectFOVTest {
 		return result;
 	}
 
-	private static /* @Nullable */ LightSource buildSource(RNG rng, DungeonSymbol[][] map) {
+	private static /* @Nullable */ LightSource buildSource(IRNG rng, DungeonSymbol[][] map) {
 		final int width = map.length;
 		final int height = width == 0 ? 0 : map[0].length;
 		for (int i = 0; i < 64; i++) {

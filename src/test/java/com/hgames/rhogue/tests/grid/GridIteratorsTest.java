@@ -9,10 +9,11 @@ import java.util.Set;
 import com.hgames.lib.collection.Collections;
 import com.hgames.lib.iterator.Iterators;
 import com.hgames.rhogue.grid.GridIterators;
+import com.hgames.rhogue.rng.DefaultRNG;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * Tests of {@link GridIterators}.
@@ -67,7 +68,7 @@ public class GridIteratorsTest {
 
 	private static void testRectangleRandomStartAndDirection() {
 		final List<Set<Coord>> sets = new ArrayList<Set<Coord>>();
-		final RNG rng = new RNG();
+		final IRNG rng = new DefaultRNG();
 		final int mapWidth = 10;
 		final int mapHeight = 15;
 		for (int i = 0; i < 32; i++) {

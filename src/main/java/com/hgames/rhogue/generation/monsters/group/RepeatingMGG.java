@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import com.hgames.rhogue.animate.IAnimate;
 
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A forwarder that calls the specified amount of times its delegate.
@@ -36,12 +36,12 @@ public class RepeatingMGG<U, T extends IAnimate> implements IMonstersGroupGenera
 	}
 
 	@Override
-	public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc, int size) {
+	public void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc, int size) {
 		generate(factory, rng, acc);
 	}
 
 	@Override
-	public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc) {
+	public void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc) {
 		final int between = rng.between(lower, higher + 1);
 		for (int i = 0; i < between; i++)
 			delegate.generate(factory, rng, acc);

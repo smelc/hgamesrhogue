@@ -8,7 +8,7 @@ import com.hgames.rhogue.zone.ListZone;
 import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A room generator that produces a room whose internal border complementary is
@@ -34,7 +34,7 @@ public class ShallowRoomGenerator extends AbstractShallowRoomGenerator {
 	}
 
 	@Override
-	protected /* @Nullable */ Zone getZoneToCarve(Zone full, RNG rng, RoomComponent component, Coord translation,
+	protected /* @Nullable */ Zone getZoneToCarve(Zone full, IRNG rng, RoomComponent component, Coord translation,
 			int maxWidth, int maxHeight) {
 		final Zone shrink = full.shrink();
 		if (shrink.isEmpty())

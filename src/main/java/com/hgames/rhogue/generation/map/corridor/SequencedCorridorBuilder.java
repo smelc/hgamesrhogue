@@ -3,7 +3,7 @@ package com.hgames.rhogue.generation.map.corridor;
 import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A corridor builder that tries {@link ICorridorBuilder} in sequence, returning
@@ -23,7 +23,7 @@ public class SequencedCorridorBuilder implements ICorridorBuilder {
 	}
 
 	@Override
-	public /* @Nullable */ Zone build(RNG rng, Coord start, Coord end, Coord[] startEndBuf) {
+	public /* @Nullable */ Zone build(IRNG rng, Coord start, Coord end, Coord[] startEndBuf) {
 		for (ICorridorBuilder builder : builders) {
 			final Zone z = builder.build(rng, start, end, startEndBuf);
 			if (z != null)

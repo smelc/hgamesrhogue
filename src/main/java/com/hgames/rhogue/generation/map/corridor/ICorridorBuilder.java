@@ -3,7 +3,7 @@ package com.hgames.rhogue.generation.map.corridor;
 import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * How to build corridors.
@@ -26,6 +26,6 @@ public interface ICorridorBuilder {
 	 * @return A zone connecting {@code start} and {@code end}. It doesn't contain
 	 *         neither {@code start} nor {@code end}.
 	 */
-	public Zone build(RNG rng, Coord start, Coord end, /* @Nullable */ Coord[] startEndBuf);
+	public Zone build(IRNG rng, Coord start, Coord end, /* @Nullable */ Coord[] startEndBuf);
 
 }

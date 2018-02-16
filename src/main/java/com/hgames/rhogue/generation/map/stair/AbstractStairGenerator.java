@@ -10,7 +10,7 @@ import com.hgames.rhogue.generation.map.Dungeon;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * @author smelC
@@ -18,8 +18,8 @@ import squidpony.squidmath.RNG;
 public abstract class AbstractStairGenerator extends SkeletalStairGenerator {
 
 	protected /* @Nullable */ ILogger logger;
-	/** The {@link RNG} to use */
-	protected final RNG rng;
+	/** The {@link IRNG} to use */
+	protected final IRNG rng;
 
 	/** The objective given at construction */
 	private final /* @Nullable */ Coord initialObjective;
@@ -34,7 +34,7 @@ public abstract class AbstractStairGenerator extends SkeletalStairGenerator {
 	 *            Whether the stair to generate is the stair up or the stair
 	 *            down.
 	 */
-	AbstractStairGenerator(/* @Nullable */ ILogger logger, RNG rng, Dungeon dungeon,
+	AbstractStairGenerator(/* @Nullable */ ILogger logger, IRNG rng, Dungeon dungeon,
 			/* @Nullable */ Coord objective, boolean upOrDown) {
 		super(dungeon);
 		this.logger = logger;

@@ -6,7 +6,7 @@ import com.hgames.rhogue.animate.IAnimate;
 import com.hgames.rhogue.generation.monsters.group.IMonstersFactory;
 import com.hgames.rhogue.generation.monsters.group.IMonstersGroupGenerator;
 
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * An implementation of {@link IMonstersGenerator}.
@@ -51,7 +51,7 @@ public class MonstersGenerator<U, T extends IAnimate> implements IMonstersGenera
 	}
 
 	@Override
-	public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc, int size) {
+	public void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc, int size) {
 		/* Monsters added as part of the 'must' generator aren't counted: intentional */
 		if (must != null)
 			must.generate(factory, rng, acc);

@@ -16,7 +16,7 @@ import com.hgames.rhogue.zone.ListZone;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * An abstract flood fill algorithm. It is not tied to {@link DungeonSymbol}.
@@ -59,7 +59,7 @@ public abstract class FloodFill {
 	 *            allocate a fresh set.
 	 * @return The flood or null (or empty) if none.
 	 */
-	public /* @Nullable */ LinkedHashSet<Coord> flood(RNG rng, int x, int y, IFloodObjective objective,
+	public /* @Nullable */ LinkedHashSet<Coord> flood(IRNG rng, int x, int y, IFloodObjective objective,
 			boolean eatBorders, /* @Nullable */ LinkedHashSet<Coord> buf) {
 		final Coord start = Coord.get(x, y);
 		if (!canBeFloodOn_(start))
@@ -119,7 +119,7 @@ public abstract class FloodFill {
 	 * @param result
 	 * @param eatBorders
 	 */
-	protected void postprocess(RNG rng, final Collection<? extends Coord> result, boolean eatBorders) {
+	protected void postprocess(IRNG rng, final Collection<? extends Coord> result, boolean eatBorders) {
 		if (eatBorders)
 			eatBorders(rng, result);
 		removeLonelies(result);
@@ -133,7 +133,7 @@ public abstract class FloodFill {
 		return 9;
 	}
 
-	protected void eatBorders(RNG rng, final Collection<? extends Coord> result) {
+	protected void eatBorders(IRNG rng, final Collection<? extends Coord> result) {
 		/*
 		 * XXX We should not eat the border if it's connecting it to walkable cells.
 		 */

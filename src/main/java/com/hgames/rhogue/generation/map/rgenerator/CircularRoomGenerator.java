@@ -5,7 +5,7 @@ import com.hgames.rhogue.zone.CircularZone;
 import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A room generator that generate rooms that are circular.
@@ -21,7 +21,7 @@ public class CircularRoomGenerator extends SkeletalRoomGenerator {
 	}
 
 	@Override
-	public Zone generate(RNG rng, RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
+	public Zone generate(IRNG rng, RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
 		final int radius = radius(rng, maxWidth, maxHeight);
 		if (radius <= 1)
 			return null;
@@ -30,7 +30,7 @@ public class CircularRoomGenerator extends SkeletalRoomGenerator {
 		return new CircularZone(Coord.get(cx, cy), radius);
 	}
 
-	protected int radius(RNG rng, int maxWidth, int maxHeight) {
+	protected int radius(IRNG rng, int maxWidth, int maxHeight) {
 		final int constraint = Math.min(maxWidth, maxHeight);
 		final int max = constraint / 2; // Exclusive
 		final int min = getMinSize();

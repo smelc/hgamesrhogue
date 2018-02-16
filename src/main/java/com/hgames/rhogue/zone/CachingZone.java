@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A wrapper around a {@link Zone} that caches potentially expensive
@@ -170,7 +170,7 @@ public class CachingZone implements Zone {
 	}
 
 	@Override
-	public Coord getRandom(RNG rng) {
+	public Coord getRandom(IRNG rng) {
 		return delegate.getRandom(rng);
 	}
 

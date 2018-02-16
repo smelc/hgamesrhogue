@@ -8,7 +8,7 @@ import java.util.List;
 import squidpony.squidgrid.Direction;
 import squidpony.squidgrid.mapping.DungeonUtility;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * Abstraction over a list of {@link Coord}.
@@ -128,7 +128,7 @@ public interface Zone extends Serializable, Iterable<Coord> {
 	 * @param rng
 	 * @return A random cell within {@link #getAll()}, or null if this zone is empty
 	 */
-	/* @Nullable */ Coord getRandom(RNG rng);
+	/* @Nullable */ Coord getRandom(IRNG rng);
 
 	/**
 	 * @param c
@@ -328,7 +328,7 @@ public interface Zone extends Serializable, Iterable<Coord> {
 
 		@Override
 		/* Convenience implementation, feel free to override. */
-		public Coord getRandom(RNG rng) {
+		public Coord getRandom(IRNG rng) {
 			final List<Coord> all = getAll();
 			return all.isEmpty() ? null : rng.getRandomElement(all);
 		}

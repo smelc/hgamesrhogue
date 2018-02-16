@@ -14,7 +14,7 @@ import com.hgames.rhogue.generation.map.flood.FloodFill;
 import com.hgames.rhogue.zone.ListZone;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * Generation of water.
@@ -40,7 +40,7 @@ public class WaterComponent implements GeneratorComponent {
 		if (candidates.isEmpty())
 			candidates = new LinkedHashSet<Coord>();
 		gdata.removeWaterFillStartCandidates();
-		final RNG rng = gen.rng;
+		final IRNG rng = gen.rng;
 		final int width = gen.width;
 		final int height = gen.height;
 		if (candidates.isEmpty()) {

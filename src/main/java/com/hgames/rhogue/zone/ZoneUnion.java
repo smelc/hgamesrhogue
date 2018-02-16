@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A zone that is the union of two zones.
@@ -58,7 +58,7 @@ public class ZoneUnion extends Zone.Skeleton {
 	}
 
 	@Override
-	public Coord getRandom(RNG rng) {
+	public Coord getRandom(IRNG rng) {
 		final Zone target = rng.nextBoolean() ? z1 : z2;
 		Coord result = target.getRandom(rng);
 		if (result == null)

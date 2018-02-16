@@ -22,7 +22,7 @@ import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A stair generator that uses the existing rooms to place stairs. It makes sure
@@ -49,7 +49,7 @@ public class StairGenerator extends AbstractStairGenerator {
 	 *            A function which given a Coord, gives its enclosing Zone.
 	 * @param connections
 	 */
-	public StairGenerator(ILogger logger, RNG rng, DungeonGenerator gen, Dungeon dungeon, Coord objective,
+	public StairGenerator(ILogger logger, IRNG rng, DungeonGenerator gen, Dungeon dungeon, Coord objective,
 			boolean upOrDown, ICellToZone containerFinder, IConnectionFinder connections) {
 		super(logger, rng, dungeon, objective, upOrDown);
 		this.gen = gen;

@@ -6,7 +6,7 @@ import com.hgames.rhogue.animate.IAnimate;
 import com.hgames.rhogue.generation.monsters.group.IMonstersFactory;
 import com.hgames.rhogue.generation.monsters.group.IMonstersGroupGenerator;
 
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * How to generate monsters in a level, when targeting a given number of
@@ -32,7 +32,7 @@ public interface IMonstersGenerator<U, T extends IAnimate> {
 	 *            The number of monsters to create. May not be honored exactly: it's
 	 *            a hint.
 	 */
-	public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc, int size);
+	public void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc, int size);
 
 	/**
 	 * Adds to {@code acc} the {@code Us} that {@code this} may generate (i.e. for

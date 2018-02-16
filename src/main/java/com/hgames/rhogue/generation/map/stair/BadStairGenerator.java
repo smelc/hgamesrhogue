@@ -11,7 +11,7 @@ import com.hgames.rhogue.grid.GridIterators;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A bad stair generator, which is kept for reference (and because it doesn't
@@ -32,7 +32,7 @@ public class BadStairGenerator extends AbstractStairGenerator {
 	 *            Where to put the stair, approximately
 	 * @param upOrDown
 	 */
-	public BadStairGenerator(ILogger logger, RNG rng, Dungeon dungeon, Coord objective, boolean upOrDown) {
+	public BadStairGenerator(ILogger logger, IRNG rng, Dungeon dungeon, Coord objective, boolean upOrDown) {
 		super(logger, rng, dungeon, objective, upOrDown);
 	}
 

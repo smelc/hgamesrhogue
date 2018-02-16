@@ -8,7 +8,7 @@ import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 import com.hgames.rhogue.generation.map.rgenerator.RectangleRoomGenerator;
 import com.hgames.rhogue.generation.map.rgenerator.ShallowRoomGenerator;
 
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * Factory for instances of {@link DungeonGenerator}.
@@ -17,7 +17,7 @@ import squidpony.squidmath.RNG;
  */
 public class DungeonGenerators {
 
-	protected final RNG rng;
+	protected final IRNG rng;
 	protected final int width;
 	protected final int height;
 
@@ -31,7 +31,7 @@ public class DungeonGenerators {
 	 * @param height
 	 *            The height of generated dungeons.
 	 */
-	public DungeonGenerators(RNG rng, int width, int height) {
+	public DungeonGenerators(IRNG rng, int width, int height) {
 		this.rng = rng;
 		this.width = width;
 		this.height = height;

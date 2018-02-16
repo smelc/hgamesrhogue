@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import com.hgames.rhogue.animate.IAnimate;
 
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * Some temporary or durable effects. They are usually attached to instances of
@@ -20,7 +20,7 @@ public interface IEffect extends Serializable {
 	 * @param rng
 	 * @return Whether something changed.
 	 */
-	public boolean tickTurn(RNG rng);
+	public boolean tickTurn(IRNG rng);
 
 	/**
 	 * @return true if this effect has no effect anymore/should be removed from

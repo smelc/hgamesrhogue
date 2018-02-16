@@ -8,7 +8,7 @@ import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * @author smelC
@@ -29,14 +29,14 @@ public abstract class SkeletalCorridorBuilder implements ICorridorBuilder {
 	}
 
 	@Override
-	public Zone build(RNG rng, Coord start, Coord end, Coord[] startEndBuf) {
+	public Zone build(IRNG rng, Coord start, Coord end, Coord[] startEndBuf) {
 		Zone candidate = build(rng, start, end);
 		if (candidate != null)
 			candidate = postprocess(candidate, start, end, startEndBuf);
 		return candidate;
 	}
 
-	protected abstract Zone build(RNG rng, Coord start, Coord end);
+	protected abstract Zone build(IRNG rng, Coord start, Coord end);
 
 	/**
 	 * @param z

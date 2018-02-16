@@ -9,7 +9,7 @@ import com.hgames.rhogue.animate.IAnimate;
 import com.hgames.rhogue.generation.monsters.generator.IMonstersGenerator;
 import com.hgames.rhogue.rng.ProbabilityTable;
 
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * How to create a group of monsters, without specifying a size. All
@@ -34,11 +34,11 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 	/**
 	 * @param factory
 	 * @param rng
-	 *            The {@link RNG} to use.
+	 *            The {@link IRNG} to use.
 	 * @param acc
 	 *            Where to record created monsters.
 	 */
-	public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc);
+	public void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc);
 
 	@Override
 	public boolean may(U u);
@@ -59,7 +59,7 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 	static abstract class SkeletalMGG<U, T extends IAnimate> implements IMonstersGroupGenerator<U, T> {
 
 		@Override
-		public final void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc, int size) {
+		public final void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc, int size) {
 			// Delegate to MonstersGroupGenerator API
 			generate(factory, rng, acc);
 		}
@@ -112,7 +112,7 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		}
 
 		@Override
-		public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc) {
+		public void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc) {
 			final IMonstersGroupGenerator<U, T> delegate = table.get(rng);
 			if (delegate == null)
 				/* Table is empty */
@@ -172,7 +172,7 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		}
 
 		@Override
-		public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc) {
+		public void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc) {
 			final int size = delegates.size();
 			for (int i = 0; i < size; i++)
 				delegates.get(i).generate(factory, rng, acc);
@@ -242,7 +242,7 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		}
 
 		@Override
-		public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc) {
+		public void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc) {
 			base.generate(factory, rng, acc);
 			if (0 < maybeProbability && rng.nextInt(maybeProbability) == 0)
 				maybe.generate(factory, rng, acc);
@@ -298,7 +298,7 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		}
 
 		@Override
-		public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc) {
+		public void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc) {
 			if (0 < probability && rng.nextInt(probability) == 0)
 				maybe.generate(factory, rng, acc);
 		}
@@ -345,7 +345,7 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		}
 
 		@Override
-		public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc) {
+		public void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc) {
 			acc.add(factory.create(identifier));
 		}
 
@@ -387,7 +387,7 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		}
 
 		@Override
-		public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc) {
+		public void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc) {
 			final int sz = identifiers.size();
 			for (int i = 0; i < sz; i++)
 				acc.add(factory.create(identifiers.get(i)));
@@ -444,7 +444,7 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		}
 
 		@Override
-		public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc) {
+		public void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc) {
 			final int sz = rng.between(min, max + 1); // +1 because 'between' is exclusive for the max
 			for (int i = 0; i < sz; i++)
 				acc.add(factory.create(identifier));
@@ -505,7 +505,7 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		}
 
 		@Override
-		public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc) {
+		public void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc) {
 			final IMonstersGroupGenerator<U, T> toUse;
 			if ((baseRolls == firstRouletteRoll && rng.nextBoolean()) || (firstRouletteRoll + 1 <= baseRolls)) {
 				assert baseRolls <= firstRouletteRoll + 1;

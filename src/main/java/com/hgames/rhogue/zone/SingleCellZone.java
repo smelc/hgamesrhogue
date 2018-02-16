@@ -5,7 +5,7 @@ import java.util.List;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A {@link Zone} containing a single cell.
@@ -68,7 +68,7 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
-	public Coord getRandom(RNG rng) {
+	public Coord getRandom(IRNG rng) {
 		return Coord.get(x, y);
 	}
 

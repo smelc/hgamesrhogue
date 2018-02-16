@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * @author smelC
@@ -47,7 +47,7 @@ public final class EmptyZone extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
-	public Coord getRandom(RNG rng) {
+	public Coord getRandom(IRNG rng) {
 		return null;
 	}
 

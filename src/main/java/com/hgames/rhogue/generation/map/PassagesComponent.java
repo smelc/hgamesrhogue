@@ -14,7 +14,7 @@ import com.hgames.rhogue.zone.SingleCellZone;
 import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * Generation of doors between almost adjacent rooms: generate doors/floors on
@@ -107,8 +107,8 @@ public class PassagesComponent extends SkeletalComponent {
 		if (forceDoors(gen, dungeon, z0) || forceDoors(gen, dungeon, z1))
 			return true;
 		else {
-			final RNG rng = gen.rng;
-			return rng.next(101) <= gen.doorProbability;
+			final IRNG rng = gen.rng;
+			return rng.nextInt(101) <= gen.doorProbability;
 		}
 	}
 

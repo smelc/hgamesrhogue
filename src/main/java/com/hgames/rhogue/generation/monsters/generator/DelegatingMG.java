@@ -7,7 +7,7 @@ import com.hgames.lib.collection.list.Lists;
 import com.hgames.rhogue.animate.IAnimate;
 import com.hgames.rhogue.generation.monsters.group.IMonstersFactory;
 
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A forwarder to another {@link IMonstersGenerator}, typically to postprocess
@@ -33,7 +33,7 @@ public abstract class DelegatingMG<U, T extends IAnimate> implements IMonstersGe
 	}
 
 	@Override
-	public void generate(IMonstersFactory<U, T> factory, RNG rng, Collection<T> acc, int size) {
+	public void generate(IMonstersFactory<U, T> factory, IRNG rng, Collection<T> acc, int size) {
 		final List<T> interceptor = Lists.newArrayList();
 		delegate.generate(factory, rng, interceptor, size);
 		intercept(interceptor);

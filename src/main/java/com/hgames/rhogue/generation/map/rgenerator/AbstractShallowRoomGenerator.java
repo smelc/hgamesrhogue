@@ -10,7 +10,7 @@ import com.hgames.rhogue.zone.ListZone;
 import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * An abstract room generator to generate a room where only the internal border
@@ -26,14 +26,14 @@ public abstract class AbstractShallowRoomGenerator extends SkeletalRoomGenerator
 	 * @param delegate
 	 *            How to build the room. This generator is used to generate the full
 	 *            room, and then it is carved with
-	 *            {@link #getZoneToCarve(Zone, RNG, RoomComponent, Coord, int, int)}.
+	 *            {@link #getZoneToCarve(Zone, IRNG, RoomComponent, Coord, int, int)}.
 	 */
 	protected AbstractShallowRoomGenerator(IRoomGenerator delegate) {
 		this.delegate = delegate;
 	}
 
 	@Override
-	public /* @Nullable */ Zone generate(RNG rng, RoomComponent component, Coord translation, int maxWidth,
+	public /* @Nullable */ Zone generate(IRNG rng, RoomComponent component, Coord translation, int maxWidth,
 			int maxHeight) {
 		final Zone toCarve = delegate.generate(rng, component, translation, maxWidth, maxHeight);
 		if (toCarve == null)
@@ -74,7 +74,7 @@ public abstract class AbstractShallowRoomGenerator extends SkeletalRoomGenerator
 	 *            The corresponding parameter given at {@link #generate}
 	 * @return The zone to carve within {@code full}, or null if it cannot be done.
 	 */
-	protected abstract /* @Nullable */ Zone getZoneToCarve(Zone full, RNG rng, RoomComponent component,
+	protected abstract /* @Nullable */ Zone getZoneToCarve(Zone full, IRNG rng, RoomComponent component,
 			Coord translation, int maxWidth,
 			int maxHeight);
 

@@ -14,7 +14,7 @@ import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A room generator that generates caves.
@@ -61,7 +61,7 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 	}
 
 	@Override
-	public Zone generate(RNG rng, RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
+	public Zone generate(IRNG rng, RoomComponent component, Coord translation, int maxWidth, int maxHeight) {
 		final RectangleRoomGenerator delegate = new RectangleRoomGenerator();
 		final Rectangle rectangle = delegate.generate(rng, component, translation, maxWidth, maxHeight);
 		if (rectangle == null) {
@@ -103,7 +103,7 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 		return 4;
 	}
 
-	protected boolean roll(RNG rng) {
+	protected boolean roll(IRNG rng) {
 		return rng.nextInt(101) <= caveness;
 	}
 
@@ -114,7 +114,7 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 	 *            The carving starting point (a corner).
 	 * @return Whether something was carved.
 	 */
-	private boolean carve(RNG rng, Collection<Coord> zone, Coord start, int maxCarvingPerCorner) {
+	private boolean carve(IRNG rng, Collection<Coord> zone, Coord start, int maxCarvingPerCorner) {
 		assert todos.isEmpty();
 		todos.add(start);
 		int carved = 0;

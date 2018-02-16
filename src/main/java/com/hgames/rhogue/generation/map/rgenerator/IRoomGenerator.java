@@ -10,7 +10,7 @@ import com.hgames.rhogue.generation.map.RoomComponent;
 import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A room generator, i.e. a function that knows out to generate a {@link Zone}
@@ -99,7 +99,7 @@ public interface IRoomGenerator {
 	 *         Or null if the size constraint cannot be honored.
 	 *         </p>
 	 */
-	public /* @Nullable */ Zone generate(RNG rng, RoomComponent component, Coord translation, int maxWidth,
+	public /* @Nullable */ Zone generate(IRNG rng, RoomComponent component, Coord translation, int maxWidth,
 			int maxHeight);
 
 	/**

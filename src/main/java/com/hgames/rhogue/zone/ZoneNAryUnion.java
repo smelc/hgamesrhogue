@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * @author smelC
@@ -183,7 +183,7 @@ public class ZoneNAryUnion extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
-	public Coord getRandom(RNG rng) {
+	public Coord getRandom(IRNG rng) {
 		final int nbu = union.size();
 		return nbu == 0 ? null : rng.getRandomElement(union).getRandom(rng);
 	}

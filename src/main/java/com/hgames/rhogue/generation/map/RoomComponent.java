@@ -23,7 +23,7 @@ import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidgrid.Direction;
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * How to generate rooms.
@@ -187,7 +187,7 @@ public class RoomComponent implements GeneratorComponent {
 		 * Try a bit harder when #startWithWater is set, as these dungeons typically
 		 * waste some space.
 		 */
-		final RNG rng = gen.rng;
+		final IRNG rng = gen.rng;
 		outer: while (frustration < 8 + (gen.startWithWater ? 4 : 0)) {
 			frustration++;
 			/* +1 to account for the surrounding wall */
@@ -261,7 +261,7 @@ public class RoomComponent implements GeneratorComponent {
 			int maxHeight_) {
 		assert 1 <= maxWidth_;
 		assert 1 <= maxHeight_;
-		final RNG rng = gen.rng;
+		final IRNG rng = gen.rng;
 		final IRoomGenerator rg = rgTable.get(rng);
 		if (rg == null)
 			return false;
@@ -362,7 +362,7 @@ public class RoomComponent implements GeneratorComponent {
 	}
 
 	private int getMaxRoomSideSize(boolean widthOrHeight, boolean spiceItUp) {
-		final RNG rng = gen.rng;
+		final IRNG rng = gen.rng;
 		int min = widthOrHeight ? gen.minRoomWidth : gen.minRoomHeight;
 		if (min == 1 && !gen.allowWidthOrHeightOneRooms)
 			min++;

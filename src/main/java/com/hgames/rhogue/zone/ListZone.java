@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import squidpony.squidmath.Coord;
-import squidpony.squidmath.RNG;
+import squidpony.squidmath.IRNG;
 
 /**
  * A zone defined by a {@link List}.
@@ -67,7 +67,7 @@ public class ListZone extends Zone.Skeleton {
 	}
 
 	@Override
-	public Coord getRandom(RNG rng) {
+	public Coord getRandom(IRNG rng) {
 		return rng.getRandomElement(coords);
 	}
 
