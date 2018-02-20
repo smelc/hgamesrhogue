@@ -1,5 +1,6 @@
 package com.hgames.rhogue.rng;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,9 +17,16 @@ import squidpony.squidmath.IRNG;
  * (not the {@code next*} ones). Methods are final, because really you shouldn't
  * change them.
  * 
+ * <p>
+ * It is {@link Serializable}, but subclasses may not. Use
+ * {@link #toSerializable()} to get the serialized version.
+ * </p>
+ * 
  * @author smelC
  */
-public abstract class AbstractRNG implements IRNG {
+public abstract class AbstractRNG implements IRNG, Serializable {
+
+	private static final long serialVersionUID = -2754544638448229504L;
 
 	@Override
 	public final int between(int min, int max) {

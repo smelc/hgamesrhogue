@@ -1,5 +1,6 @@
 package com.hgames.rhogue.rng;
 
+import java.io.Serializable;
 import java.util.Random;
 
 import squidpony.squidmath.IRNG;
@@ -18,6 +19,8 @@ import squidpony.squidmath.IRNG;
 public class DefaultRNG extends AbstractRNG {
 
 	private final Random delegate;
+
+	private static final long serialVersionUID = 7354326781521340284L;
 
 	/** A fresh instance. */
 	public DefaultRNG() {
@@ -58,4 +61,9 @@ public class DefaultRNG extends AbstractRNG {
 		return delegate.nextLong();
 	}
 
+	@Override
+	public Serializable toSerializable() {
+		/* Works because java.util.Random (#delegate) is Serializable */
+		return this;
+	}
 }

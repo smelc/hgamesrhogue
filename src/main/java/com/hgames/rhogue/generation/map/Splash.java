@@ -40,24 +40,22 @@ public class Splash<T extends Enum<T>> {
 	 * @param level
 	 *            char 2D array with x, y indices for the dungeon/map level
 	 * @param start
-	 *            Where the spill should start. It should be passable, otherwise
-	 *            an empty list gets returned. Consider using
-	 *            {@link DungeonUtility#getRandomCell(IRNG, char[][], Set, int)}
-	 *            to find it.
+	 *            Where the spill should start. It should be passable, otherwise an
+	 *            empty list gets returned. Consider using
+	 *            {@link DungeonUtility#getRandomCell}.
 	 * @param volume
 	 *            The number of cells to spill on.
 	 * @param drunks
-	 *            The ratio of drunks to use to make the splash more realistic.
-	 *            Like for dungeon generation, if greater than 0, drunk walkers
-	 *            will remove the splash's margins, to make it more realistic.
-	 *            You don't need that if you're doing a splash that is bounded
-	 *            by walls, because the fill will be realistic. If you're doing
-	 *            a splash that isn't bounded, use that for its borders not to
-	 *            be too square.
+	 *            The ratio of drunks to use to make the splash more realistic. Like
+	 *            for dungeon generation, if greater than 0, drunk walkers will
+	 *            remove the splash's margins, to make it more realistic. You don't
+	 *            need that if you're doing a splash that is bounded by walls,
+	 *            because the fill will be realistic. If you're doing a splash that
+	 *            isn't bounded, use that for its borders not to be too square.
 	 * 
 	 *            <p>
-	 *            Useful values are 0, 1, and 2. Giving more will likely yield
-	 *            an empty result, on any decent map sizes.
+	 *            Useful values are 0, 1, and 2. Giving more will likely yield an
+	 *            empty result, on any decent map sizes.
 	 *            </p>
 	 * @return The spill. It is a list of coordinates (containing {@code start})
 	 *         valid in {@code level} that are all adjacent and whose symbol is
@@ -87,8 +85,8 @@ public class Splash<T extends Enum<T>> {
 				continue;
 			trieds.add(current);
 			/*
-			 * Here it holds that either 'current == start' or there's a Coord
-			 * in 'result' that is adjacent to 'current'.
+			 * Here it holds that either 'current == start' or there's a Coord in 'result'
+			 * that is adjacent to 'current'.
 			 */
 			result.add(current);
 			if (result.size() == volume)

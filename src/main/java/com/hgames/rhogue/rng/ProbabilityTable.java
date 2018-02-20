@@ -60,6 +60,19 @@ public class ProbabilityTable<T> {
 	 * @return A table that assigns the same probability (1) to every member of
 	 *         {@code domain}.
 	 */
+	public static <T> ProbabilityTable<T> createUniform(T[] domain) {
+		final int sz = domain.length;
+		final ProbabilityTable<T> result = new ProbabilityTable<T>(sz);
+		for (int i = 0; i < sz; i++)
+			result.add(domain[i], 1);
+		return result;
+	}
+
+	/**
+	 * @param domain
+	 * @return A table that assigns the same probability (1) to every member of
+	 *         {@code domain}.
+	 */
 	public static <T> ProbabilityTable<T> createUniform(List<T> domain) {
 		final int sz = domain.size();
 		final ProbabilityTable<T> result = new ProbabilityTable<T>(sz);

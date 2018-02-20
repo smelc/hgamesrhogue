@@ -192,6 +192,14 @@ public class MGGBuilder {
 	 * @param mgs
 	 * @return The uniform disjunction of {@code mgs}.
 	 */
+	public static <U, T extends IAnimate> IMonstersGroupGenerator.Or<U, T> or(IMonstersGroupGenerator<U, T>[] mgs) {
+		return IMonstersGroupGenerator.Or.create(ProbabilityTable.createUniform(mgs));
+	}
+
+	/**
+	 * @param mgs
+	 * @return The uniform disjunction of {@code mgs}.
+	 */
 	public static <U, T extends IAnimate> IMonstersGroupGenerator.Or<U, T> or(List<IMonstersGroupGenerator<U, T>> mgs) {
 		return IMonstersGroupGenerator.Or.create(ProbabilityTable.createUniform(mgs));
 	}
