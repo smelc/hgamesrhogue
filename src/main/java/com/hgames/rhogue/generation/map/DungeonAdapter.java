@@ -131,7 +131,7 @@ public class DungeonAdapter {
 				add(sym2Zones, sym, c);
 			for (Direction dir : Direction.CARDINALS) {
 				final Coord d = c.translate(dir);
-				if (!interpreted[d.x][d.y] && syms.contains(map[x][y]))
+				if (!interpreted[d.x][d.y] && syms.contains(map[d.x][d.y]))
 					todos.add(d);
 			}
 		}
