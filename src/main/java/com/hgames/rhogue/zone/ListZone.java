@@ -27,6 +27,23 @@ public class ListZone extends Zone.Skeleton {
 		this.coords = coords;
 	}
 
+	/**
+	 * A smart constructor that will throw the List away if useless.
+	 * 
+	 * @param coords
+	 * @return A
+	 */
+	public static Zone create(List<Coord> coords) {
+		switch (coords.size()) {
+		case 0:
+			return EmptyZone.INSTANCE;
+		case 1:
+			return new SingleCellZone(coords.get(0));
+		default:
+			return new ListZone(coords);
+		}
+	}
+
 	@Override
 	public Zone add(Coord c) {
 		if (coords instanceof ArrayList || coords instanceof LinkedList) {

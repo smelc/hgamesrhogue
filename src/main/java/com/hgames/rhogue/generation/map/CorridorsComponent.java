@@ -129,11 +129,15 @@ public class CorridorsComponent extends SkeletalComponent {
 				final Coord destDoor = ZCC_CELL.get3();
 				assert zDoor != null && destDoor != null;
 				assert built.contains(zDoor) && built.contains(destDoor);
+				assert !Dungeons.getSymbols(dungeon, built).contains(DungeonSymbol.CHASM);
 				// (NO_CORRIDOR_BBOX) (if built is a ZoneUnion)
 				if (perfect) {
-					assert EnumSet.of(DungeonSymbol.WALL).containsAll(Dungeons.getSymbols(dungeon, built));
+					assert com.hgames.lib.collection.Collections.containsOnly(Dungeons.getSymbols(dungeon, built),
+							EnumSet.of(DungeonSymbol.WALL));
 				} else {
 					/* Corridor can go through DEEP_WATER */
+					assert com.hgames.lib.collection.Collections.containsOnly(Dungeons.getSymbols(dungeon, built),
+							EnumSet.of(DungeonSymbol.WALL, DungeonSymbol.DEEP_WATER));
 					if (buf != null)
 						buf.clear();
 					final boolean rm = builder.removeFromWaterPools(built, buf);

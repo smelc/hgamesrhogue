@@ -47,8 +47,7 @@ public class ShallowRoomGenerator extends AbstractShallowRoomGenerator {
 		if (result.isEmpty())
 			/* Happens if 'full' is too small */
 			return null;
-		else
-			return new ListZone(result);
+		return ListZone.create(result);
 	}
 
 }

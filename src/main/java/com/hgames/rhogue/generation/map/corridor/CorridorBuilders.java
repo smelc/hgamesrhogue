@@ -24,12 +24,12 @@ public final class CorridorBuilders {
 		IMPERFECT_CARVING = EnumSet.noneOf(DungeonSymbol.class);
 		for (DungeonSymbol sym : DungeonSymbol.values()) {
 			switch (sym) {
-			case CHASM:
 			case DEEP_WATER:
 			case WALL:
 				/* Carving allowed */
 				IMPERFECT_CARVING.add(sym);
 				continue;
+			case CHASM:
 			case DOOR:
 			case FLOOR:
 			case HIGH_GRASS:
