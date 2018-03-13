@@ -41,6 +41,6 @@ public interface IMessageService {
 	 * 
 	 * @param text
 	 */
-	public void write(List<IColoredString<IColor>> text);
+	public void write(List<? extends IColoredString<IColor>> text);
 
 }
