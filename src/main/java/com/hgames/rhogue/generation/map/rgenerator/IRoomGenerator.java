@@ -172,4 +172,18 @@ public interface IRoomGenerator {
 	 */
 	public void setMaxSideSizes(int val);
 
+	/**
+	 * Method to call when you wanna set the size of a side to an exact number, i.e.
+	 * a shorthand for:
+	 * 
+	 * <code>
+	 * setMinSideSize(val, widthOrHeight);
+	 * setMaxSideSize(val, widthOrHeight);
+	 * </code>
+	 * 
+	 * @param val
+	 * @param widthOrHeight
+	 */
+	public void setMinMaxSideSizes(int val, boolean widthOrHeight);
+
 }

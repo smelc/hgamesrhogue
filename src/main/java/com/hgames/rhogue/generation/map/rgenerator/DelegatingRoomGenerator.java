@@ -115,6 +115,12 @@ public class DelegatingRoomGenerator implements IRoomGenerator {
 	}
 
 	@Override
+	public void setMinMaxSideSizes(int val, boolean widthOrHeight) {
+		delegate.setMinSideSize(val, widthOrHeight);
+		delegate.setMaxSideSize(val, widthOrHeight);
+	}
+
+	@Override
 	public String toString() {
 		return String.valueOf(identifier) + "->" + delegate.toString();
 	}

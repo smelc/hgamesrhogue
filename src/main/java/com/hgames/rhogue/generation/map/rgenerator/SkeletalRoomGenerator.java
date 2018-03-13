@@ -100,6 +100,12 @@ public abstract class SkeletalRoomGenerator implements IRoomGenerator {
 		this.maxHeight = val;
 	}
 
+	@Override
+	public void setMinMaxSideSizes(int val, boolean widthOrHeight) {
+		setMinSideSize(val, widthOrHeight);
+		setMaxSideSize(val, widthOrHeight);
+	}
+
 	/**
 	 * @param minOrMax
 	 * @param widthOrHeight

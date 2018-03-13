@@ -43,8 +43,30 @@ public class RectangleRoomGenerator extends SkeletalRoomGenerator {
 		}
 		assert !hasSideSizeConstraint(true, false) || minh <= getMinSideSize(false);
 		final int w = rng.between(minw, maxWidth + 1);
+		if (w < minw || maxWidth < w) {
+			System.err.println("Invalid width: " + w + ". It should be in [" + minw + "," + maxWidth + "]");
+			return null;
+		}
 		final int h = rng.between(minh, maxHeight + 1);
+		if (h < minh || maxHeight < h) {
+			System.err.println("Invalid height : " + h + ". It should be in [" + minh + "," + maxHeight + "]");
+			return null;
+		}
 		return new Rectangle.Impl(Coord.get(0, 0), w, h);
+	}
+
+	/**
+	 * @param rng
+	 * @param min
+	 *            The maximum size (inclusive)
+	 * @param max
+	 *            The maximum size (exclusive)
+	 * @param widthOrHeight
+	 *            Whether the width of the height is requested.
+	 * @return The side size to use. Must be in {@code [min, max)}.
+	 */
+	protected int getWidthOrHeight(IRNG rng, int min, int max, boolean widthOrHeight) {
+		return rng.between(min, max);
 	}
 
 }
