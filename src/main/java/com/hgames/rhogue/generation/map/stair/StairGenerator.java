@@ -76,7 +76,9 @@ public class StairGenerator extends AbstractStairGenerator {
 				final Zone room = rooms.get(i);
 				final Coord rcenter = room.getCenter();
 				if (!room.contains(rcenter))
-					/* A shallow room */
+					/*
+					 * A shallow room. We don't want a room that doesn't contain its center.
+					 */
 					continue;
 				if (!reachesAtLeast(room, reachObjective))
 					/* This zone isn't connected enough */
@@ -109,14 +111,21 @@ public class StairGenerator extends AbstractStairGenerator {
 					return z.getCenter().distance(other);
 				}
 			});
-			candidates.addAll(rooms);
+			for (int i = 0; i < nbr; i++) {
+				final Zone room = rooms.get(i);
+				if (room.contains(room.getCenter()))
+					candidates.add(room);
+				/*
+				 * A shallow room, we should not return a room that does not contain its center.
+				 */
+			}
 			return candidates.isEmpty() ? null : candidates.remove().getCenter();
 		}
 	}
 
 	@Override
 	protected Iterator<Coord> candidates0(Coord objective) {
-		final Zone start = findContainer(objective);
+		final Zone start = findContainingRoomOrCorridor(objective);
 		if (start == null)
 			return Collections.emptyIterator();
 		final Iterator<Zone> delegate_ = new DungeonZonesCrawler(dungeon, start).iterator();
@@ -178,13 +187,15 @@ public class StairGenerator extends AbstractStairGenerator {
 		});
 	}
 
-	protected Zone findContainer(Coord c) {
+	protected Zone findContainingRoomOrCorridor(Coord c) {
 		Zone result = containerFinder.get(c);
 		if (result == null) {
 			/* Fallback (bad) */
 			assert false : "Zone containing " + c + " cannot be found";
 			result = Dungeons.findRoomOrCorridorContaining(dungeon, c.x, c.y);
 		}
+		assert Dungeons.hasRoomOrCorridor(dungeon, result);
+		assert result.contains(c);
 		return result;
 	}
 

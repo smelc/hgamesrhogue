@@ -942,6 +942,8 @@ public class DungeonGenerator {
 		}
 
 		protected void startStage(/* @Nullable */ Stage next) {
+			assert invariant();
+
 			if (watch == null)
 				return;
 			Stage current = null;
@@ -1189,6 +1191,21 @@ public class DungeonGenerator {
 						buf[x][y] &= false;
 				}
 			}
+		}
+
+		private boolean invariant() {
+			for (int x = 0; x < cellToEncloser.length; x++) {
+				final Zone[] ys = cellToEncloser[x];
+				for (int y = 0; y < ys.length; y++) {
+					final Zone zone = cellToEncloser[x][y];
+					if (zone != null && !(Dungeons.hasRoomOrCorridor(dungeon, zone) || Dungeons.hasChasm(dungeon, zone)
+							|| Dungeons.hasDisconnectedRoom(dungeon, zone) || Dungeons.hasWaterPool(dungeon, zone))) {
+						assert false;
+						return false;
+					}
+				}
+			}
+			return true;
 		}
 
 		@Override

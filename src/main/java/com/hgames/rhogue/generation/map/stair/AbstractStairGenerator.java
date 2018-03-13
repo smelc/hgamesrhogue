@@ -31,11 +31,10 @@ public abstract class AbstractStairGenerator extends SkeletalStairGenerator {
 	 * @param dungeon
 	 * @param objective
 	 * @param upOrDown
-	 *            Whether the stair to generate is the stair up or the stair
-	 *            down.
+	 *            Whether the stair to generate is the stair up or the stair down.
 	 */
-	AbstractStairGenerator(/* @Nullable */ ILogger logger, IRNG rng, Dungeon dungeon,
-			/* @Nullable */ Coord objective, boolean upOrDown) {
+	AbstractStairGenerator(/* @Nullable */ ILogger logger, IRNG rng, Dungeon dungeon, /* @Nullable */ Coord objective,
+			boolean upOrDown) {
 		super(dungeon);
 		this.logger = logger;
 		this.rng = Objects.checkNotNull(rng);
@@ -64,7 +63,8 @@ public abstract class AbstractStairGenerator extends SkeletalStairGenerator {
 	}
 
 	/**
-	 * @return Where to generate the stair, approximately.
+	 * @return Where to generate the stair, approximately. It must be within a room
+	 *         or corridor.
 	 */
 	protected abstract Coord getObjective0();
 
@@ -112,9 +112,9 @@ public abstract class AbstractStairGenerator extends SkeletalStairGenerator {
 	/**
 	 * @param c
 	 * @param inverted
-	 * @return A {@link Comparator} that orders {@link Coord coords} according
-	 *         to their distance to {@code c} (by closeness if {@code inverted}
-	 *         is {@code false}, otherwise by distance).
+	 * @return A {@link Comparator} that orders {@link Coord coords} according to
+	 *         their distance to {@code c} (by closeness if {@code inverted} is
+	 *         {@code false}, otherwise by distance).
 	 */
 	protected static Comparator<Coord> newDistanceComparatorFrom(final Coord c, final boolean inverted) {
 		return new Comparator<Coord>() {
