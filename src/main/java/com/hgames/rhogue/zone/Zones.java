@@ -200,6 +200,24 @@ public class Zones {
 	}
 
 	/**
+	 * @param zones
+	 * @param center
+	 * @return The first member of {@code zones} whose {@link Zone#getCenter()
+	 *         center} is {@code center}, or null if none.
+	 */
+	public static /* @Nullable */ Zone findZoneWithCenter(/* @Nullable */ List<? extends Zone> zones, Coord center) {
+		if (zones == null)
+			return null;
+		final int nbz = zones.size();
+		for (int i = 0; i < nbz; i++) {
+			final Zone zone = zones.get(i);
+			if (zone != null && zone.getCenter().equals(center))
+				return zone;
+		}
+		return null;
+	}
+
+	/**
 	 * @param z1
 	 * @param z2
 	 * @return A pair of coords in z1 and z2, whose distance is minimum; or null if

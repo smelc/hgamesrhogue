@@ -73,4 +73,6 @@ public interface InventoryPart<T> {
 	 */
 	public void pourInto(Collection<? super T> accumulator);
 
+	/** @return The size of {@code this}. */
+	public int size();
 }

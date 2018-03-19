@@ -13,6 +13,12 @@ import com.hgames.rhogue.animate.IAnimate;
 public interface IAI<T extends IAnimate> {
 
 	/**
+	 * @return A target to hunt, or null if none. Must be valid w.r.t
+	 *         {@link #isInvalidHuntingTarget(IAnimate)}.
+	 */
+	public /* @Nullable */ T chooseHuntingTarget();
+
+	/**
 	 * @return The animate to which this AI applies.
 	 */
 	public T getAnimate();
