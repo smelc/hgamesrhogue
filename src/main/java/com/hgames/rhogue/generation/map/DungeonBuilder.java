@@ -73,13 +73,16 @@ public class DungeonBuilder implements Serializable {
 	/**
 	 * @param pool
 	 *            The pool to add.
+	 * @param replaceds
+	 *            The symbols being replaced if grass is being put after having
+	 *            generated something else. For debug only.
 	 */
-	public void addGrassPool(Zone pool) {
+	public void addGrassPool(Zone pool, /* @Nullable */ EnumSet<DungeonSymbol> replaceds) {
 		assert !Dungeons.hasZone(dungeon, pool);
 		assert !pool.isEmpty();
-		assert EnumSet.of(DungeonSymbol.FLOOR).containsAll(Dungeons.getSymbols(dungeon, pool)) : "Pool of grass " + pool
+		assert replaceds == null || replaceds.containsAll(Dungeons.getSymbols(dungeon, pool)) : "Pool of grass " + pool
 				+ " contains an invalid symbol: " + Dungeons.getSymbols(dungeon, pool) + ". Only allowed symbol is "
-				+ DungeonSymbol.FLOOR + ")";
+				+ replaceds + ")";
 		if (dungeon.grassPools == null)
 			dungeon.grassPools = new ArrayList<Zone>();
 		else

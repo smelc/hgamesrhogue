@@ -1,7 +1,7 @@
 package com.hgames.rhogue.generation.map;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -54,31 +54,29 @@ public class DungeonAdapter {
 				final DungeonSymbol sym = map[x][y];
 				switch (sym) {
 				case CHASM:
-					break;
+					if (!interpreted[x][y])
+						builder.addChasm(new ListZone(spill(x, y, EnumSet.of(sym))));
+					continue;
 				case DEEP_WATER:
 					if (!interpreted[x][y])
-						builder.addWaterPool(new ListZone(spill(x, y, EnumSet.of(DungeonSymbol.DEEP_WATER), null)));
+						builder.addWaterPool(new ListZone(spill(x, y, EnumSet.of(sym))));
 					continue;
-				case DOOR:
-				case FLOOR:
-				case GRASS:
-				case HIGH_GRASS:
 				case SHALLOW_WATER:
-					if (!interpreted[x][y]) {
-						final EnumMap<DungeonSymbol, List<Coord>> terrainToZones = new EnumMap<DungeonSymbol, List<Coord>>(
-								DungeonSymbol.class);
-						terrainToZones.put(DungeonSymbol.GRASS, new ArrayList<Coord>());
-						terrainToZones.put(DungeonSymbol.HIGH_GRASS, new ArrayList<Coord>());
-						final EnumSet<DungeonSymbol> syms = EnumSet.of(DungeonSymbol.DOOR, DungeonSymbol.FLOOR,
-								DungeonSymbol.GRASS, DungeonSymbol.HIGH_GRASS, DungeonSymbol.SHALLOW_WATER);
-						builder.addWaterPool(new ListZone(spill(x, y, syms, terrainToZones)));
-						final List<Coord> grass = terrainToZones.get(DungeonSymbol.GRASS);
-						if (!grass.isEmpty())
-							builder.addGrassPool(new ListZone(grass));
-						final List<Coord> hgrass = terrainToZones.get(DungeonSymbol.HIGH_GRASS);
-						if (!hgrass.isEmpty())
-							builder.addHighGrassPool(new ListZone(hgrass));
-					}
+				case DOOR:
+					assert false : sym + " is disallowed in text maps";
+					continue;
+				case FLOOR:
+					if (!interpreted[x][y])
+						/* null: we cannot provide a meaningful bounding box */
+						builder.addZone(new ListZone(spill(x, y, EnumSet.of(sym))), null, true);
+					continue;
+				case GRASS:
+					if (!interpreted[x][y])
+						builder.addGrassPool(new ListZone(spill(x, y, EnumSet.of(sym))), EnumSet.of(sym));
+					continue;
+				case HIGH_GRASS:
+					if (!interpreted[x][y])
+						builder.addHighGrassPool(new ListZone(spill(x, y, EnumSet.of(sym))));
 					continue;
 				case STAIR_DOWN:
 					assert !interpreted[x][y];
@@ -107,11 +105,9 @@ public class DungeonAdapter {
 	 * @param x_
 	 * @param y_
 	 * @param syms
-	 * @param sym2Zones
-	 *            An optional map that is filled for members of {@code trackeds}.
+	 *            The symbols to spill on.
 	 */
-	private List<Coord> spill(int x_, int y_, EnumSet<DungeonSymbol> syms,
-			/* @Nullable */ EnumMap<DungeonSymbol, List<Coord>> sym2Zones) {
+	private List<Coord> spill(int x_, int y_, EnumSet<DungeonSymbol> syms) {
 		final List<Coord> result = new ArrayList<Coord>();
 		assert syms.contains(map[x_][y_]);
 		final Queue<Coord> todos = new LinkedList<Coord>();
@@ -127,22 +123,24 @@ public class DungeonAdapter {
 			assert !result.contains(c);
 			result.add(c);
 			interpreted[x][y] = true;
-			if (sym2Zones != null && sym2Zones.containsKey(sym))
-				add(sym2Zones, sym, c);
 			for (Direction dir : Direction.CARDINALS) {
 				final Coord d = c.translate(dir);
 				if (!interpreted[d.x][d.y] && syms.contains(map[d.x][d.y]))
 					todos.add(d);
 			}
 		}
+		assert containsAll(syms, result);
 		return result;
 	}
 
-	private static <T extends Enum<T>> void add(EnumMap<T, List<Coord>> map, T sym, Coord c) {
-		final List<Coord> list = map.get(sym);
-		assert list != null;
-		assert !list.contains(c);
-		list.add(c);
+	private boolean containsAll(EnumSet<DungeonSymbol> syms, Collection<Coord> coords) {
+		for (Coord coord : coords) {
+			if (!syms.contains(map[coord.x][coord.y])) {
+				assert false : coord + "'s symbol (" + map[coord.x][coord.y] + ") doesn't belong to " + syms;
+				return false;
+			}
+		}
+		return true;
 	}
 
 }

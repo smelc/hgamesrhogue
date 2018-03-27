@@ -1,6 +1,7 @@
 package com.hgames.rhogue.generation.map;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -91,7 +92,7 @@ public class GrassComponent implements GeneratorComponent {
 					patches++;
 					cells += buf.size();
 					/* Not using SetZone, as we would need to copy 'buf' anyway */
-					builder.addGrassPool(new ListZone(new ArrayList<Coord>(buf)));
+					builder.addGrassPool(new ListZone(new ArrayList<Coord>(buf)), EnumSet.of(DungeonSymbol.FLOOR));
 					/*
 					 * Should be done after 'addGrassPool' as it checks that symbols turned into
 					 * grass are valid.
