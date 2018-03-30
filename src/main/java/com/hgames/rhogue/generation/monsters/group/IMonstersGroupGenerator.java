@@ -122,7 +122,8 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 				if (oneShots.contains(delegate)) {
 					/* A one shotter, delete it */
 					table.remove(delegate);
-					oneShots.remove(delegate);
+					final boolean rmed = oneShots.remove(delegate);
+					assert rmed;
 					if (oneShots.isEmpty())
 						/* Free memory */
 						oneShots = null;

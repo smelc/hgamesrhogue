@@ -4,9 +4,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.hgames.lib.Exceptions;
 import com.hgames.rhogue.generation.map.draw.DungeonSymbolArrayDrawer;
@@ -52,9 +54,10 @@ public class Dungeon implements Serializable {
 	/**
 	 * Map whose keys are {@link #rooms} and whose values wrap the keys. It can be
 	 * used for example to quickly rule out zones when searching which zone contains
-	 * a cell (see {@link Dungeons#findRoomOrCorridorContaining(Dungeon, int, int)}). It can
-	 * be incomplete both for {@link #rooms} and for {@link #corridors}, as rooms
-	 * whose bounding box is the room itself aren't recorded in there (search tag
+	 * a cell (see
+	 * {@link Dungeons#findRoomOrCorridorContaining(Dungeon, int, int)}). It can be
+	 * incomplete both for {@link #rooms} and for {@link #corridors}, as rooms whose
+	 * bounding box is the room itself aren't recorded in there (search tag
 	 * (NO_BBOX) to see which implementations of {@link Zone} satisfy that).
 	 * Furthermore it can be straight incomplete for {@link #corridors}, because
 	 * corridors do not have a {@link Rectangle} bounding box (see tag
@@ -269,6 +272,8 @@ public class Dungeon implements Serializable {
 	}
 
 	/**
+	 * This method is expensive, don't call it in production.
+	 * 
 	 * @return true if {@code this}' invariants holds.
 	 */
 	public boolean invariant() {
@@ -279,6 +284,7 @@ public class Dungeon implements Serializable {
 				return false;
 			}
 		}
+
 		/* Bounding boxes are correct */
 		for (Map.Entry<Zone, ? extends Zone> key : boundingBoxes.entrySet()) {
 			final Zone boundingBox = key.getValue();
@@ -289,6 +295,7 @@ public class Dungeon implements Serializable {
 				return false;
 			}
 		}
+
 		/* Connections are correct */
 		for (Map.Entry<Zone, ? extends Collection<? extends Zone>> entry : connections.entrySet()) {
 			final Zone z = entry.getKey();
@@ -308,6 +315,7 @@ public class Dungeon implements Serializable {
 				}
 			}
 		}
+
 		/* Every non-wall cell is within a zone */
 		for (int x = 0; x < width; x++) {
 			for (int y = 0; y < height; y++) {
@@ -343,6 +351,7 @@ public class Dungeon implements Serializable {
 				throw Exceptions.newUnmatchedISE(sym);
 			}
 		}
+
 		/* All zones are non-empty */
 		{
 			for (Zone z : rooms) {
@@ -367,9 +376,30 @@ public class Dungeon implements Serializable {
 			}
 		}
 
-		/* FIXME Check that stairs are correct */
-		/* FIXME Check that disconnectedRooms are correct */
-		/* FIXME Check that waterIslands are correct */
+		{
+			/* Zones that should be connected to stairs indeed are */
+			final EnumSet<DungeonSymbol> walkables = baseWalkables();
+			checkConnecteds(rooms, walkables, "room");
+			checkConnecteds(corridors, walkables, "corridor");
+
+			walkables.add(DungeonSymbol.CHASM);
+			checkConnecteds(chasms, walkables, "chasm");
+			walkables.remove(DungeonSymbol.CHASM);
+
+			checkConnecteds(grassPools, walkables, "grass");
+			checkConnecteds(highGrassPools, walkables, "high grass");
+
+			walkables.add(DungeonSymbol.DEEP_WATER);
+			checkConnecteds(waterPools, walkables, "deep water");
+			walkables.remove(DungeonSymbol.DEEP_WATER);
+		}
+
+		/* Disconnected rooms and water islands aren't connected to stairs */
+		checkDisconnecteds(disconnectedRooms, "disconnected room");
+		checkDisconnecteds(waterIslands, "water island");
+
+		/* TODO Check that stairs are correct */
+		/* TODO Check that waterIslands are correct */
 
 		return true;
 	}
@@ -381,5 +411,64 @@ public class Dungeon implements Serializable {
 	 */
 	public String dirtyPrint() {
 		return new DungeonSymbolArrayDrawer().draw(map);
+	}
+
+	private boolean checkConnecteds(List<? extends Zone> zones, Set<DungeonSymbol> walkables, String what) {
+		if (zones == null)
+			return false;
+		final int nbdr = zones.size();
+		for (int i = 0; i < nbdr; i++) {
+			final Zone zone = zones.get(i);
+			if (zone == null || zone.isEmpty()) {
+				assert false : what + " is null or empty";
+				return false;
+			}
+			if (!Dungeons.connectedToStair(this, zone, walkables, null)) {
+				assert false : what + " is unexpectedly not connected to a stair";
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private boolean checkDisconnecteds(List<? extends Zone> zones, String what) {
+		if (zones == null)
+			return false;
+		final int nbdr = zones.size();
+		for (int i = 0; i < nbdr; i++) {
+			final Zone zone = zones.get(i);
+			if (zone == null || zone.isEmpty()) {
+				assert false : what + " is null or empty";
+				return false;
+			}
+			if (Dungeons.connectedToStair(this, zone, baseWalkables(), null)) {
+				assert false : what + " is unexpectedly connected to a stair";
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static EnumSet<DungeonSymbol> baseWalkables() {
+		final EnumSet<DungeonSymbol> result = EnumSet.noneOf(DungeonSymbol.class);
+		for (DungeonSymbol sym : DungeonSymbol.values()) {
+			switch (sym) {
+			case CHASM:
+			case DEEP_WATER:
+			case STAIR_DOWN:
+			case STAIR_UP:
+			case WALL:
+				continue;
+			case DOOR:
+			case FLOOR:
+			case GRASS:
+			case HIGH_GRASS:
+			case SHALLOW_WATER:
+				result.add(sym);
+				continue;
+			}
+			throw Exceptions.newUnmatchedISE(sym);
+		}
+		return result;
 	}
 }

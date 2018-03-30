@@ -8,8 +8,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
+import com.hgames.lib.collection.list.Lists;
 import com.hgames.lib.collection.multiset.EnumMultiset;
 import com.hgames.rhogue.zone.Rectangle;
 import com.hgames.rhogue.zone.Zone;
@@ -25,6 +27,13 @@ import squidpony.squidmath.Coord;
  * @author smelC
  */
 public class Dungeons {
+
+	/**
+	 * A flag to help me detect bugs. When this flag is ON, every non-Rectangle room
+	 * should have a bounding box. This is guaranteed by {@link DungeonGenerator},
+	 * but clients crafting dungeons on their own can break it.
+	 */
+	private static final Boolean ENFORCE_BBOX_PRECISION = Boolean.FALSE;
 
 	/**
 	 * @param dungeon
@@ -97,6 +106,61 @@ public class Dungeons {
 			result.add(component);
 		}
 		return result;
+	}
+
+	/**
+	 * @param dungeon
+	 * @param zone
+	 *            The starting points (which gets filtered by {@code walkables}
+	 *            too).
+	 * @param walkables
+	 *            The cells through which crawling can go.
+	 * @param upOrDown
+	 *            Whether to consider the upwards stair (true), the downwards stair
+	 *            (false), or both (null).
+	 * @return Whether it is possible to go from {@code zone} to a stair.
+	 */
+	public static boolean connectedToStair(Dungeon dungeon, Zone zone, Set<DungeonSymbol> walkables,
+			/* @Nullable */ Boolean upOrDown) {
+		final Queue<Coord> todos = Lists.newLinkedList();
+		final Set<Coord> dones = new HashSet<Coord>();
+		final Coord stairUp = dungeon.getStair(true);
+		final Coord stairDown = dungeon.getStair(false);
+		for (Coord coord : zone) {
+			final DungeonSymbol sym = dungeon.getSymbol(coord);
+			if (sym != null && walkables.contains(sym))
+				todos.add(coord);
+			assert !coord.equals(stairUp) : "Zone shouldn't contain stair up";
+			assert !coord.equals(stairDown) : "Zone shouldn't contain stair down";
+		}
+		final boolean checkUp = upOrDown == null || upOrDown.booleanValue();
+		final boolean checkDown = upOrDown == null || (!upOrDown.booleanValue());
+		while (!todos.isEmpty()) {
+			final Coord coord = todos.poll();
+			assert walkables.contains(dungeon.getSymbol(coord));
+			final boolean added = dones.contains(coord);
+			if (!added)
+				/* Done already */
+				continue;
+			for (Direction dir : Direction.CARDINALS) {
+				final Coord neighbor = coord.translate(dir);
+				if (dones.contains(neighbor))
+					/* Done already */
+					continue;
+				final DungeonSymbol sym = dungeon.getSymbol(neighbor);
+				if (sym == null)
+					/* Out of bounds */
+					continue;
+				if (!walkables.contains(sym))
+					continue;
+				if (checkUp && neighbor.isAdjacent(stairUp))
+					return true;
+				if (checkDown && neighbor.isAdjacent(stairDown))
+					return true;
+				todos.add(neighbor);
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -504,7 +568,8 @@ public class Dungeons {
 				final Zone boundingBox = boundingBoxes.get(z);
 				if (boundingBox == null) {
 					if (roomOrCorridors) {
-						assert z instanceof Rectangle : "There should be a bounding box for room " + z;
+						assert !ENFORCE_BBOX_PRECISION.booleanValue()
+								|| z instanceof Rectangle : "There should be a bounding box for room " + z;
 						/*
 						 * It's okay for 'z' not to have a bounding box, since it is a rectangle. Its
 						 * bounding box would be 'z' itself.

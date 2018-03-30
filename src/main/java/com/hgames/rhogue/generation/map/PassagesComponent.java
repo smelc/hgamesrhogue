@@ -119,7 +119,7 @@ public class PassagesComponent extends SkeletalComponent {
 		final Integer i2 = gdata.zOrder.get(z2);
 		if (i2 == null)
 			throw new IllegalStateException("Unknown zone: " + z2);
-		return i1 < i2 ? Pair.of(z1, z2) : Pair.of(z2, z1);
+		return i1.intValue() < i2.intValue() ? Pair.of(z1, z2) : Pair.of(z2, z1);
 	}
 
 }

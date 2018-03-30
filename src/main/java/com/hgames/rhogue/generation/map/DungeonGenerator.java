@@ -937,7 +937,7 @@ public class DungeonGenerator {
 			this.dungeon = dungeon;
 			this.cellToEncloser = new Zone[dungeon.width][dungeon.height];
 			this.timings = new EnumMap<Stage, Long>(Stage.class);
-			this.timings.put(Stage.INIT, -1l);
+			this.timings.put(Stage.INIT, Long.valueOf(-1l));
 			this.watch = watch;
 		}
 
@@ -949,23 +949,23 @@ public class DungeonGenerator {
 			Stage current = null;
 			for (Stage s : Stage.values()) {
 				final Long duration = timings.get(s);
-				if (duration != null && duration == -1l) {
+				if (duration != null && duration.longValue() == -1l) {
 					current = s;
 					break;
 				}
 			}
 			if (current == null)
 				throw new IllegalStateException("Stage not found: " + current);
-			timings.put(current, watch.getDuration());
+			timings.put(current, Long.valueOf(watch.getDuration()));
 			if (next != null) {
 				watch.reset();
-				timings.put(next, -1l);
+				timings.put(next, Long.valueOf(-1l));
 			}
 		}
 
 		protected void recordRoomOrdering(Zone z) {
 			assert Dungeons.hasZone(dungeon, z);
-			final Integer prev = this.zOrder.put(z, nextRoomIndex);
+			final Integer prev = this.zOrder.put(z, Integer.valueOf(nextRoomIndex));
 			nextRoomIndex++;
 			if (prev != null)
 				throw new IllegalStateException("Zone " + z + " is being recorded twice");
@@ -1112,9 +1112,9 @@ public class DungeonGenerator {
 				if (duration == null)
 					/* Stage wasn't done. It's okay. */
 					continue;
-				if (duration < 0)
+				if (duration.intValue() < 0)
 					logger.warnLog(tag, "Duration of stage " + stage + " is unexpectedly " + duration);
-				total += timings.get(stage);
+				total += timings.get(stage).longValue();
 			}
 			final int width = dungeon.width;
 			final int height = dungeon.height;

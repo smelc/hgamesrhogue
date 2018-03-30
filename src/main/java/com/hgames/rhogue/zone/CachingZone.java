@@ -77,40 +77,40 @@ public class CachingZone implements Zone {
 	public boolean contains(Coord c) {
 		Boolean cached = contained == null ? null : contained.get(c);
 		if (cached == null) {
-			cached = delegate.contains(c);
+			cached = Boolean.valueOf(delegate.contains(c));
 			assert cached != null;
 			if (contained == null)
 				contained = new HashMap<Coord, Boolean>();
 			contained.put(c, cached);
 		}
 		assert cached != null;
-		return cached;
+		return cached.booleanValue();
 	}
 
 	@Override
 	public boolean contains(Zone other) {
 		Boolean cached = contains == null ? null : contains.get(other);
 		if (cached == null) {
-			cached = delegate.contains(other);
+			cached = Boolean.valueOf(delegate.contains(other));
 			assert cached != null;
 			if (contains == null)
 				contains = new HashMap<Zone, Boolean>();
 			contains.put(other, cached);
 		}
-		return cached;
+		return cached.booleanValue();
 	}
 
 	@Override
 	public boolean intersectsWith(Zone other) {
 		Boolean cached = intersectsWith == null ? null : intersectsWith.get(other);
 		if (cached == null) {
-			cached = delegate.intersectsWith(other);
+			cached = Boolean.valueOf(delegate.intersectsWith(other));
 			assert cached != null;
 			if (intersectsWith == null)
 				intersectsWith = new HashMap<Zone, Boolean>();
 			intersectsWith.put(other, cached);
 		}
-		return cached;
+		return cached.booleanValue();
 	}
 
 	@Override
@@ -140,12 +140,12 @@ public class CachingZone implements Zone {
 	public int x(boolean smallestOrBiggest) {
 		if (smallestOrBiggest) {
 			if (smallestX == null)
-				smallestX = delegate.x(smallestOrBiggest);
-			return smallestX;
+				smallestX = Integer.valueOf(delegate.x(smallestOrBiggest));
+			return smallestX.intValue();
 		} else {
 			if (biggestX == null)
-				biggestX = delegate.x(smallestOrBiggest);
-			return biggestX;
+				biggestX = Integer.valueOf(delegate.x(smallestOrBiggest));
+			return biggestX.intValue();
 		}
 	}
 
@@ -153,12 +153,12 @@ public class CachingZone implements Zone {
 	public int y(boolean smallestOrBiggest) {
 		if (smallestOrBiggest) {
 			if (smallestY == null)
-				smallestY = delegate.y(smallestOrBiggest);
-			return smallestY;
+				smallestY = Integer.valueOf(delegate.y(smallestOrBiggest));
+			return smallestY.intValue();
 		} else {
 			if (biggestY == null)
-				biggestY = delegate.y(smallestOrBiggest);
-			return biggestY;
+				biggestY = Integer.valueOf(delegate.y(smallestOrBiggest));
+			return biggestY.intValue();
 		}
 	}
 

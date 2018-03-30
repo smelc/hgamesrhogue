@@ -40,7 +40,7 @@ public class CorridorComputer {
 		this.width = map.length;
 		this.height = width == 0 ? 0 : map[0].length;
 		this.walls = new HashSet<Character>();
-		walls.add('#');
+		walls.add(Character.valueOf('#'));
 	}
 
 	/**
@@ -48,7 +48,7 @@ public class CorridorComputer {
 	 *            A character to treat as a wall.
 	 */
 	public void addWall(char c) {
-		walls.add(c);
+		walls.add(Character.valueOf(c));
 	}
 
 	/**
@@ -56,7 +56,7 @@ public class CorridorComputer {
 	 *            A character not to treat as a wall.
 	 */
 	public void removeWall(char c) {
-		walls.remove(c);
+		walls.remove(Character.valueOf(c));
 	}
 
 	/**
@@ -103,12 +103,12 @@ public class CorridorComputer {
 
 	/* Subclassers may override */
 	protected boolean isCorridor(char c) {
-		return !walls.contains(c);
+		return !walls.contains(Character.valueOf(c));
 	}
 
 	/* Subclassers may override */
 	protected boolean isCorridorNeighbor(char c) {
-		return walls.contains(c);
+		return walls.contains(Character.valueOf(c));
 	}
 
 	private List<Rectangle> computeHorizontalCorridors() {

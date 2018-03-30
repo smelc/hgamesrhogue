@@ -187,9 +187,9 @@ public class ProbabilityTable<T> {
 		assert invariant();
 		if (probability < 0)
 			throw new IllegalStateException("Probability should be >= 0, but received: " + probability);
-		final Integer inThere = table.put(t, probability);
+		final Integer inThere = table.put(t, Integer.valueOf(probability));
 		if (inThere != null)
-			total -= inThere;
+			total -= inThere.intValue();
 		total += probability;
 		assert invariant();
 	}
@@ -202,10 +202,10 @@ public class ProbabilityTable<T> {
 	 * @param probability
 	 */
 	public void put(T t, int probability) {
-		final int inThere = table.containsKey(t) ? table.get(t) : 0;
+		final int inThere = table.containsKey(t) ? table.get(t).intValue() : 0;
 		final int diff = probability - inThere;
 		total += diff;
-		table.put(t, probability);
+		table.put(t, Integer.valueOf(probability));
 		assert invariant();
 	}
 
@@ -221,7 +221,7 @@ public class ProbabilityTable<T> {
 		if (rmed == null)
 			result = false;
 		else {
-			total -= rmed;
+			total -= rmed.intValue();
 			result = true;
 		}
 		assert invariant();
@@ -240,7 +240,7 @@ public class ProbabilityTable<T> {
 
 		int index = rng.nextInt(total);
 		for (T t : table.keySet()) {
-			index -= table.get(t);
+			index -= table.get(t).intValue();
 			if (index < 0)
 				/* That's a hit */
 				return t;
@@ -264,7 +264,7 @@ public class ProbabilityTable<T> {
 	 */
 	public int weight(T t) {
 		final Integer i = table.get(t);
-		return i == null ? 0 : i;
+		return i == null ? 0 : i.intValue();
 	}
 
 	/**
@@ -276,8 +276,12 @@ public class ProbabilityTable<T> {
 
 	protected boolean invariant() {
 		int weight = 0;
-		for (Integer value : table.values())
-			weight += value;
+		for (Integer value : table.values()) {
+			if (value == null)
+				return false;
+			else
+				weight += value.intValue();
+		}
 		return weight == total;
 	}
 

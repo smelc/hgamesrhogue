@@ -147,7 +147,7 @@ public abstract class SkeletalCorridorBuilder implements ICorridorBuilder {
 			final Boolean adj = adjacency(c, d);
 			if (adj == null)
 				continue;
-			if (adj == b)
+			if (adj.booleanValue() == b)
 				result++;
 		}
 		return result;
@@ -161,7 +161,7 @@ public abstract class SkeletalCorridorBuilder implements ICorridorBuilder {
 	protected static Boolean adjacency(Coord c1, Coord c2) {
 		for (Direction out : Direction.OUTWARDS) {
 			if (c1.translate(out).equals(c2))
-				return out.isCardinal() ? true : false;
+				return Boolean.valueOf(out.isCardinal() ? true : false);
 		}
 		return null;
 	}

@@ -43,7 +43,7 @@ public class CorridorsComponent extends SkeletalComponent {
 	private static final Comparator<Pair<Double, Zone>> ORDERER = new Comparator<Pair<Double, Zone>>() {
 		@Override
 		public int compare(Pair<Double, Zone> o1, Pair<Double, Zone> o2) {
-			return Double.compare(o1.getFst(), o2.getFst());
+			return Double.compare(o1.getFst().doubleValue(), o2.getFst().doubleValue());
 		}
 	};
 
@@ -91,7 +91,7 @@ public class CorridorsComponent extends SkeletalComponent {
 					/* Too far away */
 					continue;
 				}
-				otherZones.add(Pair.of(dist, other));
+				otherZones.add(Pair.<Double, Zone>of(Double.valueOf(dist), other));
 			}
 			if (!otherZones.isEmpty()) {
 				zoneToOtherZones.put(z, otherZones);
