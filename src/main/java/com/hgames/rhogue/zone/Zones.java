@@ -44,7 +44,9 @@ public class Zones {
 	 * @return true if a member of {@code zones} {@link Zone#contains(Coord)}
 	 *         {@code c}.
 	 */
-	public static boolean anyContains(List<? extends Zone> zones, Coord c) {
+	public static boolean anyContains(/* @Nullable */ List<? extends Zone> zones, Coord c) {
+		if (zones == null)
+			return false;
 		final int bound = zones.size();
 		for (int i = 0; i < bound; i++) {
 			if (zones.get(i).contains(c))
