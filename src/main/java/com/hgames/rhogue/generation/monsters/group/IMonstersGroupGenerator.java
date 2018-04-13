@@ -97,6 +97,22 @@ public interface IMonstersGroupGenerator<U, T extends IAnimate> extends IMonster
 		}
 
 		/**
+		 * @param extension
+		 * @param proba
+		 * @return A variant of {@code this} where {@code t} with probability
+		 *         {@code proba} has been added. The instances of {@code U} get shared
+		 *         between {@code this} and the result.
+		 */
+		public IMonstersGroupGenerator<U, T> disjunct(IMonstersGroupGenerator<U, T> extension, int proba) {
+			final IMonstersGroupGenerator.Or<U, T> result = new Or<U, T>(
+					new ProbabilityTable<IMonstersGroupGenerator<U, T>>(table));
+			result.table.add(extension, proba);
+			if (oneShots != null)
+				result.oneShots = new HashSet<IMonstersGroupGenerator<U, T>>(oneShots);
+			return result;
+		}
+
+		/**
 		 * @param delegate
 		 *            A member of the underlying table.
 		 */
