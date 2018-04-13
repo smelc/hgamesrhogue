@@ -128,7 +128,8 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 			if (!roll(rng))
 				/* Stop here */
 				break;
-			rng.shuffle(DIRS_BUF);
+			// Not using in place shuffle, for gwt-compatibility
+			rng.shuffle(Direction.CARDINALS, DIRS_BUF);
 			for (Direction dir : DIRS_BUF) {
 				final Coord candidate = next.translate(dir);
 				if (zone.contains(candidate))

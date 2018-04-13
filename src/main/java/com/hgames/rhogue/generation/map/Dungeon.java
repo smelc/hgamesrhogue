@@ -407,10 +407,14 @@ public class Dungeon implements Serializable {
 	/**
 	 * Debug method.
 	 * 
+	 * @param lineSeparator
+	 *            The separator to use. {@code System#getProperty("line.separator")}
+	 *            isn't used, because it isn't GWT-compatible. A fresh instance that
+	 *            uses {@link DungeonSymbolArrayDrawer}. Handy to debug.
 	 * @return {@code this} pretty printed.
 	 */
-	public String dirtyPrint() {
-		return new DungeonSymbolArrayDrawer().draw(map);
+	public String dirtyPrint(String lineSeparator) {
+		return new DungeonSymbolArrayDrawer(lineSeparator).draw(map);
 	}
 
 	private boolean checkConnecteds(List<? extends Zone> zones, Set<DungeonSymbol> walkables, String what) {

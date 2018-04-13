@@ -42,6 +42,17 @@ public class ProbabilityTable<T> {
 		this.total = 0;
 	}
 
+	/**
+	 * Creates a new probability table, copying an existing one. The instances of
+	 * {@code T} are shared between {@code this} and {@code other}.
+	 * 
+	 * @param other
+	 */
+	public ProbabilityTable(ProbabilityTable<T> other) {
+		this.table = new LinkedHashMap<T, Integer>(other.table);
+		this.total = other.total;
+	}
+
 	/** @return A fresh instance. */
 	public static <T> ProbabilityTable<T> create() {
 		return new ProbabilityTable<T>();

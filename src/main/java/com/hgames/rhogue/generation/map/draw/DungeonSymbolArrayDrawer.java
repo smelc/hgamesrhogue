@@ -13,17 +13,24 @@ public class DungeonSymbolArrayDrawer extends Generic2DArrayDrawer<DungeonSymbol
 	protected final IDungeonSymbolDrawer symd;
 
 	/**
-	 * A fresh instance that uses {@link DungeonSymbolArrayDrawer}. Handy to debug.
+	 * @param lineSeparator
+	 *            The separator to use. {@code System#getProperty("line.separator")}
+	 *            isn't used, because it isn't GWT-compatible. A fresh instance that
+	 *            uses {@link DungeonSymbolArrayDrawer}. Handy to debug.
 	 */
-	public DungeonSymbolArrayDrawer() {
-		this(new DungeonSymbolDrawer());
+	public DungeonSymbolArrayDrawer(String lineSeparator) {
+		this(lineSeparator, new DungeonSymbolDrawer());
 	}
 
 	/**
+	 * @param lineSeparator
+	 *            The separator to use. {@code System#getProperty("line.separator")}
+	 *            isn't used, because it isn't GWT-compatible.
 	 * @param symd
 	 *            How to draw an individual symbol.
 	 */
-	public DungeonSymbolArrayDrawer(IDungeonSymbolDrawer symd) {
+	public DungeonSymbolArrayDrawer(String lineSeparator, IDungeonSymbolDrawer symd) {
+		super(lineSeparator);
 		this.symd = symd;
 	}
 

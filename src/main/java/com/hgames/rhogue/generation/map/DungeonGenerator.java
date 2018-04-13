@@ -437,7 +437,7 @@ public class DungeonGenerator {
 		final boolean good = doStage(Stage.STAIRS, new StairsComponent(), gdata);
 		if (!good) {
 			if (logger != null && logger.isDebugEnabled())
-				logger.infoLog(Tags.GENERATION, dungeon.dirtyPrint());
+				logger.infoLog(Tags.GENERATION, dungeon.dirtyPrint("\n"));
 			return null;
 		}
 

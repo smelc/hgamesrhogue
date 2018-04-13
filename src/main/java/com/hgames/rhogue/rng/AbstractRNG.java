@@ -10,6 +10,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import com.hgames.lib.GwtIncompatible;
+
 import squidpony.squidmath.IRNG;
 
 /**
@@ -126,6 +128,7 @@ public abstract class AbstractRNG implements IRNG, Serializable {
 	}
 
 	@Override
+	@GwtIncompatible
 	public final <T> T[] shuffle(T[] elements) {
 		final int sz = elements.length;
 		final T[] result = Arrays.copyOf(elements, sz);
