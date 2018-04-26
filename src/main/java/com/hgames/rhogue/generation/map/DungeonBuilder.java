@@ -44,8 +44,8 @@ public class DungeonBuilder implements Serializable {
 			throw new IllegalStateException("A zone should not be connected to itself");
 		assert Dungeons.hasRoomOrCorridor(dungeon, z1);
 		assert Dungeons.hasRoomOrCorridor(dungeon, z2);
-		Multimaps.addToListMultimapIfAbsent(dungeon.connections, z1, z2);
-		Multimaps.addToListMultimapIfAbsent(dungeon.connections, z2, z1);
+		Multimaps.addToArrayListMultimapIfAbsent(dungeon.connections, z1, z2);
+		Multimaps.addToArrayListMultimapIfAbsent(dungeon.connections, z2, z1);
 	}
 
 	/**

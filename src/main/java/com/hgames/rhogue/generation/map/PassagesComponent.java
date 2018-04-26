@@ -51,7 +51,7 @@ public class PassagesComponent extends SkeletalComponent {
 				if (!acceptsOneMoreConnection(gen, dungeon, z0) || !acceptsOneMoreConnection(gen, dungeon, z1))
 					/* Connection is disallowed */
 					continue;
-				Multimaps.addToListMultimap(connectedsToCandidates, orderedPair(gdata, z0, z1), doorCandidate);
+				Multimaps.addToArrayListMultimap(connectedsToCandidates, orderedPair(gdata, z0, z1), doorCandidate);
 				assert Dungeons.findRoomOrCorridorContaining(dungeon, x, y) == null : "Candidate for door: " + doorCandidate
 						+ " should not be in a zone";
 			}
