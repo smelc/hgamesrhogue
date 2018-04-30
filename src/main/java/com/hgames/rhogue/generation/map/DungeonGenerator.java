@@ -44,7 +44,6 @@ import squidpony.squidmath.IRNG;
  * Mercenary</a>. It builts a structured dungeon. This means you have accesses
  * to objects describing rooms, corridors, zones, etc.
  * 
- * <p>
  * This class' public API can be divided into two:
  * 
  * <ul>
@@ -52,7 +51,6 @@ import squidpony.squidmath.IRNG;
  * methods.</li>
  * <li>The "generate" part of the API which is {@link #generate()}.</li>
  * </ul>
- * </p>
  * 
  * <p>
  * This class' protected API is designed to be called from
@@ -90,7 +88,7 @@ import squidpony.squidmath.IRNG;
  * @author smelC
  * @see Dungeon
  * @see DungeonGenerators
- * @see GeneratorComponent for the various parts of the implementation
+ * @see GeneratorComponent
  */
 public class DungeonGenerator {
 
@@ -337,7 +335,7 @@ public class DungeonGenerator {
 
 	/**
 	 * @param objective
-	 *            The objective. Must be >= 0.
+	 *            The objective. Must be {@code >= 0}.
 	 * @throws IllegalStateException
 	 *             If {@code objective < 0}.
 	 */

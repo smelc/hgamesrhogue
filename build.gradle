@@ -1,6 +1,43 @@
 apply plugin: 'java'
 
+def deps = ["SquidLib","com.hgames.lib"]
+def dist_version = "1.0"
+
 dependencies {
-        compile project(":SquidLib")
-        compile project(":com.hgames.lib")
+        deps.each{ name -> compile project(":" + name) }
+}
+
+task fatSourcesJar(type: Jar, dependsOn: classes) {
+    description 'Creates a jar containing sources'
+    classifier = 'sources'
+    version = dist_version
+    from sourceSets.main.allSource
+    deps.each { name -> from project(":" + name ).sourceSets.main.allSource }
+}
+
+fatSourcesJar.doLast {
+    println("Generated " + archivePath)
+}
+
+task fatJavadocJar(type: Zip, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    version = dist_version
+    into(project.name) { from javadoc.destinationDir }
+    deps.each { name -> into(name) { from project(":" + name).javadoc.destinationDir } }
+}
+
+fatJavadocJar.doLast {
+    println("Generated " + archivePath)
+}
+
+task dist(type: Zip, dependsOn: ['fatCodeJar', 'fatSourcesJar','fatJavadocJar']) {
+    classifier = 'all'
+    version = dist_version
+    from fatCodeJar.archivePath
+    from fatSourcesJar.archivePath
+    from fatJavadocJar.archivePath
+}
+
+dist.doLast {
+    println("Generated " + archivePath)
 }

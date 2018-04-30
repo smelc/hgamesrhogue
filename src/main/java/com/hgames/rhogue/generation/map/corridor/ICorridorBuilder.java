@@ -22,7 +22,7 @@ public interface ICorridorBuilder {
 	 * @param startEndBuf
 	 *            Where to set the corridor's only cell that is cardinally adjacent
 	 *            to {@code start} and the corridor's only cell that is cardinally
-	 *            adjacent to {@code end}, or null. Must be of length >= 2.
+	 *            adjacent to {@code end}, or null. Must be of length &ge; 2.
 	 * @return A zone connecting {@code start} and {@code end}. It doesn't contain
 	 *         neither {@code start} nor {@code end}.
 	 */

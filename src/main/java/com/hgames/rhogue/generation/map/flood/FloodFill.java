@@ -101,13 +101,13 @@ public abstract class FloodFill {
 
 	/**
 	 * <ol>
-	 * <li>To avoid the fill to be to squarish, let's eat its border <- NOT NEEDED
-	 * FINALLY</li>
+	 * <li>To avoid the fill to be to squarish, let's eat its border &lt;- NOT
+	 * NEEDED FINALLY</li>
 	 * <li>For every cell in the result, remove it if it is too lonely. This avoids:
 	 * 
 	 * <pre>
 	 * ######
-	 * #~#~## <-
+	 * #~#~## &lt;-
 	 * ##~~~#
 	 * #~~~~#
 	 * ######

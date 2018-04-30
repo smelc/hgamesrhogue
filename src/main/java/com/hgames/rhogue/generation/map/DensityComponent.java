@@ -19,9 +19,9 @@ import com.hgames.rhogue.zone.Zones;
  * 
  * <p>
  * Make sure that at least 1/5th of the map is accessible. For that, find
- * disconnected rooms. For every disconnected component whose size is >
- * {@link #getWallificationBound(Dungeon)} of the map, try very hard to connect
- * it to the stairs. At the end check if 1/6th of the map is accessible.
+ * disconnected rooms. For every disconnected component whose size is greater
+ * than {@link #getWallificationBound(Dungeon)} of the map, try very hard to
+ * connect it to the stairs. At the end check if 1/6th of the map is accessible.
  * </p>
  * 
  * <p>

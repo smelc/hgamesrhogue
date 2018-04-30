@@ -15,8 +15,8 @@ public class SomeShots implements Lifetime {
 
 	/**
 	 * @param nbShots
-	 *            The number of time that the associated {@link IRoomGenerator}
-	 *            can be used. Must be >= 0.
+	 *            The number of time that the associated {@link IRoomGenerator} can
+	 *            be used. Must be &ge; 0.
 	 * @throws IllegalStateException
 	 *             If {@code nbShots < 0}.
 	 */

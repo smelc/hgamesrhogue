@@ -21,7 +21,7 @@ public class BoundedList<T> extends ArrayList<T> implements InventoryPart<T> {
 	 * @param maxSize
 	 *            The maximum number of elements that this list accepts.
 	 * @throws IllegalArgumentException
-	 *             If maxSize < 0
+	 *             If {@code maxSize < 0}
 	 */
 	public BoundedList(int maxSize) {
 		this.maxSize = maxSize;
@@ -34,7 +34,7 @@ public class BoundedList<T> extends ArrayList<T> implements InventoryPart<T> {
 	 * @param maxSize
 	 *            The maximum number of elements that this list accepts.
 	 * @throws IllegalArgumentException
-	 *             If maxSize < 0
+	 *             If {@code maxSize < 0}
 	 */
 	public BoundedList(Collection<? extends T> c, int maxSize) {
 		super(c);
@@ -48,7 +48,7 @@ public class BoundedList<T> extends ArrayList<T> implements InventoryPart<T> {
 	 * @param maxSize
 	 *            The maximum number of elements that this list accepts.
 	 * @throws IllegalArgumentException
-	 *             If maxSize < 0
+	 *             If {@code maxSize < 0}
 	 */
 	public BoundedList(int initialCapacity, int maxSize) {
 		super(initialCapacity);

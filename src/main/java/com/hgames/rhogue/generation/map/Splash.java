@@ -41,8 +41,7 @@ public class Splash<T extends Enum<T>> {
 	 *            char 2D array with x, y indices for the dungeon/map level
 	 * @param start
 	 *            Where the spill should start. It should be passable, otherwise an
-	 *            empty list gets returned. Consider using
-	 *            {@link DungeonUtility#getRandomCell}.
+	 *            empty list gets returned.
 	 * @param volume
 	 *            The number of cells to spill on.
 	 * @param drunks

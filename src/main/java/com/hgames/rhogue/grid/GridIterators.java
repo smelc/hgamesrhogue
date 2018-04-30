@@ -35,17 +35,18 @@ public class GridIterators {
 		 * @param center
 		 *            The iterator's center.
 		 * @param maxOffset
-		 *            The maximum offset from {@code center}, inclusive. Giving
-		 *            2 means this iterator will iterate at {@code center}, then
-		 *            the rectangle's border around {@code center} (whose bottom
-		 *            left is at {@code (center.x - 1, center.y -1)}), then the
-		 *            rectangle 's border around the previous rectangle (whose
-		 *            bottom left is at {@code (center.x - 2, center.y -2)}).
+		 *            The maximum offset from {@code center}, inclusive. Giving 2 means
+		 *            this iterator will iterate at {@code center}, then the rectangle's
+		 *            border around {@code center} (whose bottom left is at
+		 *            {@code (center.x - 1, center.y -1)}), then the rectangle 's border
+		 *            around the previous rectangle (whose bottom left is at
+		 *            {@code (center.x - 2, center.y -2)}).
 		 * 
 		 *            <p>
 		 *            Starts at 0.
 		 *            </p>
-		 * @throw IllegalStateException If {@code maxDiagonalSize < 0}.
+		 * @throws IllegalStateException
+		 *             If {@code maxDiagonalSize < 0}.
 		 */
 		public GrowingRectangle(Coord center, int maxOffset) {
 			this.center = Objects.checkNotNull(center);
@@ -127,10 +128,10 @@ public class GridIterators {
 		 * @param mapHeight
 		 *            The rectangle's height.
 		 * @param xstart
-		 *            The rectangle x-starting point. Must be >= 0 and <
+		 *            The rectangle x-starting point. Must be {@code >= 0} and &lt;
 		 *            mapWidth.
 		 * @param ystart
-		 *            The rectangle y-starting point. Must be >= 0 and <
+		 *            The rectangle y-starting point. Must be {@code >= 0} and &lt;
 		 *            mapHeight.
 		 * @param dir
 		 *            The direction in which to iterate. It MUST be cardinal.

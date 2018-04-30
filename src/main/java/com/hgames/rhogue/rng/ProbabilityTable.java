@@ -186,7 +186,7 @@ public class ProbabilityTable<T> {
 
 	/**
 	 * Adds an object with the given probability. This object may later on be
-	 * returned by {@link #get(IRNG)} if its probability is > 0.
+	 * returned by {@link #get(IRNG)} if its probability is &gt; 0.
 	 * 
 	 * @param t
 	 *            The object to be added.
@@ -263,7 +263,7 @@ public class ProbabilityTable<T> {
 
 	/**
 	 * @return Elements that can be returned by {@link #get(IRNG)} if their
-	 *         probability is > 0.
+	 *         probability is &gt; 0.
 	 */
 	public Collection<T> getDomain() {
 		return table.keySet();

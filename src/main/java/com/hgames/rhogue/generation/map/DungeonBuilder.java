@@ -272,7 +272,8 @@ public class DungeonBuilder implements Serializable {
 	}
 
 	/**
-	 * Sets {@code sym} for cells in {@code it} whose symbol is not in {@cod except}
+	 * Sets {@code sym} for cells in {@code it} whose symbol is not in
+	 * {@code except}
 	 * 
 	 * @param it
 	 * @param sym
