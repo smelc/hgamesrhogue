@@ -493,7 +493,10 @@ public class Dungeons {
 	 *         symols are all in {@code allowed}.
 	 */
 	public static boolean isSurroundedBy(Dungeon dungeon, Zone z, EnumSet<DungeonSymbol> allowed) {
-		for (Coord c : z.getExternalBorder()) {
+		final List<Coord> extBorder = z.getExternalBorder();
+		final int sz = extBorder.size();
+		for (int i = 0; i < sz; i++) {
+			final Coord c = extBorder.get(i);
 			assert !z.contains(c);
 			final DungeonSymbol sym = dungeon.getSymbol(c);
 			if (!allowed.contains(sym))

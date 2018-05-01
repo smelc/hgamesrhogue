@@ -436,7 +436,7 @@ public interface Rectangle extends Zone {
 		}
 
 		@Override
-		public List<Coord> getAll() {
+		public List<Coord> getAll(boolean fresh) {
 			final List<Coord> result = Utils.cellsList(this);
 			assert result.size() == size();
 			return result;
@@ -460,7 +460,7 @@ public interface Rectangle extends Zone {
 		@Override
 		public List<Coord> getInternalBorder() {
 			if (width <= 1 || height <= 1)
-				return getAll();
+				return getAll(false);
 			final int expectedSize = width + (height - 1) + (width - 1) + (height - 2);
 			final List<Coord> result = new ArrayList<Coord>(expectedSize);
 			Coord current = Utils.getCorner(this, Direction.DOWN_LEFT);

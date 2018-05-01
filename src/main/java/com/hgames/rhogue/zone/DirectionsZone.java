@@ -62,7 +62,7 @@ public class DirectionsZone extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
-	public List<Coord> getAll() {
+	public List<Coord> getAll(boolean fresh) {
 		final List<Coord> all = new ArrayList<Coord>(size());
 		if (includesCenter)
 			all.add(center);

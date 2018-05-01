@@ -46,7 +46,7 @@ public class CircularZone extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
-	public List<Coord> getAll() {
+	public List<Coord> getAll(boolean fresh) {
 		final List<Coord> result = new ArrayList<Coord>(radius * 4);
 		DoerInACircle.computeAll(center.x, center.y, radius, result);
 		return result;

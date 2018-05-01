@@ -1,5 +1,6 @@
 package com.hgames.rhogue.zone;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import squidpony.squidmath.Coord;
@@ -63,8 +64,8 @@ public class ListZone extends Zone.Skeleton {
 	}
 
 	@Override
-	public List<Coord> getAll() {
-		return coords;
+	public List<Coord> getAll(boolean fresh) {
+		return fresh ? new ArrayList<Coord>(coords) : coords;
 	}
 
 	@Override

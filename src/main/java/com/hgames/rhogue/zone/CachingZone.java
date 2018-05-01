@@ -1,5 +1,6 @@
 package com.hgames.rhogue.zone;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -157,10 +158,15 @@ public class CachingZone implements Zone {
 	}
 
 	@Override
-	public List<Coord> getAll() {
+	public List<Coord> getAll(boolean fresh) {
 		if (all == null)
-			all = delegate.getAll();
-		return all;
+			/*
+			 * Not requesting a fresh list from the delegate. If the delegate caches its
+			 * List, at worst; we'll observe mutations which is nice. If the delegate
+			 * doesn't cache its List, we're saving allocations.
+			 */
+			all = delegate.getAll(false);
+		return fresh ? new ArrayList<Coord>(all) : all;
 	}
 
 	@Override

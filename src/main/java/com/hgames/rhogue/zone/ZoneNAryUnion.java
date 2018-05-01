@@ -165,12 +165,12 @@ public class ZoneNAryUnion extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
-	public List<Coord> getAll() {
+	public List<Coord> getAll(boolean fresh) {
 		final List<Coord> result = new ArrayList<Coord>(size());
 		final int nbu = union.size();
 		for (int i = 0; i < nbu; i++) {
 			final Zone sub = union.get(i);
-			result.addAll(sub.getAll());
+			result.addAll(sub.getAll(false));
 		}
 		return result;
 	}

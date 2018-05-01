@@ -60,7 +60,7 @@ public class GrassComponent implements GeneratorComponent {
 				continue;
 			}
 			int innerF = 0; /* Inner loop frustration */
-			final List<Coord> all = src.getAll();
+			final List<Coord> all = src.getAll(false);
 			final IFloodObjective objective = new IFloodObjective() {
 				int dones = 0;
 				/*

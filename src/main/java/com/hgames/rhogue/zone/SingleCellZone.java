@@ -61,7 +61,7 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
-	public List<Coord> getAll() {
+	public List<Coord> getAll(boolean fresh) {
 		final List<Coord> all = new ArrayList<Coord>(1);
 		all.add(Coord.get(x, y));
 		return all;

@@ -46,7 +46,7 @@ public abstract class AbstractShallowRoomGenerator extends SkeletalRoomGenerator
 		assert toCarve.contains(carving) : "Initial zone (" + toCarve + ") doesn't completely contain the carved zone: "
 				+ carving;
 		final List<Coord> result = Lists.newArrayList(toCarve.iterator(), toCarve.size());
-		final boolean change = result.removeAll(carving.getAll());
+		final boolean change = result.removeAll(carving.getAll(false));
 		if (change) {
 			final Zone chasm = carving.translate(translation);
 			// Replace carved zone by chasms

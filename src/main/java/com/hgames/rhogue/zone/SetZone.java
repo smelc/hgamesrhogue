@@ -60,11 +60,11 @@ public class SetZone extends Zone.Skeleton implements Zone {
 			return set.containsAll(other_.set);
 		} else
 			/* Avoid allocating the List backing getAll() in 'this' */
-			return set.containsAll(other.getAll());
+			return set.containsAll(other.getAll(false));
 	}
 
 	@Override
-	public List<Coord> getAll() {
+	public List<Coord> getAll(boolean fresh) {
 		return new ArrayList<Coord>(set);
 	}
 

@@ -1,5 +1,6 @@
 package com.hgames.rhogue.zone;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,8 +38,8 @@ public final class EmptyZone extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
-	public List<Coord> getAll() {
-		return Collections.emptyList();
+	public List<Coord> getAll(boolean fresh) {
+		return fresh ? new ArrayList<Coord>() : Collections.<Coord>emptyList();
 	}
 
 	@Override

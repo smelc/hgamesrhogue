@@ -334,7 +334,7 @@ public class CorridorsComponent extends SkeletalComponent {
 			final Coord corner = Rectangle.Utils.getCorner(bbox, dir);
 			assert bbox.contains(corner);
 			DP_CELL.clear();
-			final List<Coord> all = z.getAll();
+			final List<Coord> all = z.getAll(false);
 			final int sz = all.size();
 			for (int i = 0; i < sz; i++) {
 				final Coord c = all.get(i);

@@ -80,7 +80,7 @@ public class NineOrTenCellsZone extends Zone.Skeleton {
 	}
 
 	@Override
-	public List<Coord> getAll() {
+	public List<Coord> getAll(boolean fresh) {
 		final List<Coord> all = new ArrayList<Coord>(size());
 		if (includesCenter)
 			all.add(center);
@@ -96,7 +96,7 @@ public class NineOrTenCellsZone extends Zone.Skeleton {
 
 	@Override
 	public List<Coord> getInternalBorder() {
-		return includesCenter ? new NineOrTenCellsZone(center, false).getAll() : getAll();
+		return includesCenter ? new NineOrTenCellsZone(center, false).getAll(false) : getAll(false);
 	}
 
 	@Override

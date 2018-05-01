@@ -69,7 +69,6 @@ public interface IRoomGenerator {
 
 	/**
 	 * @param rng
-	 *            TODO
 	 * @param component
 	 *            The dungeon being built. Usually useless but handy for debugging.
 	 * @param translation
@@ -92,7 +91,7 @@ public interface IRoomGenerator {
 	 * 
 	 *         <p>
 	 *         The returned zone iterating order must be stable (don't implement
-	 *         {@link Zone#getAll()} with a {@link HashSet} for example).
+	 *         {@link Zone#getAll(boolean)} with a {@link HashSet} for example).
 	 *         </p>
 	 * 
 	 *         <p>

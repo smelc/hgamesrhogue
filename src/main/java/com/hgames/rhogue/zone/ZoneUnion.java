@@ -50,10 +50,10 @@ public class ZoneUnion extends Zone.Skeleton {
 	}
 
 	@Override
-	public List<Coord> getAll() {
+	public List<Coord> getAll(boolean fresh) {
 		final List<Coord> all = new ArrayList<Coord>(size());
-		all.addAll(z1.getAll());
-		all.addAll(z2.getAll());
+		all.addAll(z1.getAll(false));
+		all.addAll(z2.getAll(false));
 		return all;
 	}
 

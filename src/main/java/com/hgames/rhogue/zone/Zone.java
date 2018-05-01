@@ -38,7 +38,7 @@ public interface Zone extends Serializable, Iterable<Coord> {
 
 	/**
 	 * @return The number of cells that this zone contains (the size
-	 *         {@link #getAll()}).
+	 *         {@link #getAll(boolean)}).
 	 */
 	int size();
 
@@ -110,12 +110,20 @@ public interface Zone extends Serializable, Iterable<Coord> {
 	 */
 	int y(boolean smallestOrBiggest);
 
-	/** @return All cells in this zone. */
-	List<Coord> getAll();
+	/**
+	 * If you solely inspect the returned list (i.e. you don't need to mutate it),
+	 * give {@code false} to save allocations.
+	 * 
+	 * @param fresh
+	 *            {@code true} to request a fresh mutable list.
+	 * @return All cells in this zone
+	 */
+	List<Coord> getAll(boolean fresh);
 
 	/**
 	 * @param rng
-	 * @return A random cell within {@link #getAll()}, or null if this zone is empty
+	 * @return A random cell within {@link #getAll(boolean)}, or null if this zone
+	 *         is empty
 	 */
 	/* @Nullable */ Coord getRandom(IRNG rng);
 
@@ -133,11 +141,15 @@ public interface Zone extends Serializable, Iterable<Coord> {
 	Zone translate(int x, int y);
 
 	/**
-	 * @return Cells in {@code this} that are adjacent to a cell not in {@code this}
+	 * @return Cells in {@code this} that are adjacent to a cell not in
+	 *         {@code this}. May be fresh, may be not.
 	 */
 	List<Coord> getInternalBorder();
 
-	/** @return Cells adjacent to {@code this} that aren't in {@code this} */
+	/**
+	 * @return Cells adjacent to {@code this} that aren't in {@code this}. May be
+	 *         fresh, may be not.
+	 */
 	List<Coord> getExternalBorder();
 
 	/**
@@ -184,7 +196,7 @@ public interface Zone extends Serializable, Iterable<Coord> {
 		@Override
 		/* Convenience implementation, feel free to override */
 		public int size() {
-			return getAll().size();
+			return getAll(false).size();
 		}
 
 		@Override
@@ -232,7 +244,7 @@ public interface Zone extends Serializable, Iterable<Coord> {
 		 * avoid allocating the list usually allocated by getAll().
 		 */
 		public Iterator<Coord> iterator() {
-			return getAll().iterator();
+			return getAll(false).iterator();
 		}
 
 		@Override
@@ -297,7 +309,7 @@ public interface Zone extends Serializable, Iterable<Coord> {
 		@Override
 		/* Convenience implementation, feel free to override. */
 		public Coord getRandom(IRNG rng) {
-			final List<Coord> all = getAll();
+			final List<Coord> all = getAll(false);
 			return all.isEmpty() ? null : rng.getRandomElement(all);
 		}
 
@@ -310,7 +322,7 @@ public interface Zone extends Serializable, Iterable<Coord> {
 		@Override
 		/* Convenience implementation, feel free to override. */
 		public Zone translate(int x, int y) {
-			final List<Coord> initial = getAll();
+			final List<Coord> initial = getAll(false);
 			final int sz = initial.size();
 			final List<Coord> shifted = new ArrayList<Coord>(sz);
 			for (int i = 0; i < sz; i++) {
@@ -324,7 +336,7 @@ public interface Zone extends Serializable, Iterable<Coord> {
 		@Override
 		/* Convenience implementation, feel free to override. */
 		public List<Coord> getInternalBorder() {
-			return size() <= 1 ? getAll() : DungeonUtility.border(getAll(), null);
+			return size() <= 1 ? getAll(false) : DungeonUtility.border(getAll(false), null);
 		}
 
 		@Override
@@ -347,7 +359,7 @@ public interface Zone extends Serializable, Iterable<Coord> {
 		@Override
 		/* Convenience implementation, feel free to override. */
 		public Zone extend() {
-			final List<Coord> list = new ArrayList<Coord>(getAll());
+			final List<Coord> list = getAll(true);
 			list.addAll(getExternalBorder());
 			return new ListZone(list);
 		}
@@ -355,7 +367,7 @@ public interface Zone extends Serializable, Iterable<Coord> {
 		@Override
 		/* Convenience implementation, feel free to override. */
 		public Zone shrink() {
-			final List<Coord> list = new ArrayList<Coord>(getAll());
+			final List<Coord> list = getAll(true);
 			list.removeAll(getInternalBorder());
 			return new ListZone(list);
 		}
@@ -375,7 +387,7 @@ public interface Zone extends Serializable, Iterable<Coord> {
 			if (isEmpty())
 				return -1;
 			int min = Integer.MAX_VALUE;
-			final List<Coord> all = getAll();
+			final List<Coord> all = getAll(false);
 			final int nba = all.size();
 			for (int i = 0; i < nba; i++) {
 				final Coord c = all.get(i);
@@ -388,7 +400,7 @@ public interface Zone extends Serializable, Iterable<Coord> {
 
 		private int biggest(boolean xOrY) {
 			int max = -1;
-			final List<Coord> all = getAll();
+			final List<Coord> all = getAll(false);
 			final int nba = all.size();
 			for (int i = 0; i < nba; i++) {
 				final Coord c = all.get(i);
