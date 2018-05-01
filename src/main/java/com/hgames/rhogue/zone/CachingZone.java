@@ -47,12 +47,6 @@ public class CachingZone implements Zone {
 		this.delegate = delegate;
 	}
 
-	@SuppressWarnings("deprecation")
-	@Override
-	public Zone add(Coord c) {
-		return new CachingZone(delegate.add(c));
-	}
-
 	@Override
 	public Iterator<Coord> iterator() {
 		return delegate.iterator();
@@ -215,12 +209,6 @@ public class CachingZone implements Zone {
 	@Override
 	public Zone getDelegate() {
 		return delegate.getDelegate();
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public Zone remove(Coord c) {
-		return new CachingZone(delegate.remove(c));
 	}
 
 	@Override

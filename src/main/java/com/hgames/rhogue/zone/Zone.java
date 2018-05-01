@@ -32,17 +32,6 @@ import squidpony.squidmath.IRNG;
 public interface Zone extends Serializable, Iterable<Coord> {
 
 	/**
-	 * @deprecated, Not in Zone's spirit (that do not handle mutations) and never
-	 * tested.
-	 * 
-	 * @param c
-	 * @return A variant of {@code this}, or {@code this} itself; where {@code c}
-	 *         was added.
-	 */
-	@Deprecated
-	public Zone add(Coord c);
-
-	/**
 	 * @return Whether this zone is empty.
 	 */
 	boolean isEmpty();
@@ -159,16 +148,6 @@ public interface Zone extends Serializable, Iterable<Coord> {
 	Zone extend();
 
 	/**
-	 * @deprecated not in Zone's spirit (that do not handle mutations) and never
-	 *             tested.
-	 * @param c
-	 * @return A variant of {@code this} or {@code this} itself, where {@code c} has
-	 *         been removed.
-	 */
-	@Deprecated
-	Zone remove(Coord c);
-
-	/**
 	 * @return A variant of {@code this} where {@link #getInternalBorder()} has been
 	 *         removed.
 	 */
@@ -201,17 +180,6 @@ public interface Zone extends Serializable, Iterable<Coord> {
 		private transient int height = -2;
 
 		private static final long serialVersionUID = 4436698111716212256L;
-
-		@Override
-		/*
-		 * Convenience implementation which should be used iff getAll returns a FRESH
-		 * mutable list. Feel free to override
-		 */
-		public Zone add(Coord c) {
-			final List<Coord> extension = getAll();
-			extension.add(c);
-			return new ListZone(extension);
-		}
 
 		@Override
 		/* Convenience implementation, feel free to override */
@@ -395,17 +363,6 @@ public interface Zone extends Serializable, Iterable<Coord> {
 		@Override
 		public Zone getDelegate() {
 			return this;
-		}
-
-		@Override
-		/*
-		 * Convenience implementation which should be used iff getAll returns a FRESH
-		 * mutable list. Feel free to override
-		 */
-		public Zone remove(Coord c) {
-			final List<Coord> all = getAll();
-			final boolean rmed = all.remove(c);
-			return rmed ? new ListZone(all) : this;
 		}
 
 		@Override

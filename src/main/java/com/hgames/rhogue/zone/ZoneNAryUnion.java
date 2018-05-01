@@ -64,13 +64,6 @@ public class ZoneNAryUnion extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
-	public Zone add(Coord c) {
-		final List<Coord> all = getAll();
-		all.add(c);
-		return new ListZone(all);
-	}
-
-	@Override
 	public Iterator<Coord> iterator() {
 		final Iterator<Zone> it = union.iterator();
 		return new Iterator<Coord>() {

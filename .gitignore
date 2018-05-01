@@ -8,3 +8,6 @@
 ## Gradle
 build/
 .gradle/
+
+## Vim
+*.swp

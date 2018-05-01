@@ -97,11 +97,6 @@ public class SingleCellZone extends Zone.Skeleton implements Zone {
 	}
 
 	@Override
-	public Zone remove(Coord c) {
-		return x == c.x && y == c.y ? EmptyZone.INSTANCE : this;
-	}
-
-	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "[" + getCenter() + "]";
 	}

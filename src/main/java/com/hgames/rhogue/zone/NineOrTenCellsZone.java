@@ -1,7 +1,6 @@
 package com.hgames.rhogue.zone;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 
 import squidpony.squidgrid.Direction;
@@ -108,21 +107,6 @@ public class NineOrTenCellsZone extends Zone.Skeleton {
 	@Override
 	public Zone shrink() {
 		return includesCenter ? new SingleCellZone(center) : EmptyZone.INSTANCE;
-	}
-
-	@Override
-	public Zone remove(Coord c) {
-		if (includesCenter && c.equals(center))
-			return new NineOrTenCellsZone(center, false);
-		if (c.isAdjacent(center)) {
-			assert contains(c);
-			final EnumSet<Direction> copy = EnumSet.allOf(Direction.class);
-			copy.remove(Direction.NONE);
-			final boolean rmed = copy.remove(center.toGoTo(c));
-			assert rmed;
-			return copy.isEmpty() ? EmptyZone.INSTANCE : new DirectionsZone(center, copy, includesCenter);
-		} else
-			return super.remove(c);
 	}
 
 	@Override

@@ -90,20 +90,6 @@ public class DirectionsZone extends Zone.Skeleton implements Zone {
 		return includesCenter ? new DirectionsZone(center, dirs, false) : this;
 	}
 
-	@Override
-	public Zone remove(Coord c) {
-		if (includesCenter && c.equals(center))
-			return new DirectionsZone(center, EnumSet.copyOf(dirs), false);
-		if (c.isAdjacent(center)) {
-			assert contains(c);
-			final EnumSet<Direction> copy = EnumSet.copyOf(dirs);
-			final boolean rmed = copy.remove(center.toGoTo(c));
-			assert rmed;
-			return copy.isEmpty() ? EmptyZone.INSTANCE : new DirectionsZone(center, copy, includesCenter);
-		} else
-			return super.remove(c);
-	}
-
 	/**
 	 * @return The zone's center. May not be in the zone itself if
 	 *         {@link #includesCenter()} doesn't hold.
