@@ -20,9 +20,23 @@ import squidpony.squidmath.Coord;
 public interface ILevel<MC extends IMapCell> {
 
 	/**
-	 * @return The level's width.
+	 * @param t
+	 * @param considerItselfAsAlly
+	 *            Whether members of {@code team t} itself should be considered.
+	 * @return The positions of allies of team {@code t}.
 	 */
-	public int getWidth();
+	public Union<Coord> getAlliesOf(Team t, boolean considerItselfAsAlly);
+
+	/**
+	 * @param t
+	 * @return The positions of enemies of team {@code t}.
+	 */
+	public Union<Coord> getEnemiesOf(Team t);
+
+	/**
+	 * @return Stairs/doors to other levels.
+	 */
+	public List<Coord> getExits();
 
 	/**
 	 * @return The level's height.
@@ -37,22 +51,8 @@ public interface ILevel<MC extends IMapCell> {
 	public MC getMapCellAt(int x, int y);
 
 	/**
-	 * @return Stairs/doors to other levels.
+	 * @return The level's width.
 	 */
-	public List<Coord> getExits();
-
-	/**
-	 * @param t
-	 * @return The positions of enemies of team {@code t}.
-	 */
-	public Union<Coord> getEnemiesOf(Team t);
-
-	/**
-	 * @param t
-	 * @param considerItselfAsAlly
-	 *            Whether members of {@code team t} itself should be considered.
-	 * @return The positions of allies of team {@code t}.
-	 */
-	public Union<Coord> getAlliesOf(Team t, boolean considerItselfAsAlly);
+	public int getWidth();
 
 }
