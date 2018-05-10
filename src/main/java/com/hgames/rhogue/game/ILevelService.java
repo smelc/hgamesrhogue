@@ -14,7 +14,7 @@ import squidpony.squidmath.Coord;
  * @param <L>
  *            The concrete type of levels.
  */
-public interface ILevelService<L extends ILevel<?>> {
+public interface ILevelService<L extends ILevel<?, ?>> {
 
 	/**
 	 * @return The current level, if any.

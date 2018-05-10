@@ -14,10 +14,12 @@ import squidpony.squidmath.Coord;
  * {@link Team teams}.
  * 
  * @author smelC
+ * @param <I>
+ *            The concrete type of identifiers
  * @param <MC>
  *            The concrete type of cells.
  */
-public interface ILevel<MC extends IMapCell> {
+public interface ILevel<I extends ILevelIdentifier, MC extends IMapCell> {
 
 	/**
 	 * @param t
@@ -42,6 +44,9 @@ public interface ILevel<MC extends IMapCell> {
 	 * @return The level's height.
 	 */
 	public int getHeight();
+
+	/** @return This level's identifier */
+	public I getIdentifier();
 
 	/**
 	 * @param x

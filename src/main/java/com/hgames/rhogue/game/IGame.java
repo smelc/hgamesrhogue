@@ -17,7 +17,7 @@ import com.hgames.rhogue.level.ILevel;
  * @param <I>
  *            The concrete instance of {@link IAnimate} used in the game.
  */
-public interface IGame<L extends ILevel<?>, I extends IAnimate> {
+public interface IGame<L extends ILevel<?, ?>, I extends IAnimate> {
 
 	/**
 	 * @return The instance of {@link IInputService}. Typically created once and

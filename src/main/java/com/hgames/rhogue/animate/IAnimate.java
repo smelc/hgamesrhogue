@@ -36,6 +36,6 @@ public interface IAnimate extends Positioned {
 	 * @return {@code this}' current level, or null if none.
 	 */
 	/* Override if you have a stronger return type */
-	public /* @Nullable */ ILevel<?> getLevel();
+	public /* @Nullable */ ILevel<?, ?> getLevel();
 
 }
