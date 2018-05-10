@@ -31,6 +31,7 @@ public interface ILevelService<L extends ILevel<?>> {
 	 * @return The level to which to go when going through {@code exit} in
 	 *         {@code source} or null if none.
 	 */
+	// FIXME CH Delete 'createIfMissing'
 	public /* @Nullable */ L getDestination(L source, Coord exit, boolean createIfMissing);
 
 	/**
