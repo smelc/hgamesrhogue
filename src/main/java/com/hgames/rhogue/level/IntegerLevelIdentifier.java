@@ -1,6 +1,8 @@
 package com.hgames.rhogue.level;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -14,6 +16,9 @@ public final class IntegerLevelIdentifier implements ILevelIdentifier {
 	private final Integer depth;
 
 	private static final long serialVersionUID = 2241334832120655823L;
+
+	/** A buffer to avoid clients to have to pool */
+	private static List<IntegerLevelIdentifier> BUFFER;
 
 	/**
 	 * @param depth
@@ -78,6 +83,15 @@ public final class IntegerLevelIdentifier implements ILevelIdentifier {
 	 */
 	public static IntegerLevelIdentifier get(Integer i) {
 		return ILICache.get(i);
+	}
+
+	/** @return A buffer for {@link IntegerLevelIdentifier}s. */
+	public List<IntegerLevelIdentifier> getBuffer() {
+		if (BUFFER == null)
+			BUFFER = new ArrayList<IntegerLevelIdentifier>();
+		else
+			BUFFER.clear();
+		return BUFFER;
 	}
 
 	/**
