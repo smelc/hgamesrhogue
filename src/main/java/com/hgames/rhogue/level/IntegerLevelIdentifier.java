@@ -23,7 +23,7 @@ public final class IntegerLevelIdentifier implements ILevelIdentifier {
 	/**
 	 * @param depth
 	 */
-	public IntegerLevelIdentifier(Integer depth) {
+	protected IntegerLevelIdentifier(Integer depth) {
 		this.depth = depth;
 	}
 
@@ -35,16 +35,6 @@ public final class IntegerLevelIdentifier implements ILevelIdentifier {
 	/** @return The level's depth */
 	public Integer getDepth() {
 		return depth;
-	}
-
-	@Override
-	public ILevelIdentifier getPrevious() {
-		return ILICache.get(Integer.valueOf(depth.intValue() - 1));
-	}
-
-	@Override
-	public ILevelIdentifier getNext() {
-		return ILICache.get(Integer.valueOf(depth.intValue() + 1));
 	}
 
 	@Override

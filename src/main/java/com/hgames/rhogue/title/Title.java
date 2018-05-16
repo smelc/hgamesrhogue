@@ -29,6 +29,13 @@ public interface Title<I extends ILevelIdentifier> {
 	public void addConnections(I levelID, boolean before, Collection<I> acc, boolean after);
 
 	/**
+	 * @param levelID1
+	 * @param levelID2
+	 * @return Whether levelID1 and levelID2 are adjacent in the list of levels.
+	 */
+	public boolean areConnected(I levelID1, I levelID2);
+
+	/**
 	 * @param levelID
 	 * @return Whether such a level exists
 	 */
