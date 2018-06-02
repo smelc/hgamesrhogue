@@ -25,4 +25,16 @@ public interface LinearTitle<I extends ILevelIdentifier> extends Title<I> {
 	 */
 	public /* @Nullable */ I getPrevious(I levelID);
 
+	/**
+	 * @param levelID
+	 * @return Whether {@code levelID} is the first level
+	 */
+	public boolean isFirst(I levelID);
+
+	/**
+	 * @param levelID
+	 * @return Whether {@code levelID} is the last level
+	 */
+	public boolean isLast(I levelID);
+
 }

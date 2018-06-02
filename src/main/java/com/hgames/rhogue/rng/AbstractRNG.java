@@ -128,6 +128,11 @@ public abstract class AbstractRNG implements IRNG, Serializable {
 	}
 
 	@Override
+	public short nextShort(short bound) {
+		return (short) nextInt(bound);
+	}
+
+	@Override
 	@GwtIncompatible
 	public final <T> T[] shuffle(T[] elements) {
 		final int sz = elements.length;
