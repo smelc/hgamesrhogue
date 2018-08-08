@@ -7,7 +7,7 @@ A library that I use in my roguelike [Dungeon Mercenary](http://www.schplaf.org/
 
 The most prominent features of this library are:
 
-* A customizable map generator: [DungeonGenerator](https://github.com/smelc/hgamesrhogue/blob/master/src/main/java/com/hgames/rhogue/generation/map/DungeonGenerator.java). In action: [gif](https://i.imgur.com/gYMyLPw.gifv), [png1](https://i.imgur.com/R3APwq0.png), [png2](https://i.imgur.com/8C0L8aq.png)
+* A customizable map generator: [DungeonGenerator](https://github.com/smelc/hgamesrhogue/blob/master/src/main/java/com/hgames/rhogue/generation/map/dungeon/DungeonGenerator.java). In action: [gif](https://i.imgur.com/gYMyLPw.gifv), [png1](https://i.imgur.com/R3APwq0.png), [png2](https://i.imgur.com/8C0L8aq.png)
 * [Flexible monster generation](http://hgamesdev.blogspot.fr/2017/11/flexible-object-oriented-generation-of.html)
 * The [Zone](https://github.com/smelc/hgamesrhogue/blob/master/src/main/java/com/hgames/rhogue/zone/Zone.java) API, to manipulate rooms and corridors in an object-oriented manner
 * Object Oriented [Field Of View](https://github.com/smelc/hgamesrhogue/blob/master/src/main/java/com/hgames/rhogue/fov/ShadowCastingObjectFOV.java)
