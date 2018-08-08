@@ -1,7 +1,7 @@
 package com.hgames.rhogue.generation.map.draw;
 
-import com.hgames.rhogue.generation.map.DungeonSymbol;
-import com.hgames.rhogue.generation.map.DungeonSymbolDrawer;
+import com.hgames.rhogue.generation.map.dungeon.DungeonSymbol;
+import com.hgames.rhogue.generation.map.dungeon.DungeonSymbolDrawer;
 
 /**
  * The instantiation of {@link Generic2DArrayDrawer} on {@link DungeonSymbol}.

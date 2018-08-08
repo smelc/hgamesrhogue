@@ -1,6 +1,6 @@
 package com.hgames.rhogue.generation.map.lifetime;
 
-import com.hgames.rhogue.generation.map.DungeonGenerator;
+import com.hgames.rhogue.generation.map.dungeon.DungeonGenerator;
 import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
 
 /**

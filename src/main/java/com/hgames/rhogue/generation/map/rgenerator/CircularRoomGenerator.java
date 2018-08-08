@@ -1,6 +1,6 @@
 package com.hgames.rhogue.generation.map.rgenerator;
 
-import com.hgames.rhogue.generation.map.RoomComponent;
+import com.hgames.rhogue.generation.map.dungeon.RoomComponent;
 import com.hgames.rhogue.zone.CircularZone;
 import com.hgames.rhogue.zone.Zone;
 

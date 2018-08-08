@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.Set;
 
 import com.hgames.lib.iterator.Iterators;
-import com.hgames.rhogue.generation.map.Dungeon;
-import com.hgames.rhogue.generation.map.DungeonGenerator;
-import com.hgames.rhogue.generation.map.DungeonGenerators;
-import com.hgames.rhogue.generation.map.DungeonSymbolDrawer;
-import com.hgames.rhogue.generation.map.DungeonZonesCrawler;
 import com.hgames.rhogue.generation.map.draw.ConsoleDungeonDrawer;
 import com.hgames.rhogue.generation.map.draw.IDungeonDrawer;
+import com.hgames.rhogue.generation.map.dungeon.Dungeon;
+import com.hgames.rhogue.generation.map.dungeon.DungeonGenerator;
+import com.hgames.rhogue.generation.map.dungeon.DungeonGenerators;
+import com.hgames.rhogue.generation.map.dungeon.DungeonSymbolDrawer;
+import com.hgames.rhogue.generation.map.dungeon.DungeonZonesCrawler;
 import com.hgames.rhogue.rng.DefaultRNG;
 import com.hgames.rhogue.zone.Zone;
 

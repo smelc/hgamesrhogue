@@ -7,7 +7,7 @@ import java.util.Set;
 
 import com.hgames.lib.Ints;
 import com.hgames.lib.collection.set.Sets;
-import com.hgames.rhogue.generation.map.RoomComponent;
+import com.hgames.rhogue.generation.map.dungeon.RoomComponent;
 import com.hgames.rhogue.zone.ListZone;
 import com.hgames.rhogue.zone.Rectangle;
 import com.hgames.rhogue.zone.Zone;

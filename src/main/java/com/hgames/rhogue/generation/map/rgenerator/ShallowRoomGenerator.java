@@ -3,7 +3,7 @@ package com.hgames.rhogue.generation.map.rgenerator;
 import java.util.List;
 
 import com.hgames.lib.collection.list.Lists;
-import com.hgames.rhogue.generation.map.RoomComponent;
+import com.hgames.rhogue.generation.map.dungeon.RoomComponent;
 import com.hgames.rhogue.zone.ListZone;
 import com.hgames.rhogue.zone.Zone;
 

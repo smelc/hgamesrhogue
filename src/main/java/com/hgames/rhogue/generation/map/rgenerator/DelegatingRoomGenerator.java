@@ -2,9 +2,9 @@ package com.hgames.rhogue.generation.map.rgenerator;
 
 import java.util.EnumSet;
 
-import com.hgames.rhogue.generation.map.DungeonGenerator;
-import com.hgames.rhogue.generation.map.DungeonSymbol;
-import com.hgames.rhogue.generation.map.RoomComponent;
+import com.hgames.rhogue.generation.map.dungeon.DungeonGenerator;
+import com.hgames.rhogue.generation.map.dungeon.DungeonSymbol;
+import com.hgames.rhogue.generation.map.dungeon.RoomComponent;
 import com.hgames.rhogue.zone.Zone;
 
 import squidpony.squidmath.Coord;

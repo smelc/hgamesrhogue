@@ -2,7 +2,7 @@ package com.hgames.rhogue.generation.map.rgenerator;
 
 import java.util.EnumSet;
 
-import com.hgames.rhogue.generation.map.DungeonSymbol;
+import com.hgames.rhogue.generation.map.dungeon.DungeonSymbol;
 
 /**
  * @author smelC
