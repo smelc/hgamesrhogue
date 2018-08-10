@@ -27,7 +27,7 @@ public final class IntegerLevelIdentifier implements ILevelIdentifier {
 		this.depth = depth;
 	}
 
-	@Override
+	/** @return Whether this is the first level */
 	public boolean isFirst() {
 		return depth.intValue() == 1;
 	}

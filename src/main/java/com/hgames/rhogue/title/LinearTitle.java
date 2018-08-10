@@ -13,6 +13,9 @@ import com.hgames.rhogue.level.ILevelIdentifier;
  */
 public interface LinearTitle<I extends ILevelIdentifier> extends Title<I> {
 
+	/** @return The first level's identifier */
+	public I getFirst();
+
 	/**
 	 * @param levelID
 	 * @return The level after {@code levelID} or null if none.

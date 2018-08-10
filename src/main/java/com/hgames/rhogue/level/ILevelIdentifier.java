@@ -7,11 +7,6 @@ import java.io.Serializable;
  */
 public interface ILevelIdentifier extends Serializable {
 
-	/**
-	 * @return Whether this is the first level
-	 */
-	public boolean isFirst();
-
 	@Override
 	public boolean equals(Object other);
 

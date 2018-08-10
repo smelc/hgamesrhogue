@@ -29,6 +29,18 @@ public interface Title<I extends ILevelIdentifier> {
 	public void addConnections(I levelID, boolean before, Collection<I> acc, boolean after);
 
 	/**
+	 * Adds to {@code acc} identifiers of levels that are connected to
+	 * {@code levelID} to the level before or after {@code levelID} i.e levels that
+	 * are at distance 2 of {@code levelID}.
+	 * 
+	 * @param levelID
+	 * @param acc
+	 * @param beforeOrAfter
+	 *            Whether to add levels that are before {@code levelID} or after
+	 */
+	public void addConnections2(I levelID, boolean beforeOrAfter, Collection<I> acc);
+
+	/**
 	 * @param levelID1
 	 * @param levelID2
 	 * @return Whether levelID1 and levelID2 are adjacent in the list of levels.
