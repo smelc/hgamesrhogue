@@ -18,7 +18,7 @@ public enum DungeonSymbol {
 	GRASS,
 	/** Grass through which the rogue doesn't see */
 	HIGH_GRASS,
-	/** Water in which you can walk without any penaly */
+	/** Water in which you can walk without any penalty */
 	SHALLOW_WATER,
 	/** The stair to the next level */
 	STAIR_DOWN,

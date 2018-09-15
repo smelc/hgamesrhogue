@@ -65,18 +65,4 @@ public interface Title<I extends ILevelIdentifier> {
 	/** @return The name of the game, such as "Dungeon Mercenary" */
 	public String getName();
 
-	/**
-	 * @param levelID1
-	 * @param levelID2
-	 * @return Whether levelID1 is before levelID2 or is equal to it.
-	 */
-	public boolean isBefore(I levelID1, I levelID2);
-
-	/**
-	 * @param levelID1
-	 * @param levelID2
-	 * @return Whether levelID1 is strictly before levelID2
-	 */
-	public boolean isStrictlyBefore(I levelID1, I levelID2);
-
 }

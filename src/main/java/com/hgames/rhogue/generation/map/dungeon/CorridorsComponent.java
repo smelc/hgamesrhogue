@@ -161,15 +161,17 @@ public class CorridorsComponent extends SkeletalComponent {
 					if (c.equals(zDoor) || c.equals(destDoor))
 						/* Done after the loop */
 						continue;
-					final boolean shallowWater = buf != null && buf.contains(c);
+					final boolean shallowWater = gen.allowShallowWater && buf != null && buf.contains(c);
 					builder.setSymbol(c, shallowWater ? DungeonSymbol.SHALLOW_WATER : DungeonSymbol.FLOOR);
 				}
 				/*
 				 * Must be done after the loop above, because we check adequacy of walkable
 				 * cells which is set partially by the loop.
 				 */
-				punchCorridorExtremity(gen, gdata, z, recorded, zDoor, buf != null && buf.contains(zDoor));
-				punchCorridorExtremity(gen, gdata, dest, recorded, destDoor, buf != null && buf.contains(destDoor));
+				punchCorridorExtremity(gen, gdata, z, recorded, zDoor,
+						gen.allowShallowWater && buf != null && buf.contains(zDoor));
+				punchCorridorExtremity(gen, gdata, dest, recorded, destDoor,
+						gen.allowShallowWater && buf != null && buf.contains(destDoor));
 				gen.draw(dungeon);
 				result++;
 				connections++;

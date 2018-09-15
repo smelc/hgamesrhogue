@@ -23,43 +23,75 @@ import squidpony.squidgrid.Direction;
  */
 public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned, T extends IFOVCell<U>> {
 
-	protected final double[][] resistanceMap;
+	protected final /* @Nullable */ double[][] resistanceMap;
+	/** Can only be null if {@link #lightMap} is non-null and non shallow */
 	protected final /* @Nullable */ ArrayBuilder<T> ab;
-	/* Lazily allocated and shallow */
+	/* Maybe lazily allocated and possibly shallow */
 	protected /* @Nullable */ T[][] lightMap;
 
 	protected final int width;
 	protected final int height;
 
 	/**
+	 * With this constructor, the light map will be build entirely lazily.
+	 * 
 	 * @param ab
 	 *            How to build instances of {@code T[]}.
 	 * @param resistanceMap
+	 *            The resistance map
 	 */
-	public ShadowCastingObjectFOV(/* @Nullable */ ArrayBuilder<T> ab, double[][] resistanceMap) {
+	public ShadowCastingObjectFOV(ArrayBuilder<T> ab, double[][] resistanceMap) {
 		if (resistanceMap == null)
-			throw new NullPointerException("Resistance map shouldn't be null in oo fov");
+			throw new NullPointerException("resistance map shouldn't be null in this constructor");
 		this.resistanceMap = resistanceMap;
+		if (ab == null)
+			throw new NullPointerException("array builder shouldn't be null in this constructor");
 		this.ab = ab;
-
 		this.width = resistanceMap.length;
 		this.height = width == 0 ? 0 : resistanceMap[0].length;
 	}
 
 	/**
-	 * Constructor for when you want to give the light map directly.
+	 * Constructor where the resistance is omitted, being equivalent to having 0
+	 * everywhere. Also, the light map will be build entirely lazily.
 	 * 
 	 * @param ab
-	 *            How to build instances of {@code T[]}. Can be null.
-	 * @param resistanceMap
-	 * @param lightMap
-	 *            The light map, should not be null; neither shallow if {@code ab}
-	 *            is null.
+	 *            How to build instances of {@code T[]}.
+	 * @param width
+	 * @param height
 	 */
-	public ShadowCastingObjectFOV(/* @Nullable */ ArrayBuilder<T> ab, double[][] resistanceMap, T lightMap[][]) {
-		this(ab, resistanceMap);
-		if (lightMap == null)
-			throw new NullPointerException("Light map shouldn't be null in oo fov");
+	public ShadowCastingObjectFOV(ArrayBuilder<T> ab, int width, int height) {
+		this.resistanceMap = null;
+		if (ab == null)
+			throw new NullPointerException("array builder shouldn't be null in this constructor");
+		this.ab = ab;
+		this.width = width;
+		this.height = height;
+	}
+
+	/**
+	 * Constructor for when you want to give the light map directly.
+	 * {@code resistanceMap} and {@code lightMap} should not both be null.
+	 * 
+	 * @param ab
+	 *            How to build instances of {@code T[]}. Can be null if
+	 *            {@code lightMap} is neither null or shallow.
+	 * @param resistanceMap
+	 *            The resistance map or null(equivalent to 0 everywhere)
+	 * @param lightMap
+	 *            The light map, should neither be null nor shallow if {@code ab} is
+	 *            null.
+	 */
+	public ShadowCastingObjectFOV(/* @Nullable */ ArrayBuilder<T> ab, /* @Nullable */ double[][] resistanceMap,
+			T lightMap[][]) {
+		if (lightMap == null && resistanceMap == null)
+			throw new NullPointerException("Resistance map and light map shouldn't be both null");
+		if (lightMap == null && ab == null)
+			throw new NullPointerException("Light map and array builder shouldn't be both null");
+		this.ab = ab;
+		this.resistanceMap = resistanceMap;
+		this.width = resistanceMap == null ? lightMap.length : resistanceMap.length;
+		this.height = this.width == 0 ? 0 : (resistanceMap == null ? lightMap[0].length : resistanceMap[0].length);
 		this.lightMap = lightMap;
 	}
 
@@ -99,6 +131,15 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 	 */
 	public T[][] getFOV() {
 		return lightMap;
+	}
+
+	/**
+	 * @param x
+	 * @param y
+	 * @return Whether (x, y) is a valid cell, bounds wise
+	 */
+	public boolean isValid(int x, int y) {
+		return 0 <= x && x < width && 0 <= y && y < height;
 	}
 
 	/**
@@ -206,7 +247,7 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 
 				if (blocked) {
 					// previous cell was a blocking one
-					if (resistanceMap[curX][curY] >= 1) {
+					if (resistanceMap != null && resistanceMap[curX][curY] >= 1) {
 						// Hitting a wall
 						newStart = rightSlope;
 						continue;
@@ -214,7 +255,7 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 						blocked = false;
 						start = newStart;
 					}
-				} else if (resistanceMap[curX][curY] >= 1 && distance < radius) {
+				} else if (resistanceMap != null && resistanceMap[curX][curY] >= 1 && distance < radius) {
 					// hit a wall within sight line
 					blocked = true;
 					castLight(source, distance + 1, start, leftSlope, xx, xy, yx, yy, radius);
@@ -222,10 +263,6 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 				}
 			}
 		}
-	}
-
-	private boolean isValid(int x, int y) {
-		return 0 <= x && x < width && 0 <= y && y < height;
 	}
 
 	private static double radiusOf(double dx, double dy) {

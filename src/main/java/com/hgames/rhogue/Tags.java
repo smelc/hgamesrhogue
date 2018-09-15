@@ -16,6 +16,8 @@ public class Tags {
 
 	public static final String ASSETS = "assets";
 
+	public static final String CMDLINE = "cmdl";
+
 	public static final String COMBAT = "combat";
 
 	public static final String CUSTOM_MAP = "custom_map";

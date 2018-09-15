@@ -40,4 +40,11 @@ public interface LinearTitle<I extends ILevelIdentifier> extends Title<I> {
 	 */
 	public boolean isLast(I levelID);
 
+	/**
+	 * @param levelID1
+	 * @param levelID2
+	 * @return Whether levelID1 is strictly before levelID2
+	 */
+	public boolean isStrictlyBefore(I levelID1, I levelID2);
+
 }

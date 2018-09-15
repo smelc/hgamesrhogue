@@ -18,6 +18,16 @@ public interface IMessageService {
 	public void clear();
 
 	/**
+	 * Call done when the map's viewport changes
+	 * 
+	 * @param deltax
+	 *            The change, in number of cells
+	 * @param deltay
+	 *            The change, in number of cells
+	 */
+	public void handleMapViewPortChange(int deltax, int deltay);
+
+	/**
 	 * @param where
 	 *            Where the text should be written (mapwise)
 	 * @param text

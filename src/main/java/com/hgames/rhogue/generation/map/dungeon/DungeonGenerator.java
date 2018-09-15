@@ -129,6 +129,9 @@ public class DungeonGenerator {
 	 */
 	protected boolean allowWidthOrHeightOneRooms = false;
 
+	/** Whether shallow water can be generated */
+	protected boolean allowShallowWater = true;
+
 	/** Whether to do water before rooms. This makes water more central. */
 	// XXX false is not yet implemented
 	protected boolean startWithWater = true;
@@ -211,6 +214,14 @@ public class DungeonGenerator {
 	 */
 	public void setLogger(/* @Nullable */ ILogger logger) {
 		this.logger = logger;
+	}
+
+	/**
+	 * @param value
+	 *            Whether to generate shallow water
+	 */
+	public void setAllowShallowWater(boolean value) {
+		this.allowShallowWater = value;
 	}
 
 	/**
