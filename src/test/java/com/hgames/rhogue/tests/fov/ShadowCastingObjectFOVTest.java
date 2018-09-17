@@ -56,10 +56,15 @@ public class ShadowCastingObjectFOVTest {
 		final FOVCell<LightSource>[][] lightMap = new FOVCell[width][height];
 		final double[][] resistanceMap = toResistanceMap(map);
 		final ShadowCastingObjectFOV<LightSource, FOVCell<LightSource>> fov = new ShadowCastingObjectFOV<LightSource, FOVCell<LightSource>>(
-				null, resistanceMap, lightMap) {
+				null, lightMap) {
 			@Override
 			protected FOVCell<LightSource> buildCell() {
 				return new FOVCell<LightSource>();
+			}
+
+			@Override
+			protected double getResistance(int x, int y) {
+				return resistanceMap[x][y];
 			}
 		};
 		final List<LightSource> sources = buildSources(rng, map);

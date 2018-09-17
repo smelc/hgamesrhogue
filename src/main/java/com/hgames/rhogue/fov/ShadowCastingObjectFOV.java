@@ -23,7 +23,6 @@ import squidpony.squidgrid.Direction;
  */
 public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned, T extends IFOVCell<U>> {
 
-	protected final /* @Nullable */ double[][] resistanceMap;
 	/** Can only be null if {@link #lightMap} is non-null and non shallow */
 	protected final /* @Nullable */ ArrayBuilder<T> ab;
 	/* Maybe lazily allocated and possibly shallow */
@@ -31,25 +30,6 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 
 	protected final int width;
 	protected final int height;
-
-	/**
-	 * With this constructor, the light map will be build entirely lazily.
-	 * 
-	 * @param ab
-	 *            How to build instances of {@code T[]}.
-	 * @param resistanceMap
-	 *            The resistance map
-	 */
-	public ShadowCastingObjectFOV(ArrayBuilder<T> ab, double[][] resistanceMap) {
-		if (resistanceMap == null)
-			throw new NullPointerException("resistance map shouldn't be null in this constructor");
-		this.resistanceMap = resistanceMap;
-		if (ab == null)
-			throw new NullPointerException("array builder shouldn't be null in this constructor");
-		this.ab = ab;
-		this.width = resistanceMap.length;
-		this.height = width == 0 ? 0 : resistanceMap[0].length;
-	}
 
 	/**
 	 * Constructor where the resistance is omitted, being equivalent to having 0
@@ -61,7 +41,6 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 	 * @param height
 	 */
 	public ShadowCastingObjectFOV(ArrayBuilder<T> ab, int width, int height) {
-		this.resistanceMap = null;
 		if (ab == null)
 			throw new NullPointerException("array builder shouldn't be null in this constructor");
 		this.ab = ab;
@@ -76,22 +55,15 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 	 * @param ab
 	 *            How to build instances of {@code T[]}. Can be null if
 	 *            {@code lightMap} is neither null or shallow.
-	 * @param resistanceMap
-	 *            The resistance map or null(equivalent to 0 everywhere)
 	 * @param lightMap
-	 *            The light map, should neither be null nor shallow if {@code ab} is
-	 *            null.
+	 *            The light map should not be shallow if {@code ab} is null.
 	 */
-	public ShadowCastingObjectFOV(/* @Nullable */ ArrayBuilder<T> ab, /* @Nullable */ double[][] resistanceMap,
-			T lightMap[][]) {
-		if (lightMap == null && resistanceMap == null)
-			throw new NullPointerException("Resistance map and light map shouldn't be both null");
-		if (lightMap == null && ab == null)
-			throw new NullPointerException("Light map and array builder shouldn't be both null");
+	public ShadowCastingObjectFOV(/* @Nullable */ ArrayBuilder<T> ab, T lightMap[][]) {
+		if (lightMap == null)
+			throw new NullPointerException("array builder shouldn't be both null");
 		this.ab = ab;
-		this.resistanceMap = resistanceMap;
-		this.width = resistanceMap == null ? lightMap.length : resistanceMap.length;
-		this.height = this.width == 0 ? 0 : (resistanceMap == null ? lightMap[0].length : resistanceMap[0].length);
+		this.width = lightMap.length;
+		this.height = this.width == 0 ? 0 : lightMap[0].length;
 		this.lightMap = lightMap;
 	}
 
@@ -164,6 +136,9 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 
 	/** @return A fresh unlit cell */
 	protected abstract T buildCell();
+
+	/** @return The resistance at (x, y) */
+	protected abstract double getResistance(int x, int y);
 
 	protected void calculateFOV(U source) {
 		final int srcX = source.getX();
@@ -247,7 +222,7 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 
 				if (blocked) {
 					// previous cell was a blocking one
-					if (resistanceMap != null && resistanceMap[curX][curY] >= 1) {
+					if (getResistance(curX, curY) >= 1) {
 						// Hitting a wall
 						newStart = rightSlope;
 						continue;
@@ -255,7 +230,7 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 						blocked = false;
 						start = newStart;
 					}
-				} else if (resistanceMap != null && resistanceMap[curX][curY] >= 1 && distance < radius) {
+				} else if (getResistance(curX, curY) >= 1 && distance < radius) {
 					// hit a wall within sight line
 					blocked = true;
 					castLight(source, distance + 1, start, leftSlope, xx, xy, yx, yy, radius);
