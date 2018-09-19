@@ -25,6 +25,7 @@ import com.hgames.rhogue.generation.map.draw.IDungeonDrawer;
 import com.hgames.rhogue.generation.map.dungeon.corridor.CorridorBuilders;
 import com.hgames.rhogue.generation.map.dungeon.corridor.ICorridorBuilder;
 import com.hgames.rhogue.generation.map.dungeon.flood.IFloodObjective;
+import com.hgames.rhogue.generation.map.dungeon.stair.SkeletalStairGenerator;
 import com.hgames.rhogue.generation.map.lifetime.Lifetime;
 import com.hgames.rhogue.generation.map.lifetime.SomeShots;
 import com.hgames.rhogue.generation.map.rgenerator.IRoomGenerator;
@@ -160,6 +161,11 @@ public class DungeonGenerator {
 	protected /* @Nullable */ Coord upStairObjective;
 	/** Where to put the downward stair (approximately) */
 	protected /* @Nullable */ Coord downStairObjective;
+
+	/** See {@link SkeletalStairGenerator} */
+	protected /* @Nullable */ Direction stairUpValidDirection;
+	/** See {@link SkeletalStairGenerator} */
+	protected /* @Nullable */ Direction stairDownValidDirection;
 
 	/** See {@link Complexity} */
 	protected Complexity complexity = Complexity.NORMAL;
@@ -342,6 +348,20 @@ public class DungeonGenerator {
 	public void setStairsObjectives(/* @Nullable */Coord upStair, /* @Nullable */Coord downStair) {
 		this.upStairObjective = upStair == null ? null : clamp(upStair);
 		this.downStairObjective = downStair == null ? null : clamp(downStair);
+	}
+
+	/**
+	 * @param dir
+	 *            The direction in which the stair must be in its enclosing room or
+	 *            null for no constraint (the default)
+	 * @param upOrDown
+	 *            Whether the stair up or stair down is being concerned
+	 */
+	public void setStairValidDirection(Direction dir, boolean upOrDown) {
+		if (upOrDown)
+			stairUpValidDirection = dir;
+		else
+			stairDownValidDirection = dir;
 	}
 
 	/**

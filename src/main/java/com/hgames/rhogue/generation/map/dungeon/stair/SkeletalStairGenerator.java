@@ -22,6 +22,14 @@ public abstract class SkeletalStairGenerator implements IStairGenerator {
 
 	protected final Dungeon dungeon;
 
+	/**
+	 * The valid direction of a stair up in a room. Must be a diagonal direction. If
+	 * {@link Direction#UP}, the stair is guaranteed to be at the north of its room.
+	 * If null, there's no constraint.
+	 */
+	protected /* @Nullable */ Direction stairUpValidDirection;
+	protected /* @Nullable */ Direction stairDownValidDirection;
+
 	private static final List<Coord> COORD_LIST_BUF = new ArrayList<Coord>(4);
 
 	/**
@@ -32,8 +40,22 @@ public abstract class SkeletalStairGenerator implements IStairGenerator {
 		this.dungeon = Objects.checkNotNull(dungeon);
 	}
 
+	/**
+	 * @param dir
+	 *            The direction in which the stair must be in its enclosing room or
+	 *            null for no constraint (the default)
+	 * @param upOrDown
+	 *            Whether the stair up or stair down is being concerned
+	 */
+	public void setStairValidDirection(Direction dir, boolean upOrDown) {
+		if (upOrDown)
+			stairUpValidDirection = dir;
+		else
+			stairDownValidDirection = dir;
+	}
+
 	/* Subclassers may override */
-	protected boolean isValidCandidate(Coord c) {
+	protected boolean isValidCandidate(Coord c, boolean stairUpOrDown) {
 		final DungeonSymbol sym = dungeon.getSymbol(c);
 		if (sym == null)
 			return false;
@@ -84,6 +106,8 @@ public abstract class SkeletalStairGenerator implements IStairGenerator {
 		if (!reachable)
 			/* Not cardinally accessible from a safe cell */
 			return false;
+		if (!honorsValidDirection(c, stairUpOrDown))
+			return false;
 		/* Diagonal neighbors */
 		COORD_LIST_BUF.clear();
 		int nbw = 0;
@@ -131,9 +155,8 @@ public abstract class SkeletalStairGenerator implements IStairGenerator {
 		 * ...
 		 * </pre>
 		 * 
-		 * which would force cause possible placement weirdness upon arriving
-		 * into the level (since placement in different rooms would be
-		 * possible).
+		 * which would force cause possible placement weirdness upon arriving into the
+		 * level (since placement in different rooms would be possible).
 		 */
 		if (nbw < 5)
 			return false;
@@ -163,10 +186,40 @@ public abstract class SkeletalStairGenerator implements IStairGenerator {
 		return true;
 	}
 
+	private boolean honorsValidDirection(Coord c, boolean stairUpOrDown) {
+		final Direction constraint = stairUpOrDown ? stairUpValidDirection : stairDownValidDirection;
+		if (constraint == null)
+			return true;
+		/*
+		 * If you want a stair north, you need to have a walkable cells to its south,
+		 * hence opposite():
+		 */
+		final Coord neighbor = c.translate(constraint.opposite());
+		final DungeonSymbol dsym = dungeon.getSymbol(neighbor);
+		if (dsym == null)
+			return false;
+		switch (dsym) {
+		case CHASM:
+		case DEEP_WATER:
+		case DOOR:
+		case SHALLOW_WATER:
+		case STAIR_DOWN:
+		case STAIR_UP:
+		case WALL:
+			return false;
+		case FLOOR:
+		case GRASS:
+		case HIGH_GRASS:
+			/* Can safely go from such cells to the candidate stair */
+			return true;
+		}
+		throw Exceptions.newUnmatchedISE(dsym);
+	}
+
 	/**
 	 * @param list
-	 * @return {@code true} if there's a member of {@code list} to which all
-	 *         other members are adjacent.
+	 * @return {@code true} if there's a member of {@code list} to which all other
+	 *         members are adjacent.
 	 */
 	private static boolean haveACrossRoad(List<Coord> list) {
 		final int size = list.size();

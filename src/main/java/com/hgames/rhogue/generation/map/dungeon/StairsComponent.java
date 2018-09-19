@@ -110,7 +110,10 @@ public class StairsComponent implements GeneratorComponent {
 				return Dungeons.areConnected(dungeon, z0, z1, intermediates);
 			}
 		};
-		return new StairGenerator(gen.logger, gen.rng, gen, dungeon, objective, upOrDown, gdata, connections);
+		final StairGenerator result = new StairGenerator(gen.logger, gen.rng, gen, dungeon, objective, upOrDown, gdata, connections);
+		result.setStairValidDirection(gen.stairUpValidDirection, true);
+		result.setStairValidDirection(gen.stairDownValidDirection, false);
+		return result;
 	}
 
 	/** @return Whether punching was done */

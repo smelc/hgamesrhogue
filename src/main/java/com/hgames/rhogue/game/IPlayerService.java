@@ -14,6 +14,13 @@ import com.hgames.rhogue.animate.IAnimate;
 public interface IPlayerService<I extends IAnimate> {
 
 	/**
+	 * @param liveOnly
+	 *            Whether to filter away dead player
+	 * @return The first player, or null if none.
+	 */
+	public /* @Nullable */ I getFirstPlayer(boolean liveOnly);
+
+	/**
 	 * This method should likely be fast (no allocations).
 	 * 
 	 * @return Whether it's a player's turn.

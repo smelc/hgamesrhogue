@@ -182,7 +182,7 @@ public class StairGenerator extends AbstractStairGenerator {
 		return Iterators.filter(base, new Predicate<Coord>() {
 			@Override
 			public boolean apply(Coord c) {
-				return isValidCandidate(c);
+				return isValidCandidate(c, StairGenerator.this.upOrDown);
 			}
 		});
 	}

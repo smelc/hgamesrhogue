@@ -94,7 +94,7 @@ public class BadStairGenerator extends AbstractStairGenerator {
 		while (it.hasNext()) {
 			final Coord next = it.next();
 			trials++;
-			if (isValidCandidate(next))
+			if (isValidCandidate(next, upOrDown))
 				queue.add(next);
 		}
 		if (queue.isEmpty()) {
