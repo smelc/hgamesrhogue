@@ -1,7 +1,6 @@
 package com.hgames.rhogue.generation.map.dungeon;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -269,9 +268,9 @@ public class Dungeons {
 	 * @return {@code acc} if non-null, otherwise a fresh list; where neighboring
 	 *         zones of {@code (x, y)} have been added.
 	 */
-	public static Collection<Zone> getNeighborz(Dungeon dungeon, int x, int y, boolean considerDiagonals,
-			Collection<Zone> acc) {
-		final Collection<Zone> result = acc == null ? new ArrayList<Zone>() : acc;
+	public static Set<Zone> getNeighborz(Dungeon dungeon, int x, int y, boolean considerDiagonals,
+			Set<Zone> acc) {
+		final Set<Zone> result = acc == null ? new HashSet<Zone>() : acc;
 		final Direction[] dirs = considerDiagonals ? Direction.OUTWARDS : Direction.CARDINALS;
 		for (Direction dir : dirs) {
 			final Coord neighbor = Coord.get(x + dir.deltaX, y + dir.deltaY);

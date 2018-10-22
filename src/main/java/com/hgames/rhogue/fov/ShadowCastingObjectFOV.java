@@ -134,7 +134,7 @@ public abstract class ShadowCastingObjectFOV<U extends ILightSource & Positioned
 		return cell.unionLight(source, v);
 	}
 
-	/** @return A fresh unlit cell */
+	/** @return A fresh cell */
 	protected abstract T buildCell();
 
 	/** @return The resistance at (x, y) */

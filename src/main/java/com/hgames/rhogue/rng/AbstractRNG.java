@@ -2,15 +2,12 @@ package com.hgames.rhogue.rng;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
-
-import com.hgames.lib.GwtIncompatible;
 
 import squidpony.squidmath.IRNG;
 
@@ -130,20 +127,6 @@ public abstract class AbstractRNG implements IRNG, Serializable {
 	@Override
 	public short nextShort(short bound) {
 		return (short) nextInt(bound);
-	}
-
-	@Override
-	@GwtIncompatible
-	public final <T> T[] shuffle(T[] elements) {
-		final int sz = elements.length;
-		final T[] result = Arrays.copyOf(elements, sz);
-		for (int i = 0; i < sz; i++) {
-			final int j = i + nextInt(sz - i);
-			final T save = result[j];
-			result[j] = result[i];
-			result[i] = save;
-		}
-		return result;
 	}
 
 	@Override
