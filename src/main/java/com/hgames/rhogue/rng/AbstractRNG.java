@@ -130,6 +130,11 @@ public abstract class AbstractRNG implements IRNG, Serializable {
 	}
 
 	@Override
+	public final boolean roll(int chance, int bound) {
+		return nextInt(bound + 1) <= chance;
+	}
+
+	@Override
 	public final <T> T[] shuffle(T[] elements, T[] dest) {
 		assert elements != dest;
 		if (dest.length != elements.length) {

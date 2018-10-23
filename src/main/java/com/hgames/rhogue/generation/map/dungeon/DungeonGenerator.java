@@ -108,9 +108,9 @@ public class DungeonGenerator {
 	/** The domain of this map is {@link #roomGenerators} */
 	protected final Map<IRoomGenerator, Lifetime> rgLifetimes;
 
-	protected int minRoomWidth = 2;
+	protected int minRoomWidth = 3;
 	protected int maxRoomWidth;
-	protected int minRoomHeight = 2;
+	protected int minRoomHeight = 3;
 	protected int maxRoomHeight;
 
 	/** An int in [0, 100], which is used when a door can be punched */
@@ -496,6 +496,7 @@ public class DungeonGenerator {
 				}
 			}
 		}
+		assert dungeon.invariant();
 		gdata.startStage(null); // Record end of last stage
 		gdata.logTimings(logger);
 		return dungeon;
@@ -747,7 +748,6 @@ public class DungeonGenerator {
 
 	protected void draw(Dungeon dungeon) {
 		if (drawer != null) {
-			assert dungeon.invariant();
 			drawer.draw(dungeon.getMap());
 		}
 	}

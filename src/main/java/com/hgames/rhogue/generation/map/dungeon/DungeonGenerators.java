@@ -1,5 +1,6 @@
 package com.hgames.rhogue.generation.map.dungeon;
 
+import com.hgames.rhogue.generation.map.dungeon.DungeonGenerator.Complexity;
 import com.hgames.rhogue.generation.map.lifetime.Eternity;
 import com.hgames.rhogue.generation.map.lifetime.OneShot;
 import com.hgames.rhogue.generation.map.rgenerator.CaveRoomGenerator;
@@ -50,19 +51,16 @@ public class DungeonGenerators {
 	 */
 	public DungeonGenerator halfRectanglesHalfCaves() {
 		final DungeonGenerator result = new DungeonGenerator(rng, width, height);
-		result.installRoomGenerator(new RectangleRoomGenerator(), 3, Eternity.INSTANCE);
-		result.installRoomGenerator(new CaveRoomGenerator(75), 1, Eternity.INSTANCE);
-		result.installRoomGenerator(new CaveRoomGenerator(50), 1, Eternity.INSTANCE);
-		result.installRoomGenerator(new CaveRoomGenerator(25), 1, Eternity.INSTANCE);
+		result.installRoomGenerator(new RectangleRoomGenerator(), 1, Eternity.INSTANCE);
+		result.installRoomGenerator(new CaveRoomGenerator(), 1, Eternity.INSTANCE);
 		return result;
 	}
 
 	/** @return A generator that builds dungeons with only caves */
 	public DungeonGenerator cave() {
 		final DungeonGenerator result = new DungeonGenerator(rng, width, height);
-		result.installRoomGenerator(new CaveRoomGenerator(75), 1, Eternity.INSTANCE);
-		result.installRoomGenerator(new CaveRoomGenerator(50), 1, Eternity.INSTANCE);
-		result.installRoomGenerator(new CaveRoomGenerator(25), 1, Eternity.INSTANCE);
+		result.setComplexity(Complexity.KID);
+		result.installRoomGenerator(new CaveRoomGenerator(), 1, Eternity.INSTANCE);
 		return result;
 	}
 

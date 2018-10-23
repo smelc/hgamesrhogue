@@ -388,10 +388,6 @@ public class Dungeon implements Serializable {
 
 			checkConnecteds(grassPools, walkables, "grass");
 			checkConnecteds(highGrassPools, walkables, "high grass");
-
-			walkables.add(DungeonSymbol.DEEP_WATER);
-			checkConnecteds(waterPools, walkables, "deep water");
-			walkables.remove(DungeonSymbol.DEEP_WATER);
 		}
 
 		/* Disconnected rooms and water islands aren't connected to stairs */
@@ -427,10 +423,8 @@ public class Dungeon implements Serializable {
 				assert false : what + " is null or empty";
 				return false;
 			}
-			if (!Dungeons.connectedToStair(this, zone, walkables, null)) {
-				assert false : what + " is unexpectedly not connected to a stair";
+			if (!Dungeons.connectedToStair(this, zone, walkables, null))
 				return false;
-			}
 		}
 		return true;
 	}
@@ -445,10 +439,8 @@ public class Dungeon implements Serializable {
 				assert false : what + " is null or empty";
 				return false;
 			}
-			if (Dungeons.connectedToStair(this, zone, baseWalkables(), null)) {
-				assert false : what + " is unexpectedly connected to a stair";
+			if (Dungeons.connectedToStair(this, zone, baseWalkables(), null))
 				return false;
-			}
 		}
 		return true;
 	}
