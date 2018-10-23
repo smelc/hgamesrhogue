@@ -308,31 +308,13 @@ public class DungeonGenerator {
 
 	/**
 	 * @param minWidth
-	 *            The minimum width of rooms. The default is 2. Give anything
-	 *            negative to keep the existing value (useful to only change a
-	 *            subset of the sizes).
-	 * @param maxWidth
-	 *            The maximum width of rooms (inclusive). The default is
-	 *            {@link #width} / 5. Give anything negative to keep the existing
-	 *            value (useful to only change a subset of the sizes).
+	 *            The minimum width of rooms. The default is 3.
 	 * @param minHeight
-	 *            The minimum width of rooms. The default is 2. Give anything
-	 *            negative to keep the existing value (useful to only change a
-	 *            subset of the sizes).
-	 * @param maxHeight
-	 *            The maximum height of rooms (inclusive). The default is
-	 *            {@link #height} / 5. Give anything negative to keep the existing
-	 *            value (useful to only change a subset of the sizes).
+	 *            The minimum width of rooms. The default is 3.
 	 */
-	public void setRoomsBounds(int minWidth, int maxWidth, int minHeight, int maxHeight) {
-		if (0 <= minWidth)
-			this.minRoomWidth = minWidth;
-		if (0 <= maxWidth)
-			this.maxRoomWidth = maxWidth;
-		if (0 <= minHeight)
-			this.minRoomHeight = minHeight;
-		if (0 <= maxHeight)
-			this.maxRoomHeight = maxHeight;
+	public void setMinRoomSizes(int minWidth, int minHeight) {
+		this.minRoomWidth = minWidth;
+		this.minRoomHeight = minHeight;
 	}
 
 	/**
@@ -815,12 +797,12 @@ public class DungeonGenerator {
 			div -= 2;
 			break;
 		case NORMAL:
+			div -= 1;
 			break;
 		case COMPLEX:
-			div += 2;
 			break;
 		case WIZARD:
-			div += 3;
+			div += 2;
 			break;
 		}
 		this.maxRoomWidth = Math.max(2, width / div);

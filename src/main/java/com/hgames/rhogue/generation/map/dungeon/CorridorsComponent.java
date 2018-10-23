@@ -28,7 +28,11 @@ import squidpony.squidmath.Coord;
 import squidpony.squidmath.IRNG;
 
 /**
- * Generation of corridors.
+ * Generation of corridors. This file is very important, having robust
+ * generation of corridors; - i.e. being able to connect rooms with a high
+ * probability of success - is generation's #1 success criterion. Even if room
+ * are kinda badly generated, if you're able to connect them no matter what;
+ * you'll get dungeons.
  * 
  * @author smelC
  */
@@ -343,8 +347,24 @@ public class CorridorsComponent extends SkeletalComponent {
 				DP_CELL.union(c, c.distance(corner));
 			}
 			final Coord coord = DP_CELL.get();
-			if (coord != null)
+			if (coord != null) {
 				buf.add(coord);
+				if (dir.isCardinal()) {
+					/* Emulate the internal border */
+					/* going left or right: y can vary */
+					final boolean samex = dir == Direction.LEFT || dir == Direction.RIGHT;
+					/* going up or down: x can vary */
+					final boolean samey = dir == Direction.UP || dir == Direction.DOWN;
+					for (int i = 0; i < sz; i++) {
+						final Coord c = all.get(i);
+						if (c.equals(coord)) continue;
+						if ((samex && c.x == coord.x) || (samey && c.y == coord.y)) {
+							final boolean added = buf.add(c);
+							assert added;
+						}
+					}
+				}
+			}
 		}
 		return !buf.isEmpty();
 	}

@@ -70,7 +70,8 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 			}
 		}
 
-		if (drawer != null) drawer.draw(toSymbols(now));
+		// To draw initial state:
+		// if (drawer != null) drawer.draw(toSymbols(now));
 
 		for (int i = 0; i < iterations; i++) {
 			for (int x = 0; x < maxWidth; x++) {
@@ -84,11 +85,11 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 				}
 			}
 			pourInto(after, now);
-			if (drawer != null) drawer.draw(toSymbols(now));
+			// To dray intermediate states:
+			// if (drawer != null) drawer.draw(toSymbols(now));
 		}
 
-		if (boulderizeOpenArea)
-			sanitize(now);
+		sanitize(now);
 
 		if (!stronglyConnected(now, after)) return null;
 
@@ -98,6 +99,9 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 				if (now[x][y]) result.add(Coord.get(x, -y));
 			}
 		}
+
+		// Draw final state
+		if (drawer != null) drawer.draw(toSymbols(now));
 
 		return result.size() < 4 ? null : Zones.build(result);
 	}
@@ -135,12 +139,19 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 					final boolean cell = map[x][y] == FLOOR;
 					/* Check that cell has a cardinal neighbor of same type */
 					boolean sane = false;
+					int nbNeighborsOfSameType = 0;
 					for (Direction dir : Direction.CARDINALS) {
 						final int xprime = x + dir.deltaX;
 						final int yprime = y + dir.deltaY;
 						if (Arrays.isValid(map, xprime, yprime) &&
 								map[xprime][yprime] == cell) {
-							sane = true; break;
+							nbNeighborsOfSameType++;
+							if (!cell || nbNeighborsOfSameType >= 2) {
+								/* Wall needs a single cardinal neighbor to be sane */
+								/* Floor needs two cardinal neighbors to be sane (for convexity) */
+								sane = true;
+								break;
+							}
 						}
 					}
 					if (!sane) {
