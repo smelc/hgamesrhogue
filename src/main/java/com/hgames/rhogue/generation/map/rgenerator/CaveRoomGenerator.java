@@ -26,10 +26,13 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 	protected int initialWallProbability = 45;
 	protected int iterations = 5;
 
+	/* A field to minimize allocations */
+	private /*@Nullable*/ Queue<Coord> todos;
+
 	private static final boolean WALL = false;
 	private static final boolean FLOOR = !WALL;
 
-	private static final int MIN_SIDE_SIZE = 5;
+	static final int MIN_SIDE_SIZE = 5;
 
 	/**
 	 * A fresh instance
@@ -96,7 +99,7 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 		final List<Coord> result = new ArrayList<Coord>((maxWidth * maxHeight) / 2);
 		for (int x = 0; x < maxWidth; x++) {
 			for (int y = 0; y < maxHeight; y++) {
-				if (now[x][y]) result.add(Coord.get(x, -y));
+				if (now[x][y] == FLOOR) result.add(Coord.get(x, -y));
 			}
 		}
 
@@ -104,6 +107,53 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 		if (drawer != null) drawer.draw(toSymbols(now));
 
 		return result.size() < 4 ? null : Zones.build(result);
+	}
+
+	/** @return if all cells of {@code map} are cardinally connected */
+	private boolean stronglyConnected(boolean[][] map, boolean[][] buf) {
+		final int width = map.length;
+		final int height = width == 0 ? 0 : map[0].length;
+	
+		Coord start = null;
+	
+		/* Let's put false everywhere in 'buf', to use it as a reachable marker */
+		/* and look for a starting point in 'map' at the same time */
+	
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				if (start == null && map[x][y] == FLOOR) start = Coord.get(x, y);
+				buf[x][y] = false;
+			}
+		}
+	
+		if (start == null) return false;
+	
+		if (todos == null) todos = new LinkedList<Coord>();
+		else if (!todos.isEmpty()) { assert false; todos.clear(); }
+
+		todos.add(start);
+		while (!todos.isEmpty()) {
+			final Coord todo = todos.remove();
+			if (buf[todo.x][todo.y]) continue;
+			buf[todo.x][todo.y] = FLOOR;
+			for (Direction dir : Direction.CARDINALS) {
+				final Coord neighbor = todo.translate(dir);
+				if (!Arrays.isValid(map, neighbor.x, neighbor.y)) continue;
+				if (map[neighbor.x][neighbor.y] == FLOOR && !buf[neighbor.x][neighbor.y])
+					/* Go to a walkable neighbor */
+					todos.add(neighbor);
+			}
+		}
+
+		todos.clear();
+	
+		/* Now check that map's entirety has been visited */
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++)
+				if (map[x][y] == FLOOR && buf[x][y] != FLOOR) return false;
+		}
+	
+		return true;
 	}
 
 	private static int neighborWalls(boolean[][] map, int x, int y, boolean oobCounts) {
@@ -166,49 +216,6 @@ public class CaveRoomGenerator extends SkeletalRoomGenerator {
 		}
 		if (roll == 64)
 			System.err.println("Emergency exit in " + CaveRoomGenerator.class.getSimpleName() + "::sanitize");
-	}
-
-	/** @return if all cells of {@code map} are cardinally connected */
-	private static boolean stronglyConnected(boolean[][] map, boolean[][] buf) {
-		final int width = map.length;
-		final int height = width == 0 ? 0 : map[0].length;
-
-		Coord start = null;
-
-		/* Let's put false everywhere in 'buf', to use it as a reachable marker */
-		/* and look for a starting point in 'map' at the same time */
-
-		for (int x = 0; x < width; x++) {
-			for (int y = 0; y < height; y++) {
-				if (start == null && map[x][y] == FLOOR) start = Coord.get(x, y);
-				buf[x][y] = false;
-			}
-		}
-
-		if (start == null) return false;
-
-		final Queue<Coord> todos = new LinkedList<Coord>();
-		todos.add(start);
-		while (!todos.isEmpty()) {
-			final Coord todo = todos.remove();
-			if (buf[todo.x][todo.y]) continue;
-			buf[todo.x][todo.y] = FLOOR;
-			for (Direction dir : Direction.CARDINALS) {
-				final Coord neighbor = todo.translate(dir);
-				if (!Arrays.isValid(map, neighbor.x, neighbor.y)) continue;
-				if (map[neighbor.x][neighbor.y] == FLOOR && !buf[neighbor.x][neighbor.y])
-					/* Go to a walkable neighbor */
-					todos.add(neighbor);
-			}
-		}
-
-		/* Now check that map's entirety has been visited */
-		for (int x = 0; x < width; x++) {
-			for (int y = 0; y < height; y++)
-				if (map[x][y] == FLOOR && buf[x][y] != FLOOR) return false;
-		}
-
-		return true;
 	}
 
 	private static DungeonSymbol[][] toSymbols(boolean[][] map) {

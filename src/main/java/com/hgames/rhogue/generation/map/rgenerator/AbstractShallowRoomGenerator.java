@@ -3,9 +3,9 @@ package com.hgames.rhogue.generation.map.rgenerator;
 import java.util.List;
 
 import com.hgames.lib.collection.list.Lists;
+import com.hgames.rhogue.generation.map.dungeon.DungeonGenerator.ZoneType;
 import com.hgames.rhogue.generation.map.dungeon.DungeonSymbol;
 import com.hgames.rhogue.generation.map.dungeon.RoomComponent;
-import com.hgames.rhogue.generation.map.dungeon.DungeonGenerator.ZoneType;
 import com.hgames.rhogue.zone.ListZone;
 import com.hgames.rhogue.zone.Zone;
 
@@ -13,8 +13,8 @@ import squidpony.squidmath.Coord;
 import squidpony.squidmath.IRNG;
 
 /**
- * An abstract room generator to generate a room where only the internal border
- * and the center have been kept.
+ * An abstract room generator that carves a room and turns the carving into
+ * {@link DungeonSymbol#CHASM}.
  * 
  * @author smelC
  */
@@ -26,7 +26,7 @@ public abstract class AbstractShallowRoomGenerator extends SkeletalRoomGenerator
 	 * @param delegate
 	 *            How to build the room. This generator is used to generate the full
 	 *            room, and then it is carved with
-	 *            {@link #getZoneToCarve(Zone, IRNG, RoomComponent, Coord, int, int)}.
+	 *            {@link #getCarving(Zone, IRNG, RoomComponent, Coord, int, int)}.
 	 */
 	protected AbstractShallowRoomGenerator(IRoomGenerator delegate) {
 		this.delegate = delegate;
@@ -39,12 +39,12 @@ public abstract class AbstractShallowRoomGenerator extends SkeletalRoomGenerator
 		if (toCarve == null)
 			/* Cannot do */
 			return null;
-		final Zone carving = getZoneToCarve(toCarve, rng, component, translation, maxWidth, maxHeight);
+		final Zone carving = getCarving(toCarve, rng, component, translation, maxWidth, maxHeight);
 		if (carving == null)
 			/* Cannot do */
 			return null;
-		assert toCarve.contains(carving) : "Initial zone (" + toCarve + ") doesn't completely contain the carved zone: "
-				+ carving;
+		assert toCarve.contains(carving) : "Initial zone (" + toCarve + ": " + toCarve.getAll(false)
+				+ ") doesn't completely contain the carved zone: " + carving;
 		final List<Coord> result = Lists.newArrayList(toCarve.iterator(), toCarve.size());
 		final boolean change = result.removeAll(carving.getAll(false));
 		if (change) {
@@ -74,8 +74,7 @@ public abstract class AbstractShallowRoomGenerator extends SkeletalRoomGenerator
 	 *            The corresponding parameter given at {@link #generate}
 	 * @return The zone to carve within {@code full}, or null if it cannot be done.
 	 */
-	protected abstract /* @Nullable */ Zone getZoneToCarve(Zone full, IRNG rng, RoomComponent component,
-			Coord translation, int maxWidth,
-			int maxHeight);
+	protected abstract /* @Nullable */ Zone getCarving(Zone full, IRNG rng, RoomComponent component,
+			Coord translation, int maxWidth, int maxHeight);
 
 }

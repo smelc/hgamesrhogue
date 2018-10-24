@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.hgames.lib.collection.list.Lists;
 import com.hgames.rhogue.generation.map.dungeon.RoomComponent;
-import com.hgames.rhogue.zone.ListZone;
 import com.hgames.rhogue.zone.Zone;
+import com.hgames.rhogue.zone.Zones;
 
 import squidpony.squidmath.Coord;
 import squidpony.squidmath.IRNG;
@@ -34,7 +34,7 @@ public class ShallowRoomGenerator extends AbstractShallowRoomGenerator {
 	}
 
 	@Override
-	protected /* @Nullable */ Zone getZoneToCarve(Zone full, IRNG rng, RoomComponent component, Coord translation,
+	protected /* @Nullable */ Zone getCarving(Zone full, IRNG rng, RoomComponent component, Coord translation,
 			int maxWidth, int maxHeight) {
 		final Zone shrink = full.shrink();
 		if (shrink.isEmpty())
@@ -47,7 +47,7 @@ public class ShallowRoomGenerator extends AbstractShallowRoomGenerator {
 		if (result.isEmpty())
 			/* Happens if 'full' is too small */
 			return null;
-		return ListZone.create(result);
+		return Zones.build(result);
 	}
 
 }
