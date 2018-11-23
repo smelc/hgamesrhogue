@@ -34,4 +34,24 @@ public class IColoredStrings {
 		return result.toString();
 	}
 
+	/**
+	 * @param i
+	 * @param markup
+	 * @param color
+	 * @return The application of {@code markup} on {@code i + color}
+	 */
+	public static <T> String typeset(int i, IMarkup<T> markup, T color) {
+		return typeset(String.valueOf(i), markup, color);
+	}
+
+	/**
+	 * @param text
+	 * @param markup
+	 * @param color
+	 * @return The application of {@code markup} on {@code text + color}
+	 */
+	public static <T> String typeset(String text, IMarkup<T> markup, T color) {
+		return markup.getMarkup(color) + text + markup.closeMarkup();
+	}
+
 }

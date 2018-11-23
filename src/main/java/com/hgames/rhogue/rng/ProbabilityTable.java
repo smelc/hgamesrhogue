@@ -278,6 +278,9 @@ public class ProbabilityTable<T> {
 		return i == null ? 0 : i.intValue();
 	}
 
+	/** @return The sum of weights in this */
+	public int weight() { return total; }
+
 	/**
 	 * @return true if this table {@link #get(IRNG)} method cannot return something.
 	 */

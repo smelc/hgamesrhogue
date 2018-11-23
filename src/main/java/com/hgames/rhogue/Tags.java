@@ -67,6 +67,8 @@ public class Tags {
 	/** Use this tag when logging things about gdx's Screen. */
 	public static final String SCREEN = "screen";
 
+	public static final String SOUND = "sound";
+
 	public static final String STATUS = "bottom panel";
 
 	public static final String STORAGE = "storage";
