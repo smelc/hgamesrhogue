@@ -3,7 +3,6 @@
 .settings/gradle.prefs
 .settings/org.eclipse.buildship.core.prefs
 .classpath
-.project
 
 ## Gradle
 build/

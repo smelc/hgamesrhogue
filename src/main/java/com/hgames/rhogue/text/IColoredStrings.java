@@ -23,9 +23,9 @@ public class IColoredStrings {
 		final int sz = text.size();
 		for (int i = 0; i < sz; i++) {
 			final IColoredString<T> ics = text.get(i);
-			if (ics == null)
+			if (ics == null) {
 				assert false;
-			else {
+			} else {
 				result.append(ics.presentWithMarkup(markup));
 				if (i < sz - 1)
 					result.append(joiner);
