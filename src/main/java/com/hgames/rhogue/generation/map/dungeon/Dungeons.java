@@ -204,6 +204,41 @@ public class Dungeons {
 		if (result != null)
 			return result;
 		return findZoneContaining(dungeon.corridors, dungeon.boundingBoxes, x, y, false);
+	} 
+
+	/**
+	 * @param dungeon 
+	 * @param upOrDown
+	 * 			Whether the zone next to the stair up or stair down is searched
+	 * @return The zone from which to go to a stair
+	 */
+	public static /*@Nullable */ Zone findRoomOfStair(Dungeon dungeon, boolean upOrDown) {
+		final Coord stair = dungeon.getStair(upOrDown);
+		if (stair == null) return null;
+		final List<Zone> rs = dungeon.getRooms();
+		if (rs == null) return null;
+		final int nbr = rs.size();
+		for (int i = 0; i < nbr; i++) {
+			final Zone r = rs.get(i);
+			assert r != null;
+			if (!r.getExternalBorder().contains(stair))
+				continue;
+			final List<Coord> all = r.getAll(false);
+			final int nba = all.size();
+			/* Now check one can go cardinally from room to stair */
+			for (int j = 0; j < nba; j++) {
+				final Coord inroom = all.get(j);
+				for (Direction dir : Direction.CARDINALS) {
+					if (inroom.translate(dir).equals(stair))
+						/*
+						 * Stair in border of room + can go cardinally from room
+						 * to stair: success
+						 */
+						return r;
+				}
+			}
+		}
+		return null;
 	}
 
 	/**

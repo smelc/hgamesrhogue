@@ -1,6 +1,6 @@
 apply plugin: 'java'
 
-def deps = ["SquidLib","com.hgames.lib"]
+def deps = ["SquidLib","hgameslib"]
 def dist_version = "1.0"
 
 dependencies {

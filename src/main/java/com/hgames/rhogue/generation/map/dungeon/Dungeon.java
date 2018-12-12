@@ -46,7 +46,7 @@ public class Dungeon implements Serializable {
 	/** The mutation API */
 	protected final DungeonBuilder builder;
 
-	/** A cache from a coordinate, to its enclosing Zome; or null */
+	/** A cache from a coordinate, to its enclosing Zone; or null */
 	/* FIXME FILL ME */
 	protected transient Zone[][] coordToZone;
 
@@ -255,7 +255,6 @@ public class Dungeon implements Serializable {
 	public /* @Nullable */ Zone findRoomOrCorridorContaining(Coord c) {
 		return Dungeons.findRoomOrCorridorContaining(this, c.x, c.y);
 	}
-
 	/** @return The number of cells in this dungeon */
 	public int size() {
 		return width * height;
