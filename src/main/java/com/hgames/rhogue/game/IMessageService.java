@@ -61,6 +61,15 @@ public interface IMessageService {
 	/**
 	 * Writes {@code text} to the UI.
 	 * 
+	 * @param coord
+	 *            Where the text should be written (mapwise)
+	 * @param text
+	 */
+	public void write(/*@Nullable*/ Coord coord, /* @Nullable */ String text);
+
+	/**
+	 * Writes {@code text} to the UI.
+	 * 
 	 * @param text
 	 * @param color
 	 *            {@code text}'s color.
