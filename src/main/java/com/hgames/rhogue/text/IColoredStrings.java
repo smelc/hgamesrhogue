@@ -35,6 +35,35 @@ public class IColoredStrings {
 	}
 
 	/**
+	 * @param text
+	 * @param markup
+	 * @param default_
+	 * @param highlight
+	 * @param searcheds
+	 * @return {@code text} where the first occurence of a member of
+	 *         {@code searcheds} is highlight with {@code highlight}.
+	 */
+	public static <T> String colorizeFirstCharIn(String text, IMarkup<T> markup, T default_, T highlight,
+			char... searcheds) {
+		int idx = -1;
+		for (char searched : searcheds) {
+			idx = text.indexOf(searched);
+			if (0 <= idx)
+				/* found */
+				break;
+		}
+		if (idx < 0) {
+			/* 'searcheds' not found */
+			return typeset(text, markup, default_);
+		}
+		final int len = text.length();
+		final String start = idx == 0 ? "" : typeset(text.substring(0, idx - 1), markup, default_);
+		final String hl = typeset(String.valueOf(text.charAt(idx)), markup, highlight);
+		final String end = idx == len - 1 ? "" : typeset(text.substring(idx + 1, len), markup, default_);
+		return start + hl + end;
+	}
+
+	/**
 	 * @param i
 	 * @param markup
 	 * @param color
@@ -51,7 +80,7 @@ public class IColoredStrings {
 	 * @return The application of {@code markup} on {@code text + color}
 	 */
 	public static <T> String typeset(String text, IMarkup<T> markup, T color) {
-		return markup.getMarkup(color) + text + markup.closeMarkup();
+		return text.length() == 0 ? "" : markup.getMarkup(color) + text + markup.closeMarkup();
 	}
 
 }
