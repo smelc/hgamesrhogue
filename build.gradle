@@ -7,6 +7,25 @@ dependencies {
         deps.each{ name -> compile project(":" + name) }
 }
 
+/*
+
+task fatCodeJar(type: Jar, dependsOn: classes) {
+    // Takes code of a project and its dependencies
+    description 'Creates a standalone jar (libgdx excluded) containing classes'
+    classifier = 'code'
+    from sourceSets.main.output.classesDir
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    // exclude 'com/badlogic/**'
+    exclude 'META-INF/**'
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    // Takes javadoc of a single project
+    description 'Creates a jar containing html javadoc'
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
 task fatSourcesJar(type: Jar, dependsOn: classes) {
     description 'Creates a jar containing sources'
     classifier = 'sources'
@@ -41,3 +60,5 @@ task dist(type: Zip, dependsOn: ['fatCodeJar', 'fatSourcesJar','fatJavadocJar'])
 dist.doLast {
     println("Generated " + archivePath)
 }
+
+*/
